@@ -1,0 +1,10 @@
+.segment "TEXTURES"
+
+.include "SLADRGB.S"
+.include "PANEL.S"
+.include "ROCKRGB.S"
+.include "IMP32.S"
+.include "CACO.S"
+.include "DEMON.S"
+.include "CACO.S"
+.include "DEMON.S"

@@ -1,0 +1,584 @@
+; vic 20 doom
+;
+
+; need to keep track of columns
+; each column needs a sector, edge, depth (3)
+; or sprite, sprite column, depth (3)
+; map is max 256 sectors
+
+; screen is 40 columns
+
+*=$1d00
+.screencols
+
+; zero page variables
+
+; will need interrupts for sound
+; so don't use first parts of zero page
+
+; floating point accumulator
+fp_sign = $10
+fp_exp  = $11
+fp_manh = $12
+fp_manm = $13
+fp_manl = $14
+
+fp_b_sign = $15
+fp_b_exp = $16
+fp_b_manh = $17
+fp_b_manm = $18
+fp_b_manl = $19
+
+psec = $1a
+pang = $1b
+px   = $1c
+py   = $1d
+
+*=$1001
+; basic program to exec: 2009 SYS 4107
+!word $100b     ; pointer to next line
+!word 2009      ; line number
+!byte $9e       ; SYS
+!text "4107", 0 ; 4107
+; !word 0         ; pointer to next line
+
+; assume all FP maths takes place on the zero page
+; we're going to need FLOAT, INT, ADD, NEG, MUL, DIV, RSQRT, ISGT, ISPOS
+
+; ah, FP is just too slow
+; need to use various fixed point formats (0.8, 8.8, 16.8 - really just need to know about byte size (1, 2, 3))
+; then see Hacker's Delight for a SQRT routine that just uses shifts and adds!
+; search google for "6502 fast multiply" and "6502 fast divide"
+; we can use self-modifying code to make the multiply faster
+; still, will be more than 100,000 cycles per frame!
+
+// here is the hacker's delight method
+/*
+sqrt(x)
+{
+  m, y, b;
+  m = 0x400000;
+  y = 0;
+  while (m != 0) // do 12 times
+  {
+    b = y|m;
+    y >>= 1;
+    if (x >= b)
+    {
+      x = x - b;
+      y = y | m;
+    }
+    m >>= 2;
+  }
+  return y;
+}
+*/
+// and that's it!?
+
+// RSQRT using newton's method x <- x/2*(3 - Nx^2)
+// need a FP stack
+// first, get an approximation by dividing the exponent by two and using a lookup table on the high-order bits of the mantissa
+if (exp & 1)
+{
+    exp++;
+    mant >> 1;
+}
+exp = -exp/2;
+mant = mantTab[mantHi>>4]; // 16 entry table (for x and x^2, 64 bytes)
+// then do one newton refinement pass
+// we looked up x, so we can look up x^2!
+// FP stack looks like this:
+// N x x^2
+// Nx^2 x // 1 mul
+// Nx^2 x 3
+// 3-Nx^2 x // 1 mul, 1 add
+// x(3-Nx^2) // 2 mul, 1 add
+// 0.5x(3-Nx^2) // special case /2 (just subtract one from exponent!)
+// so pretty darn cheap for 0.03% error
+
+
+; int_to_float
+; implies max map size is -127..127
+; A contains int
+int_to_float
+   sta tmp
+   bge +
+   lda #1
+   sta fp_sign
+   lda 255
+   sec
+   sbc tmp
+   clc
+   adc #1
+   jmp ++
++
+   lda #0
+   sta fp_sign
+   lda tmp
+++
+   ldy #7
+-
+   dey
+   rol a
+   bpl -
+   sta fp_manh   
+   tya
+   sta fp_exp
+   lda #0
+   sta fp_manl
+   rts
+
+                int mana = a.man<<16;
+                int manb = b.man;
+                int man = 0;
+                for (int i = 0; i < 16; ++i)
+                {
+                    if ((manb & 80) > 0)
+                    {
+                        man += mana;
+                    }
+                    mana >>= 1;
+                    manb <<= 1;
+                }
+                while (man < 256 * 128)
+                {
+                    man <<= 1;
+                    exp--;
+                }
+                man >>= 8;
+
+; fmul
+; X contains location of multiplier
+fmul
+   ; multiply signs
+   lda fp_sign
+   xor (fp_sign),x
+   sta fp_sign
+   ; add exponents
+   lda fp_exp
+   sec
+   adc (fp_exp),x
+   sta fp_exp
+
+   ; deal with mantissa
+   lda fp_manh
+   sta mana3
+   lda fp_manl
+   sta mana2
+   lda (fp_manh),x
+   eor #$ff ; doing this here saves a clc in the main loop
+   sta manb_h
+   lda (fp_manl),x
+   eor #$ff
+   sta manb_l
+   lda #0
+   sta fp_manh
+   sta fp_manl
+
+   ldy 16
+-
+5   asl manb_l
+5   rol manb_h
+3   bcs +
+3   lda fp_manl
+3   adc mana2
+4   sta fp_manl
+3   lda fp_manh
+3   adc mana3
+4   sta fp_manh
++
+5   lsr mana3
+5   ror mana2
+2   dey
+3   bne -
+
+normalize
+   lda fp_manh
+   beq ++
+   jmp +
+-
+5   dec fp_exp
+5   asl fp_manl
+5   rol fp_manh
++
+3   bpl -
+   rts
+++
+   lda fp_exp
+   sec
+   sbc #8
+   lda fp_manl
+   beq +
+   sta fp_manh
+   lda #0
+   sta fp_manl
+   jmp normalize
++
+   lda #0
+   sta fp_sign
+   sta fp_exp
+   rts
+
+/*
+; fast approximate divide with 16 bit divisor (dividend/divisor = quotient.remainder)
+; first get a reciprocal 65536/divisor
+; use floating point techniques to cast the reciprocal into an 8bit recip for a table lookup
+; do the multiply (with table lookups) then shift the result back
+; doh/dol is the divisor
+; reciph/recipl is the LUT
+; quh/qul is the quotient
+
+recip
+3   lda doh
+2   beq ++
+2   bmi +++
+2   ldx #7
+-
+2     dex
+5     asl dol
+2     rol
+3     bpl -
+2   tay
+5   lda recipl,y
+4   sta qul
+5   lda reciph,y
+3   tay
+6   lda jumplook,x
+5   sta modify+1
+3   tya
+modify
+3   bra +
++
+2   lsr
+5   ror qul
+lsr
+ror qul
+lsr
+ror qul
+lsr
+ror qul
+lsr
+ror qul
+lsr
+ror qul
+lsr
+ror qul
+-
+2     lsr
+5     ror qul
+2     dex
+3     bne -
+4   sta quh
+5   rts
+++
+3   ldy dol
+5   lda recipl,y
+4   sta qul
+5   lda reciph,y
+4   sta quh
+5   rts
++++
+3   tay
+5   lda reciph,y
+4   sta quh
+2   lda #0
+4   sta qul
+5   rts
+
+
+// from codebase64 I think
+divisor = $58     ;$59 used for hi-byte
+dividend = $fb      ;$fc used for hi-byte
+remainder = $fd      ;$fe used for hi-byte
+result = dividend ;save memory by reusing dividend to store the result
+
+divide
+2 lda #0            ;preset remainder to 0
+4 sta remainder
+4 sta remainder+1
+2 ldx #16            ;repeat for each bit: ...
+
+divloop
+5 asl dividend    ;dividend lb & hb*2, msb -> Carry
+5 rol dividend+1    
+5 rol remainder    ;remainder lb & hb * 2 + msb from carry
+5 rol remainder+1
+3 lda remainder
+2 sec
+3 sbc divisor    ;substract divisor to see if it fits in
+2 tay            ;lb result -> Y, for we may need it later
+3 lda remainder+1
+3 sbc divisor+1
+2 bcc skip    ;if carry=0 then divisor didn't fit in yet
+
+4 sta remainder+1    ;else save substraction result as new remainder,
+4 sty remainder    
+4 inc result    ;and INCrement result cause divisor fit in 1 times
+
+skip
+2 dex
+3 bne divloop    
+5 rts
+
+
+*/
+; to draw a column
+; pull from a texture (32 high)
+; plot to the screen (64 high)
+; we have sx, sy, tx, ty
+; arrange the screen and texture in vertical columns to make plotting easier
+; sx, sy -> sp = (sx&~3)<<4 + sy
+; tx, ty -> tp = (tx&~3)<<3 + ty
+; then need to mask what's there and || in the pixel data
+; there are 7 different ways to shift the texture data - left 6, 4, 2, no shift, right 2, 4, 6
+; the left and right 6 shifts don't need to mask the texture data!
+; let's try two versions, with and without masking texture data. first though, just make it work
+
+screenMasks
+.byte $c0, $30, $0c, $03
+textureMasks
+.byte $3f, $cf, $f3, $fc
+
+; set up before inner loop
+lda sx
+and #~3
+asl
+asl
+asl
+asl
+clc
+adc sy
+sta screenPtr
+lda tx
+and #~3
+asl
+asl
+asl
+clc
+adc texl
+sta texturePtr
+lda tx
+and #3
+tax
+sta textureShift
+lda textureMasks, x
+sta textureMask
+lda sx
+and #3
+tax
+sec
+sbc textureShift ; calculate number of shifts
+sta textureShift
+lda screenMasks, x
+sta screenMask
+
+// it's reasonable to keep a texture on a page, since the texture is 128 bytes
+// each page stores two textures only! (or a texture and its mipmaps :)
+
+// inner loop can be tiny - ish
+// can afford seven of these
+// don't need screen mask normally since we started with a clear screen
+// total is about 60 cycles
+// for a full screen... 60x64x40 = 153600 cycles, so about 8 FPS (with no other overhead)
+// say another 50000 cycles per frame, then about 6 FPS on average
+// which is what I was estimating! phew!
+
+// store the textures bottom to top, so we can use a dex/bne and save 3 cycles
+// worth self-modifying the crap out of this: texp, textureMask, shifts, screen, dyl, dyh
+// gets it down to 42x64x40 = 107520 cycles. massive saving!
+// thank you 6502 code for being easy to self modify!
+// we're optimizing the worst case, so no point in trying to get rid of the shifts
+// hmm, since it is "worst case", perhaps we could pre-shift an entire texture
+// lda tex, x; tay; and; sta; tya; asl; asl; tay; and; sta; tya; asl; asl; tay; and; sta; tya; asl; asl; sta; dex; bne
+//   4            2     3      5     2     2   2     2     3     5     2    2     2    2    3      5      2    2    2     5    2      3
+// would take up another 512 bytes, and cost (per texture switch) 128x62 = 7936 cycles
+// but would save 8 cycles per pixel = 20480 cycles (so three texture switches makes it not worthwhile!)
+// forget that idea. whee!
+
+ldy tyh
+
+-
+4 lda texp, y ; self modify this sucker!
+2 and #textureMask ; self modify this sucker!
+2 asl ; self modify this sucker!
+2 asl ; self modify this sucker!
+2 nop
+2 nop
+4 ora screen, x ; self modify this sucker!
+5 sta screen, x ; self modify this sucker!
+3 lda tyl
+; we know for sure the carry bit is clear, because of the asl/lsr
+2 adc #dyl ; self modify this sucker!
+3 sta tyl
+2 tya
+2 adc #dyh ; self modify this sucker!
+2 tay
+2 dex
+3 bne -
+
+rts
+
+
+
+
+// second attempt = combine the best of both...
+// drawColumn
+// total self-modifying awesomeness
+
+curX = x
+texI = y
+
+.tmasktab
+// BBC Micro (interleaved)
+// .byte $88, $44, $22, $11
+// VIC-20 (
+.byte $C0, $30, $0C, $03
+
+// approx 50 cycles per pixel
+// so that's on average 32x32x54 per frame
+lda curX
+and #$03
+tax
+lda tmasktab,x
+sta tmask+1
+
+lda curX
+and #$f8
+asl
+asl
+asl
+rol
+sta scrbuf+1
+lda #$16
+adc #0 // plus carry
+sta scrbuf+2
+
+lda texI
+and #$fc
+asl
+asl
+asl
+
+// texLo is kept in y
+// texHi is stored at loop+1
+
+.loop
+4 lda tex // self modified texture address
+// shift into position for the screen
+???shift (curX - texI)
+// modify these as required (asl/lsr/nop)
+2 lsr
+2 lsr
+2 lsr
+2 lsr
+.tmask
+2 and #0 // self modified immediate operand
+.scrbuf
+4 ora $1600,x // self modified screen addr
+5 sta $1600,x // self modified screen addr
+2 inx
+.twobyheight
+2 cpx #16 // self modified immediate operand
+2 beq done
+2 tya
+2 clc
+.stepLo
+2 adc #0 // self modified immediate operand
+2 tay
+4 lda loop+1
+.stepHi
+2 adc #0 // self modified immediate operand
+4 sta loop+1
+3 jmp loop
+.done
+
+
+
+
+
+/*
+; fast approximate divide with 16 bit divisor (dividend/divisor = quotient.remainder)
+; first get a reciprocal 65536/divisor
+; use floating point techniques to cast the reciprocal into an 8bit recip for a table lookup
+; do the multiply (with table lookups) then shift the result back
+; doh/dol is the divisor
+; reciph/recipl is the LUT
+; quh/qul is the quotient
+
+recip
+3   lda doh
+2   beq +
+2   bmi ++
+2   ldx #7
+-
+2     dex
+5     asl dol
+2     rol
+3     bpl -
+2   tay
+5   lda recipl,y
+4   sta qul
+5   lda reciph,y
+-
+2     lsr
+5     ror qul
+2     dex
+3     bne -
+4   sta quh
+5   rts
++
+3   ldy dol
+5   lda recipl,y
+4   sta qul
+5   lda reciph,y
+4   sta quh
+5   rts
+++
+3   tay
+5   lda reciph,y
+4   sta quh
+2   lda #0
+4   sta qul
+5   rts
+
+
+// from codebase64 I think
+divisor = $58     ;$59 used for hi-byte
+dividend = $fb      ;$fc used for hi-byte
+remainder = $fd      ;$fe used for hi-byte
+result = dividend ;save memory by reusing dividend to store the result
+
+divide
+2 lda #0            ;preset remainder to 0
+4 sta remainder
+4 sta remainder+1
+2 ldx #16            ;repeat for each bit: ...
+
+divloop
+5 asl dividend    ;dividend lb & hb*2, msb -> Carry
+5 rol dividend+1    
+5 rol remainder    ;remainder lb & hb * 2 + msb from carry
+5 rol remainder+1
+3 lda remainder
+2 sec
+3 sbc divisor    ;substract divisor to see if it fits in
+2 tay            ;lb result -> Y, for we may need it later
+3 lda remainder+1
+3 sbc divisor+1
+2 bcc skip    ;if carry=0 then divisor didn't fit in yet
+
+4 sta remainder+1    ;else save substraction result as new remainder,
+4 sty remainder    
+4 inc result    ;and INCrement result cause divisor fit in 1 times
+
+skip
+2 dex
+3 bne divloop    
+5 rts
+
+
+would be awesome to have a text editor that can (a) format 6502 (b) compile as you type (c) show timings and memory usage
+
+*/
+
+
