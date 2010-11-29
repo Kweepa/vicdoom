@@ -1,0 +1,7 @@
+To add all files to git staging area:
+git add .
+To commit files to local repository:
+git commit
+To push files to github:
+git push vicdoom master
+  (vicdoom is the project, master is the branch)
