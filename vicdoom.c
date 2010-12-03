@@ -83,6 +83,7 @@ void waitforraster(void)
     while (PEEK(0x9004) < 16) ;
 }
 
+#if 0
 typedef struct vertexT
 {
   signed char x;
@@ -137,6 +138,8 @@ sector sectors[2] =
   { 4, -1, { 4, 5, 6, 7 }, { 6, 7, 8, 9 } }
 };
 
+#endif
+
 char spanStackSec[10];
 signed char spanStackL[10];
 signed char spanStackR[10];
@@ -148,6 +151,9 @@ typedef struct xfvertexT
   short screenx;
   short dummy;
 } xfvertex;
+
+// transformed sector verts
+xfvertex xfverts[8];
 
 typedef struct objtypeT
 {
@@ -176,7 +182,7 @@ typedef struct objectT
   char dummy;
 } object;
 
-object player = { -19*256, 2*256, 8, 0, 0 };
+object player = { -35*256, -23*256, 8, 0, 0 };
 object *camera = &player;
 
 object objects[5] =
@@ -187,9 +193,6 @@ object objects[5] =
   { -256*10, 0, 0, 3, 3, 0 },
   { -256*10, 256, 0, 4, 0 }
 };
-
-// transformed sector verts
-xfvertex xfverts[8];
 
 #define SCREENWIDTH 32
 #define HALFSCREENWIDTH (SCREENWIDTH/2)
@@ -206,11 +209,15 @@ unsigned char frame = 0;
 
 void __fastcall__ drawColumn(char textureIndex, char texI, signed char curX, short curY, unsigned short h);
 
+char __fastcall__ getEdgeTexture(char sectorIndex, char edgeIndex);
+char __fastcall__ getEdgeLen(char sectorIndex, char edgeIndex);
+
 void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
 {
-  sector *sec = &sectors[sectorIndex];
-  edge *curEdge = &edges[sec->edges[curEdgeIndex]];
-  char textureIndex = curEdge->tex;
+  //sector *sec = &sectors[sectorIndex];
+  //edge *curEdge = &edges[sec->edges[curEdgeIndex]];
+  char textureIndex = getEdgeTexture(sectorIndex, curEdgeIndex); // curEdge->tex;
+  char edgeLen = getEdgeLen(sectorIndex, curEdgeIndex); // curEdge->len;
 
   // intersect the view direction and the edge
   // http://local.wasp.uwa.edu.au/~pbourke/geometry/lineline2d/
@@ -223,7 +230,6 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
   //int y3 = 0;
   //int y4 = 256*1;
 
-  char edgeLen = curEdge->len;
   int x4;
   int denom;
   signed char curX;
@@ -382,12 +388,14 @@ void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 	}
 }
 
+char __fastcall__ getOtherSector(char sectorIndex, char edgeIndex);
+char __fastcall__ getNextEdge(char sectorIndex, char edgeIndex);
+
 void drawSpans()
 {
   signed char stackTop = 0;
   char sectorIndex;
   signed char x_L, x_R;
-  sector *sec;
   signed char firstEdge;
   char curEdge;
   signed char curX;
@@ -425,18 +433,16 @@ void drawSpans()
      
      // now fill the span buffer with these edges
 
-     sec = &sectors[sectorIndex];
      curEdge = firstEdge;
      curX = x_L;
      while (curX < x_R)
      {
         // update the edge
-        nextEdge = curEdge + 1;
-        if (nextEdge == sec->numverts) nextEdge = 0;
+        nextEdge = getNextEdge(sectorIndex, curEdge);
         nextX = getScreenX(nextEdge);
         if (nextX < curX || nextX > x_R) nextX = x_R;
 
-        thatSector = edges[sec->edges[curEdge]].sector;
+        thatSector = getOtherSector(sectorIndex, curEdge); //edges[sec->edges[curEdge]].sector;
         if (thatSector != -1)
         {
            // come back to this
@@ -476,6 +482,7 @@ unsigned int sqrt(unsigned long x)
 
 // THIS IS THE NEXT TARGET OF OPTIMIZATION!
 
+#if 0
 int push_out(object *obj)
 {
   // probably a good idea to check the edges we can cross first
@@ -568,6 +575,7 @@ int push_out(object *obj)
   }
   return 0;
 }
+#endif
 
 void clearSecondBuffer(void);
 void copyToPrimaryBuffer(void);
@@ -705,7 +713,7 @@ int main()
 		player.x -= 8*get_sin(player.angle);
 		player.y -= 8*get_cos(player.angle);
 	  }
-#if 1
+#if 0
       POKE(0x900f, 11);
 	  if (push_out(&player))
 	  {
