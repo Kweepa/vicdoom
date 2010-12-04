@@ -1,10 +1,13 @@
 .segment "TEXTURES"
 
-.include "SLADRGB.S"
 .include "PANEL.S"
-.include "ROCKRGB.S"
-.include "IMP32.S"
+.include "SEWERWALL.S"
+.include "TECHWALL.S"
+.include "TILE.S"
+.include "DOOR.S"
+
+.include "IMP.S"
 .include "CACO.S"
 .include "DEMON.S"
-.include "CACO.S"
-.include "DEMON.S"
+
+.include "TECHCOLUMN.S"

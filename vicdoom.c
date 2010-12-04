@@ -169,13 +169,22 @@ typedef struct objtypeT
   char dummy;
 } objtype;
 
-objtype objtypes[5] =
+objtype objtypes[16] =
 {
-  { 3, 1, 4 }, // imp
-  { 4, 1, 8 }, // caco
-  { 5, 1, 8 }, // pinky
-  { 3, 0, 2 }, // medkit
-  { 4, 0, 1 }  // clip
+  { 6, 1, 3 }, // player spawn
+  { 6, 1, 3 }, // green armor
+  { 6, 1, 3 }, // backpack
+  { 6, 1, 3 }, // barrel
+  { 6, 1, 3 }, // blue keycard
+  { 6, 1, 3 }, // caco
+  { 6, 1, 3 }, // medikit
+  { 5, 1, 5 }, // imp
+  { 7, 1, 3 }, // demon
+  { 6, 1, 3 }, // red keycard
+  { 6, 1, 3 }, // bullets
+  { 5, 1, 5 }, // sargeant
+  { 8, 1, 5 }, // pillar
+  { 6, 1, 3 }, // green keycard
 };
 
 typedef struct objectT
@@ -188,19 +197,8 @@ typedef struct objectT
   char dummy;
 } object;
 
-object player = { -35*256, -23*256, 8, 0, 0 };
+object player = { -17*256, -11*256, 8, 0, 0 };
 object *camera = &player;
-
-#if 0
-object objects[5] =
-{
-  { 0, -256*2, 0, 0, 0 },
-  { 256*10, 256*2, 0, 1, 0 },
-  { -256*5, 256*15, 0, 2, 1 },
-  { -256*10, 0, 0, 3, 3, 0 },
-  { -256*10, 256, 0, 4, 0 }
-};
-#endif
 
 #define SCREENWIDTH 32
 #define HALFSCREENWIDTH (SCREENWIDTH/2)
@@ -251,10 +249,10 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
   x4 = (256*x_L + 128)/HALFSCREENWIDTH;
   for (curX = x_L; curX < x_R; ++curX)
   {
+     x4 += 16;
      if (testFilled(curX) == 0)
      {
         //x4 = (256*curX + 128)/HALFSCREENWIDTH;
-        x4 += 16;
 
         // denom = dx - x4 * dy / 256;
         denom = muladd88(-x4, dy, dx);
@@ -272,8 +270,16 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
            // h = (SCREENHEIGHT/16)*512/(curY/16);
 
            h = div88(128, curY);
-
-           texI = t * edgeLen / 64; // 256/PIXELSPERMETER
+           
+           if (textureIndex == 2 || textureIndex == 4)
+           {
+	           // door or techwall, so fit to wall
+				texI = t >> 4;
+		   }
+		   else
+		   {
+	           texI = t * edgeLen / 64; // 256/PIXELSPERMETER
+	       }
            texI &= 15; // 16 texel wide texture
 
            // can look up the yStep (and starting texY) too
@@ -290,8 +296,9 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
   // perspective transform (see elsewhere for optimization)
   //int h = (SCREENHEIGHT/16) * 512 / (vy/16);
   unsigned int h = div88(128, vy);
-  unsigned int w = h/3;
-  char textureIndex = objtypes[getObjectType(o)].texture;
+  char objectType = getObjectType(o);
+  unsigned int w = h/objtypes[objectType].width;
+  char textureIndex = objtypes[objectType].texture;
   int sx;
   int leftX;
   int rightX;
@@ -346,17 +353,18 @@ void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
   char o, i, j;
   char count = 0;
   char numObj = getNumObjects();
-
+  
   // loop through the objects
   for (o = 0; o < numObj; ++o)
   {
-     if (getObjectSector(o) == sectorIndex)
+	 char thisObjSec = getObjectSector(o);
+     if (thisObjSec == sectorIndex)
      {
         // inverse transform
         vx = transformxy_withParams(getObjectX(o), getObjectY(o));
         vy = transformy();
         
-        if (vy > 0)
+        if (vy > 256)
         {
            sorted[count] = count;
 
@@ -384,7 +392,7 @@ void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 			   sorted[i] = o;
 			}
 		 }
-	  }
+	  }	  
 
 	  // draw
 	  for (i = 0; i < count; ++i)
