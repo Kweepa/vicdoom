@@ -6,10 +6,24 @@
 .export _getTransformedX
 .export _getTransformedY
 .export _getScreenX
+
+; sector/vertex functions
+.export _getNumVerts
+.export _getSectorVertexX
+.export _getSectorVertexY
+
+; sector/edge functions
 .export _getEdgeTexture
 .export _getEdgeLen
 .export _getOtherSector
 .export _getNextEdge
+
+; object functions
+.export _getNumObjects
+.export _getObjectSector
+.export _getObjectX
+.export _getObjectY
+.export _getObjectType
 .export secNumVerts
 .export vertX
 .export edgeTex
@@ -479,6 +493,65 @@ edgeIndex = $80
 sectorIndex = $81
 numberOfVerts = $82
 
+.proc _getNumVerts : near
+
+; A - sectorIndex
+
+tay
+lda secNumVerts,y
+rts
+
+.endproc
+
+.proc _getSectorVertexX : near
+
+; params:
+; A - vertexIndex
+; TOS - sectorIndex
+
+sta edgeIndex
+ldy #0
+lda (sp),y
+asl
+asl
+asl
+clc
+adc edgeIndex
+tay
+lda secVerts,y
+tay
+lda vertX,y
+
+ldy #1
+jmp addysp
+
+.endproc
+
+.proc _getSectorVertexY : near
+
+; params:
+; A - vertexIndex
+; TOS - sectorIndex
+
+sta edgeIndex
+ldy #0
+lda (sp),y
+asl
+asl
+asl
+clc
+adc edgeIndex
+tay
+lda secVerts,y
+tay
+lda vertY,y
+
+ldy #1
+jmp addysp
+
+.endproc
+
+
 .proc _getEdgeTexture : near
 
 ; params:
@@ -579,5 +652,49 @@ lda #0
 done:
 ldy #1
 jmp addysp
+
+.endproc
+
+
+.proc _getNumObjects : near
+
+lda numObj
+rts
+
+.endproc
+
+.proc _getObjectSector : near
+
+tay
+lda objSec,y
+rts
+
+.endproc
+
+.proc _getObjectX : near
+
+tay
+lda objXhi,y
+tax
+lda objXlo,y
+rts
+
+.endproc
+
+.proc _getObjectY : near
+
+tay
+lda objYhi,y
+tax
+lda objYlo,y
+rts
+
+.endproc
+
+.proc _getObjectType : near
+
+tay
+lda objType,y
+rts
 
 .endproc

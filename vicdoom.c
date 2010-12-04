@@ -67,6 +67,12 @@ int __fastcall__ getScreenX(unsigned char i);
 int __fastcall__ getTransformedX(unsigned char i);
 int __fastcall__ getTransformedY(unsigned char i);
 
+char __fastcall__ getNumObjects(void);
+char __fastcall__ getObjectSector(char o);
+int __fastcall__ getObjectX(char o);
+int __fastcall__ getObjectY(char o);
+char __fastcall__ getObjectType(char o);
+
 signed char __fastcall__ get_sin(unsigned char angle)
 {
   return sinTab[angle & 63];
@@ -185,6 +191,7 @@ typedef struct objectT
 object player = { -35*256, -23*256, 8, 0, 0 };
 object *camera = &player;
 
+#if 0
 object objects[5] =
 {
   { 0, -256*2, 0, 0, 0 },
@@ -193,6 +200,7 @@ object objects[5] =
   { -256*10, 0, 0, 3, 3, 0 },
   { -256*10, 256, 0, 4, 0 }
 };
+#endif
 
 #define SCREENWIDTH 32
 #define HALFSCREENWIDTH (SCREENWIDTH/2)
@@ -283,7 +291,7 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
   //int h = (SCREENHEIGHT/16) * 512 / (vy/16);
   unsigned int h = div88(128, vy);
   unsigned int w = h/3;
-  char textureIndex = objtypes[objects[o].type].texture;
+  char textureIndex = objtypes[getObjectType(o)].texture;
   int sx;
   int leftX;
   int rightX;
@@ -318,35 +326,34 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
   }
 }
 
-typedef struct objxyT
+typedef struct
 {
   char o;
-  short x;
-  unsigned short y;
   char dummy;
-  short dummy2;
-} objxy;
+  int x;
+  unsigned int y;
+  int dummy2;
+}
+objxy;
 
 objxy unsorted[12];
 char sorted[12];
 
 void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 {
-  object *obj;
   int vx, vy;
   objxy *objInst;
   char o, i, j;
   char count = 0;
+  char numObj = getNumObjects();
 
   // loop through the objects
-  for (o = 0; o < 3; ++o)
+  for (o = 0; o < numObj; ++o)
   {
-     obj = &objects[o];
-
-     if (obj->sector == sectorIndex)
+     if (getObjectSector(o) == sectorIndex)
      {
         // inverse transform
-        vx = transformxy_withParams(obj->x, obj->y);
+        vx = transformxy_withParams(getObjectX(o), getObjectY(o));
         vy = transformy();
         
         if (vy > 0)
@@ -482,18 +489,18 @@ unsigned int sqrt(unsigned long x)
 
 // THIS IS THE NEXT TARGET OF OPTIMIZATION!
 
-#if 0
+char __fastcall__ getNumVerts(char sectorIndex);
+signed char __fastcall__ getSectorVertexX(char sectorIndex, char vertexIndex);
+signed char __fastcall__ getSectorVertexY(char sectorIndex, char vertexIndex);
+
 int push_out(object *obj)
 {
   // probably a good idea to check the edges we can cross first
   // if any of them teleport us, move, then push_out in the new sector
 
-  char curSector = obj->sector;
-  sector *sec = &sectors[curSector];
+  char thatSector;
   char i, ni;
-  edge *curEdge;
-  vertex *v1;
-  vertex *v2;
+  int v1x, v1y, v2x, v2y;
   long ex;
   long ey;
   long px, py;
@@ -502,21 +509,23 @@ int push_out(object *obj)
   long dist;
   long distanceToPush;
   long dx, dy;
+  char curSector = obj->sector;
+  char secNumVerts = getNumVerts(curSector);
   
   // see which edge the new coordinate is behind
-  for (i = 0; i < sec->numverts; ++i)
+  for (i = 0; i < secNumVerts; ++i)
   {
-     ni = (i + 1);
-     if (ni == sec->numverts) ni = 0;
-     curEdge = &edges[sec->edges[i]];
-     v1 = &verts[sec->verts[i]];
-     v2 = &verts[sec->verts[ni]];
-     ex = ((long)v2->x) - v1->x;
-     ey = ((long)v2->y) - v1->y;
-     px = obj->x - 256*v1->x;
-     py = obj->y - 256*v1->y;
+	 ni = getNextEdge(curSector, i);
+     v1x = getSectorVertexX(curSector, i);
+     v1y = getSectorVertexY(curSector, i);
+     v2x = getSectorVertexX(curSector, ni);
+     v2y = getSectorVertexY(curSector, ni);
+     ex = ((long)v2x) - v1x;
+     ey = ((long)v2y) - v1y;
+     px = obj->x - 256*v1x;
+     py = obj->y - 256*v1y;
      // need to precalc 65536/edge.len
-     edgeLen = curEdge->len;
+     edgeLen = getEdgeLen(curSector, i);
      height = (px * ey - py * ex) / edgeLen;
      if (height < INNERCOLLISIONRADIUS)
      {
@@ -524,11 +533,14 @@ int push_out(object *obj)
         dist = (px * ex + py * ey)/edgeLen;
         if (dist > 0 && dist < 256*edgeLen)
         {
-           if (curEdge->sector != -1)
+           thatSector = getOtherSector(curSector, i);
+           if (thatSector != -1)
            {
               if (height < 0)
               {
-                 obj->sector = curEdge->sector;
+                 obj->sector = thatSector;
+                 gotoxy(1,0);
+                 cprintf("sec%d ed%d ned%d ex%d ey%d. ", thatSector, i, ni, (int)ex, (int)ey);
                  return 1;
               }
            }
@@ -558,8 +570,8 @@ int push_out(object *obj)
 			}
 			else
 			{
-			   dx = obj->x - 256*v2->x;
-			   dy = obj->y - 256*v2->y;
+			   dx = obj->x - 256*v2x;
+			   dy = obj->y - 256*v2y;
 			   height = sqrt(dx * dx + dy * dy);
 			   distanceToPush = INNERCOLLISIONRADIUS - height;
 			   if (distanceToPush > 0)
@@ -575,7 +587,6 @@ int push_out(object *obj)
   }
   return 0;
 }
-#endif
 
 void clearSecondBuffer(void);
 void copyToPrimaryBuffer(void);
@@ -713,7 +724,7 @@ int main()
 		player.x -= 8*get_sin(player.angle);
 		player.y -= 8*get_cos(player.angle);
 	  }
-#if 0
+#if 1
       POKE(0x900f, 11);
 	  if (push_out(&player))
 	  {
