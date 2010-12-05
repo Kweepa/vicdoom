@@ -9,6 +9,7 @@
 	.debuginfo	off
 	.importzp	sp
 	.export     _drawColumn
+	.export     _drawColumnTransparent
 	.export     _clearSecondBuffer
 	.export     _copyToPrimaryBuffer
 	.export     _clearFilled
@@ -385,6 +386,282 @@ jmp loop
 
 end:
 ldy #5
+jmp addysp
+
+.endproc
+
+
+; ---------------------------------------------------------------
+; void __near__ __fastcall__ drawColumnTransparent(char textureIndex, char texYStart, char texYEnd, char texI, signed char curX, short curY, unsigned short h)
+; ---------------------------------------------------------------
+; param order is texIndex, texI, curX, curY (2), h (in AX)
+
+;  if (h > 0)
+;  {
+;     // yStep = (TEXHEIGHT / 32) * curY / (SCREENHEIGHT / 8);
+;     yStep = curY / 8;
+;     texY = yStep / 2;
+;
+;     overage = h - HALFSCREENHEIGHT;
+;     if (overage > 0)
+;     {
+;        h -= overage;
+;        texY += overage * yStep;
+;     }
+;
+;     // draw a column
+;     curX += HALFSCREENWIDTH;
+
+.proc _drawColumnTransparent: near
+
+; clamp h to 255
+cpx #0
+beq hlessthan256
+lda #255
+hlessthan256:
+
+; if (h > 0)
+cmp #0
+bne hnotzero
+ldy #7
+jmp addysp
+hnotzero:
+
+sta height
+
+loadaxfromstack 1
+; divide by 8 for yStep
+sta stepLo+1
+txa
+lsr
+ror stepLo+1
+lsr
+ror stepLo+1
+lsr
+ror stepLo+1
+sta stepHi+1
+; and divide by 2 for texY
+ldx stepLo+1
+stx texY
+lsr
+ror texY
+sta texY+1
+
+lda height
+sec
+sbc #32
+bmi noadjust
+beq noadjust
+ldx #32
+stx height
+; multiply yStep by overage
+ldx #0
+jsr log2
+sta tmp
+stx tmp+1
+lda stepLo+1
+ldx stepHi+1
+jsr log2
+clc
+adc tmp
+tay
+txa
+adc tmp+1
+clc
+adc #8
+tax
+tya
+jsr exp2
+clc
+adc texY
+sta texY
+tay
+txa
+adc texY+1
+sta texY+1
+tax
+tya
+
+noadjust:
+
+ldy #2
+lda (sp),y
+clc
+adc #16
+sta curX
+
+; modify mask code
+
+and #$03
+tax
+lda tmasktab,x
+sta tmask+1
+eor #$ff
+sta smask+1
+
+iny
+lda (sp),y
+sta texI
+
+ldy #6
+lda (sp),y
+sta texIndex
+
+;     screenAddr = 0x1800 + SCREENHEIGHT*(curX/4) + (HALFSCREENHEIGHT - h);
+
+lda curX
+and #$1c
+asl
+asl
+asl
+rol
+sta scrbuf+1
+lda #$18
+adc #0 ; plus carry
+sta scrbuf+2
+sta scrbuf2+2
+
+lda #32 ; HALFSCREENHEIGHT
+sec
+sbc height
+clc
+adc scrbuf+1
+sta scrbuf+1
+sta scrbuf2+1
+
+;     texAddr = $1A00 + 128*textureIndex + TEXHEIGHT*(texI/4);
+
+lda texI
+and #$fc
+asl
+asl
+asl
+sta texAddr+1
+
+lda texIndex
+and #1
+lsr
+ror
+adc texAddr+1
+sta texAddr+1
+lda #0
+adc #$1A ; start of texture memory
+sta texAddr+2
+
+lda texIndex
+lsr
+clc
+adc texAddr+2
+sta texAddr+2
+
+; add texture offset
+lda texAddr+1
+clc
+ldy #5
+adc (sp),y
+sta texAddr+1
+
+; poke texture upper limit
+ldy #4
+lda (sp),y
+clc
+adc texAddr+1
+sta texLimit+1
+
+; add texHi
+
+lda texY+1
+clc
+adc texAddr+1
+sta texAddr+1
+lda texAddr+2
+adc #0
+sta texAddr+2
+
+; see if it's all off screen
+lda texAddr+1
+cmp texLimit+1
+bmi :+
+jmp end
+:
+
+; just need to update the shifts now
+
+lda curX
+and #3
+sta curX
+lda texI
+and #3
+clc
+adc #3
+sec
+sbc curX
+asl
+asl
+adc #3
+tay
+ldx #3
+keepcopying:
+lda shiftcode,y
+sta shiftcodegoeshere,x
+dey
+dex
+bpl keepcopying
+
+; number of pixels to draw in x
+lda height
+asl
+tax
+dex
+
+; texLo is kept in y
+ldy texY
+
+; cycles 4+2+2+2+2+2+4+5+2+2+2+2+2+2+4+2+4+3
+; approx 48 cycles per pixel
+; so that's on average 32x32x48 per frame
+loop:
+texAddr:
+lda $1A00 ; self modified texture address
+; shift into position for the screen
+; modify these as required (asl/lsr/nop)
+shiftcodegoeshere:
+lsr
+lsr
+lsr
+lsr
+tmask:
+and #0 ; self modified immediate operand
+beq dontWrite
+sta tmp
+smask:
+lda #0 ; self modified immediate operand
+scrbuf:
+and $1800,x
+ora tmp
+scrbuf2:
+sta $1800,x ; self modified screen addr
+dontWrite:
+dex
+bmi end
+tya
+clc
+stepLo:
+adc #0 ; self modified immediate operand
+tay
+lda texAddr+1
+stepHi:
+adc #0 ; self modified immediate operand
+bcs end ; off the top of the texture
+texLimit:
+cmp #0 ; self modified immediate operand
+bpl end ; off the end of the texture piece
+sta texAddr+1
+jmp loop
+
+
+end:
+ldy #7
 jmp addysp
 
 .endproc

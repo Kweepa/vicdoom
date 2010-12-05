@@ -5,8 +5,8 @@
 // todo
 // X 1. move angle to sin/cos to logsin/logcos to a separate function and just use those values
 // X 2. fix push_out code
-// 3. add transparent objects
-// 4. finish map and use that instead of the test map
+// X 3. add transparent objects
+// X 4. finish map and use that instead of the test map
 // 5. enemy AI (update only visible enemies, plus enemies in the current sector)
 // 5.5. per sector objects (link list)
 // 6. add keys and doors
@@ -167,26 +167,30 @@ typedef struct objtypeT
 {
   char texture;
   char solid;
-  char width;
+  char widthScale;
+  char startY; // from the bottom of the texture
+  char height;
+  char startX;
+  char width; // either 8 or 16
   char dummy;
 } objtype;
 
 objtype objtypes[16] =
 {
   { 6, 0, 3 }, // player spawn
-  { 6, 0, 3 }, // green armor
+  { 9, 0, 3, 16, 16, 0, 16 }, // green armor
   { 6, 0, 3 }, // backpack
-  { 6, 0, 3 }, // barrel
-  { 6, 0, 3 }, // blue keycard
+  { 11, 0, 8, 16, 16, 0, 16 }, // barrel
+  { 10, 0, 8, 16, 8, 8, 8 }, // blue keycard
   { 6, 1, 3 }, // caco
-  { 6, 0, 3 }, // medikit
+  { 10, 0, 8, 24, 8, 0, 8 }, // medikit
   { 5, 1, 5 }, // imp
   { 7, 1, 3 }, // demon
-  { 6, 0, 3 }, // red keycard
-  { 6, 0, 3 }, // bullets
+  { 10, 0, 8, 24, 8, 8, 8 }, // red keycard
+  { 10, 0, 5, 8, 8, 0, 16 }, // bullets
   { 5, 1, 5 }, // sargeant
   { 8, 1, 5 }, // pillar
-  { 6, 0, 3 }, // green keycard
+  { 10, 0, 8, 16, 24, 0, 8 }, // green keycard
 };
 
 typedef struct objectT
@@ -216,6 +220,7 @@ object *camera = &player;
 unsigned char frame = 0;
 
 void __fastcall__ drawColumn(char textureIndex, char texI, signed char curX, short curY, unsigned short h);
+void __fastcall__ drawColumnTransparent(char textureIndex, char texYStart, char texYEnd, char texI, signed char curX, short curY, unsigned short h);
 
 char __fastcall__ getEdgeTexture(char sectorIndex, char edgeIndex);
 char __fastcall__ getEdgeLen(char sectorIndex, char edgeIndex);
@@ -301,7 +306,7 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
   //int h = (SCREENHEIGHT/16) * 512 / (vy/16);
   unsigned int h = div88(128, vy);
   char objectType = getObjectType(o);
-  unsigned int w = h/objtypes[objectType].width;
+  unsigned int w = h/objtypes[objectType].widthScale;
   char textureIndex = objtypes[objectType].texture;
   int sx;
   int leftX;
@@ -344,7 +349,7 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
   //int h = (SCREENHEIGHT/16) * 512 / (vy/16);
   unsigned int h = div88(128, vy);
   char objectType = getObjectType(o);
-  unsigned int w = h/objtypes[objectType].width;
+  unsigned int w = h/objtypes[objectType].widthScale;
   char textureIndex = objtypes[objectType].texture;
   int sx;
   int leftX;
@@ -367,12 +372,18 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
      {
         for (curX = startX; curX < endX; ++curX)
         {
+           char startY = objtypes[objectType].startY;
+           char height = objtypes[objectType].height;
            if (testFilledWithY(curX, vy) > 0)
            {
               // compensate for pixel samples being mid column
               //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
               texI = getObjectTexIndex(w, curX - leftX);
-              drawColumn(textureIndex, texI, curX, vy, h);
+              if (objtypes[objectType].width != 16)
+              {
+                 texI = objtypes[objectType].startX + (texI>>1);
+              }
+              drawColumnTransparent(textureIndex, startY, height, texI, curX, vy, h);
            }
         }
      }
@@ -568,8 +579,6 @@ void drawSpans()
      queueTransparentObjects(x_L, x_R);
   }
 
-  gotoxy(0,2);
-  cprintf("Num transparent %d. ", numTransparent);  
   drawTransparentObjects();
 }
 
