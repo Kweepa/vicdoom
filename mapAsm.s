@@ -207,6 +207,7 @@ vertexCounter = $61
 vertexCounterPP = $62
 x_L = $63
 x_R = $65
+outsideSector = $67
 ; see logMathAsm (keep in sync)
 xToTransform = $68
 yToTransform = $6A
@@ -317,6 +318,7 @@ rts
 
 ; x_R in A
 ; x_L on stack
+; we're outside the sector flag further down the stack
 
 ; save and sign extend L & R
 ldx #0
@@ -335,6 +337,10 @@ bpl signExtendL
 dex
 signExtendL:
 stx x_L+1
+
+ldy #1
+lda (sp),y
+sta outsideSector
 
 ldx #0
 stx vertexCounter
@@ -386,6 +392,10 @@ lda x_L+1
 sbc xfvertScreenXhi, x
 bpl thisVert
 
+; the second part of the test should only be done if the camera is inside the sector
+lda outsideSector
+bne notThisVert
+
 lda xfvertScreenXlo, x
 bne notThisVert
 lda xfvertScreenXhi, x
@@ -403,7 +413,7 @@ bpl notThisVert
 thisVert:
 
 lda vertexCounter
-ldy #1
+ldy #2
 jmp addysp
 
 notThisVert:
@@ -413,7 +423,7 @@ cpx vertexCount
 bne keepLooking
 
 lda #255
-ldy #1
+ldy #2
 jmp addysp
 
 .endproc

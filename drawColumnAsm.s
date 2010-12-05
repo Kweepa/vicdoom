@@ -13,6 +13,8 @@
 	.export     _copyToPrimaryBuffer
 	.export     _clearFilled
 	.export     _testFilled
+	.export     _testFilledWithY
+	.export     _setFilled
 
 .macro loadaxfromstack offs
 	ldy #offs
@@ -35,7 +37,9 @@ height = $49
 tmasktab:
 .byte	$C0, $30, $0C, $03
 
-filled:
+filled_hi:
+.res 32, 0
+filled_lo:
 .res 32, 0
 
 shiftcode:
@@ -82,7 +86,8 @@ nop
 lda #0
 ldx #31
 keepclearing:
-sta filled, x
+sta filled_hi, x
+sta filled_lo, x
 dex
 bpl keepclearing
 rts
@@ -94,12 +99,52 @@ rts
 clc
 adc #16
 tax
-lda filled, x
-tay
-lda #1
-sta filled, x
-tya
+lda filled_hi, x
 rts
+
+.endproc
+
+.proc _setFilled : near
+
+; AX holds y
+; TOS holds x
+
+sta tmp
+ldy #0
+lda (sp),y
+clc
+adc #16
+tay
+lda tmp
+sta filled_lo,y
+txa
+sta filled_hi,y
+
+ldy #1
+jmp addysp
+
+.endproc
+
+.proc _testFilledWithY: near
+
+; AX holds y
+; TOS holds x
+
+sta tmp
+stx tmp+1
+ldy #0
+lda (sp),y
+clc
+adc #16
+tay
+sec
+lda filled_lo,y
+sbc tmp
+lda filled_hi,y
+sbc tmp+1
+
+ldy #1
+jmp addysp
 
 .endproc
 

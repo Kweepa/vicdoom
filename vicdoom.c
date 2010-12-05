@@ -54,13 +54,15 @@ void __fastcall__ setCameraAngle(unsigned char a);
 void __fastcall__ setCameraX(int x);
 void __fastcall__ setCameraY(int y);
 void __fastcall__ transformSectorToScreenSpace(char sectorIndex);
-signed char __fastcall__ findFirstEdgeInSpan(signed char x_L, signed char x_R);
+signed char __fastcall__ findFirstEdgeInSpan(char cameraOutsideSector, signed char x_L, signed char x_R);
 int __fastcall__ transformxy_withParams(int x, int y);
 int __fastcall__ transformy(void);
 int __fastcall__ leftShift4ThenDiv(int p, unsigned int q);
-unsigned char __fastcall__ getObjectTexIndex(unsigned int halfWidth, unsigned int x);
+char __fastcall__ getObjectTexIndex(unsigned int halfWidth, unsigned int x);
 void __fastcall__ clearFilled(void);
-unsigned char __fastcall__ testFilled(signed char col);
+char __fastcall__ testFilled(signed char col);
+signed char __fastcall__ testFilledWithY(signed char col, unsigned int y);
+void __fastcall__ setFilled(signed char col, unsigned int y);
 
 unsigned char *secNumVerts;
 int __fastcall__ getScreenX(unsigned char i);
@@ -171,20 +173,20 @@ typedef struct objtypeT
 
 objtype objtypes[16] =
 {
-  { 6, 1, 3 }, // player spawn
-  { 6, 1, 3 }, // green armor
-  { 6, 1, 3 }, // backpack
-  { 6, 1, 3 }, // barrel
-  { 6, 1, 3 }, // blue keycard
+  { 6, 0, 3 }, // player spawn
+  { 6, 0, 3 }, // green armor
+  { 6, 0, 3 }, // backpack
+  { 6, 0, 3 }, // barrel
+  { 6, 0, 3 }, // blue keycard
   { 6, 1, 3 }, // caco
-  { 6, 1, 3 }, // medikit
+  { 6, 0, 3 }, // medikit
   { 5, 1, 5 }, // imp
   { 7, 1, 3 }, // demon
-  { 6, 1, 3 }, // red keycard
-  { 6, 1, 3 }, // bullets
+  { 6, 0, 3 }, // red keycard
+  { 6, 0, 3 }, // bullets
   { 5, 1, 5 }, // sargeant
   { 8, 1, 5 }, // pillar
-  { 6, 1, 3 }, // green keycard
+  { 6, 0, 3 }, // green keycard
 };
 
 typedef struct objectT
@@ -281,6 +283,8 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
 	           texI = t * edgeLen / 64; // 256/PIXELSPERMETER
 	       }
            texI &= 15; // 16 texel wide texture
+           
+           setFilled(curX, curY);
 
            // can look up the yStep (and starting texY) too
            // each is a 512 byte table - hooray for wasting memory
@@ -322,10 +326,52 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
         {
            if (testFilled(curX) == 0)
            {
+              setFilled(curX, vy);
               // compensate for pixel samples being mid column
               //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
               texI = getObjectTexIndex(w, curX - leftX);
               if ((frame & 4) != 0) texI = (TEXWIDTH - 1) - texI;
+              drawColumn(textureIndex, texI, curX, vy, h);
+           }
+        }
+     }
+  }
+}
+
+void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char x_R)
+{
+  // perspective transform (see elsewhere for optimization)
+  //int h = (SCREENHEIGHT/16) * 512 / (vy/16);
+  unsigned int h = div88(128, vy);
+  char objectType = getObjectType(o);
+  unsigned int w = h/objtypes[objectType].width;
+  char textureIndex = objtypes[objectType].texture;
+  int sx;
+  int leftX;
+  int rightX;
+  int startX;
+  int endX;
+  signed char curX;
+  char texI;
+  if (w > 0)
+  {
+     //sx = vx / (vy / HALFSCREENWIDTH);
+     sx = leftShift4ThenDiv(vx, vy);
+     leftX = sx - w;
+     rightX = sx + w;
+     startX = leftX;
+     endX = rightX;
+     if (startX < x_L) startX = x_L;
+     if (endX > x_R) endX = x_R;
+     if (startX < x_R && endX > x_L)
+     {
+        for (curX = startX; curX < endX; ++curX)
+        {
+           if (testFilledWithY(curX, vy) > 0)
+           {
+              // compensate for pixel samples being mid column
+              //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
+              texI = getObjectTexIndex(w, curX - leftX);
               drawColumn(textureIndex, texI, curX, vy, h);
            }
         }
@@ -339,20 +385,24 @@ typedef struct
   char dummy;
   int x;
   unsigned int y;
-  int dummy2;
+  signed char x_L;
+  signed char x_R;
 }
 objxy;
 
-objxy unsorted[12];
-char sorted[12];
+objxy unsorted[8];
+char sorted[8];
+char numSorted;
+char numTransparent;
+objxy transparent[12];
 
 void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 {
+  char numObj = getNumObjects();
   int vx, vy;
   objxy *objInst;
   char o, i, j;
-  char count = 0;
-  char numObj = getNumObjects();
+  numSorted = 0;
   
   // loop through the objects
   for (o = 0; o < numObj; ++o)
@@ -366,24 +416,24 @@ void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
         
         if (vy > 256)
         {
-           sorted[count] = count;
+           sorted[numSorted] = numSorted;
 
-           objInst = &unsorted[count];
+           objInst = &unsorted[numSorted];
            objInst->x = vx;
            objInst->y = vy;
            objInst->o = o;
 
-           ++count;
+           ++numSorted;
         }
      }
   }
 
-  if (count > 0)
+  if (numSorted > 0)
   {
 	  // sort
-	  for (i = 0; i < count - 1; ++i)
+	  for (i = 0; i < numSorted - 1; ++i)
 	  {
-		 for (j = i + 1; j < count; ++j)
+		 for (j = i + 1; j < numSorted; ++j)
 		 {
 			if (unsorted[sorted[i]].y > unsorted[sorted[j]].y)
 			{
@@ -395,12 +445,49 @@ void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 	  }	  
 
 	  // draw
-	  for (i = 0; i < count; ++i)
+	  for (i = 0; i < numSorted; ++i)
 	  {
+	     char type;
 		 objInst = &unsorted[sorted[i]];
-		 drawObjectInSector(objInst->o, objInst->x, objInst->y, x_L, x_R);
+		 type = getObjectType(objInst->o);
+		 if (objtypes[type].solid)
+		 {
+		   drawObjectInSector(objInst->o, objInst->x, objInst->y, x_L, x_R);
+		 }
 	  }
 	}
+}
+
+void queueTransparentObjects(signed char x_L, signed char x_R)
+{
+   char i, type;
+   objxy *objInst, *transp;
+   for (i = 0; i < numSorted; ++i)
+   {
+        objInst = &unsorted[sorted[i]];
+		type = getObjectType(objInst->o);
+		if (!objtypes[type].solid)
+        {
+           transp = &transparent[numTransparent];
+           transp->o = objInst->o;
+           transp->x = objInst->x;
+           transp->y = objInst->y;
+           transp->x_L = x_L;
+           transp->x_R = x_R;
+           ++numTransparent;
+        }
+    }
+}
+
+void drawTransparentObjects()
+{
+   int i;
+   objxy *objInst;
+   for (i = numTransparent-1; i >= 0; --i)
+   {
+		objInst = &transparent[i];
+		drawTransparentObject(objInst->o, objInst->x, objInst->y, objInst->x_L, objInst->x_R);
+   }
 }
 
 char __fastcall__ getOtherSector(char sectorIndex, char edgeIndex);
@@ -409,6 +496,7 @@ char __fastcall__ getNextEdge(char sectorIndex, char edgeIndex);
 void drawSpans()
 {
   signed char stackTop = 0;
+  char cameraOutsideSector = 0;
   char sectorIndex;
   signed char x_L, x_R;
   signed char firstEdge;
@@ -419,6 +507,7 @@ void drawSpans()
   signed char thatSector;
 
   clearFilled();
+  numTransparent = 0;
 
   spanStackSec[0] = camera->sector;
   spanStackL[0] = -HALFSCREENWIDTH;
@@ -439,7 +528,9 @@ void drawSpans()
      transformSectorToScreenSpace(sectorIndex);
      //POKE(0x900f, 13);
 
-     firstEdge = findFirstEdgeInSpan(x_L, x_R);
+     firstEdge = findFirstEdgeInSpan(cameraOutsideSector, x_L, x_R);
+     // any non-zero value means the camera is outside
+     cameraOutsideSector++;
      // didn't find a first edge - must be behind
      if (firstEdge == -1)
      {
@@ -473,7 +564,13 @@ void drawSpans()
         curX = nextX;
         curEdge = nextEdge;
      }
+     
+     queueTransparentObjects(x_L, x_R);
   }
+
+  gotoxy(0,2);
+  cprintf("Num transparent %d. ", numTransparent);  
+  drawTransparentObjects();
 }
 
 unsigned int sqrt(unsigned long x)
@@ -732,14 +829,14 @@ int main()
 		player.x -= 8*get_sin(player.angle);
 		player.y -= 8*get_cos(player.angle);
 	  }
-#if 1
-      POKE(0x900f, 11);
+
+      //POKE(0x900f, 11);
 	  if (push_out(&player))
 	  {
 		push_out(&player);
 	  }
-      POKE(0x900f, 13);
-#endif      
+      //POKE(0x900f, 13);
+
       setCameraX(player.x);
       setCameraY(player.y);
 
