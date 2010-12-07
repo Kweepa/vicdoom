@@ -1,0 +1,246 @@
+
+=============================================================================
+
+    Doom PC speaker file format description
+
+       by Simon Howard (fraggle) and Andrew Apted (ajapted)
+
+    Version 1.0
+
+    27 February, 2007
+
+=============================================================================
+
+----------------
+COPYRIGHT NOTICE
+----------------
+
+Copyright (C) 2007 Simon Howard.  Verbatim copying is allowed provided
+this notice is kept attached.
+
+---------
+CONTENTS:
+---------
+
+ [1] Introduction
+ [2] File format
+    [2-1] Lump naming
+    [2-2] Header
+    [2-3] Data format
+    [2-4] Frequency table
+ [3] Method of research
+
+
+[1]: Introduction
+=================
+
+When Doom was released in 1993, digital sound cards were not as ubiquitous 
+as they have now become.  As a result, a large percentage of PCs did not
+have the ability to play digital audio.  
+
+To work around this problem, when Id wrote Doom they included support for
+two different sound formats.  The main one is the digital sound format,
+which supports 8-bit mono sound effects; this is used for the sound blaster
+and all other sound cards supported by Doom.  The second is the PC speaker 
+format, which uses the speaker built in to every PC to make basic beeping
+sound effects.
+
+PC speaker sound effects can be enabled by setting snd_sfxdevice to 1
+in the Doom configuration file (usually named default.cfg).
+
+While the basic structure of PC speaker sound effects has been known 
+since the early days of Doom (see the Unofficial Doom Specs), its 
+complete format has not been properly documented before now.  The 
+reasons for this are mainly those of indifference: the ubiquity of 
+digital sound cards means that there is little interest in playing PC 
+speaker sound effects.
+
+Determining the format of PC speaker sound effects has been made more 
+difficult as the code to play them is not present in the released Doom
+source code: either it depended on the proprietary DMX sound library or
+was simply removed with the other sound code before the source release.
+
+
+[2]: File format
+================
+
+[2-1]: Lump naming
+==================
+
+The PC speaker sound data is stored in the main IWAD file, along with other
+resources used by Doom.  The IWAD contains a lump resource for each sound
+effect, each of which has a name up to 8 characters long.  The first 
+two characters of each PC speaker effect are "DP"; the remaining six 
+characters identify the sound.  This is the same format as is used for
+digital sound effects, which use the prefix "DS".  The six character
+names match those used for the digital effects.
+
+As an example, the digital sound effect for firing the pistol is named 
+"DSPISTOL"; the corresponding PC speaker sound effect is "DPPISTOL".
+
+
+[2-2]: Header
+=============
+
+PC speaker effects have a four byte header.  The first two bytes are
+always zero.  The third and fourth bytes are a 16-bit little endian value 
+specifying the length of the sound effect in samples.  The sample rate
+is 140 samples per second; for example, a sound effect 70 samples long
+will take half a second to play.
+
+
+[2-3]: Data format
+==================
+
+Immediately following the header is the sound sample data; the number of
+samples is specified in the header.  Each sample is a single byte.
+
+The sample values map to frequencies: higher sample values correspond to
+higher frequencies.  The scale used is a musical one: the samples 
+correspond to frequencies of notes in the western musical scale.  As
+such, the frequency of the notes increases exponentially.  There are
+24 values per octave, whereas the western musical scale has 12 semitones 
+per octave.  The sample values are in fact a superset of the western 
+musical scale, with an extra value inserted between each semitone.
+
+As a consequence of the above, adding 24 to the value of a sample will
+double the frequency.  The values start at 175Hz, which is a low "F".
+
+A table of the frequencies is given in section 2-4.
+
+A value of zero indicates silence.
+
+
+[2-4]: Frequency Table
+======================
+
+This table specifies the frequency for values in PC speaker sound effects.
+The value is given along with the corresponding output frequency and the
+precise counter value which should be programmed into the 8253 timer chip
+found in PCs to give this frequency.  
+
+This table is only given for the range 0..95, which is the range of values
+used by the Doom PC speaker sound effects.  It is not known if higher
+values are supported.
+
+In some cases, the frequency is off by one or two hz, this is due to
+loss of precision in calculations, and is an inherent limitation of 
+the 8253 chip.
+
+Value   Counter    Frequency(Hz)   Note
+-------------------------------------------------------------
+0       -          -               Silence
+1       6818       175.00          F-3
+2       6628       180.02
+3       6449       185.01          F#3
+4       6279       190.02
+5       6087       196.02          G-3
+6       5906       202.02
+7       5736       208.01          G#3
+8       5575       214.02
+9       5423       220.02          A-3
+10      5279       226.02
+11      5120       233.04          A#3
+12      4971       240.02
+13      4830       247.03          B-3
+14      4697       254.03
+15      4554       262.00          C-4
+16      4435       269.03
+17      4307       277.03          C#4
+18      4186       285.04
+19      4058       294.03          D-4
+20      3950       302.07
+21      3836       311.04          D#4
+22      3728       320.05
+23      3615       330.06          E-4
+24      3519       339.06
+25      3418       349.08          F-4
+26      3323       359.06
+27      3224       370.09          F#4
+28      3131       381.08
+29      3043       392.10          G-4
+30      2960       403.10
+31      2875       415.01          G#4
+32      2794       427.05
+33      2711       440.12          A-4
+34      2633       453.16
+35      2560       466.08          A#4
+36      2485       480.15
+37      2415       494.07          B-4
+38      2348       508.16
+39      2281       523.09          C-5
+40      2213       539.16
+41      2153       554.19          C#5
+42      2089       571.17
+43      2032       587.19          D-5
+44      1975       604.14
+45      1918       622.09          D#5
+46      1864       640.11
+47      1810       659.21          E-5
+48      1757       679.10
+49      1709       698.17          F-5
+50      1659       719.21
+51      1612       740.18          F#5
+52      1565       762.41
+53      1521       784.47          G-5
+54      1478       807.29
+55      1435       831.48          G#5
+56      1395       855.32
+57      1355       880.57          A-5
+58      1316       906.67
+59      1280       932.17          A#5
+60      1242       960.69
+61      1207       988.55          B-5
+62      1173       1017.20
+63      1140       1046.64         C-6
+64      1107       1077.85
+65      1075       1109.93         C#6
+66      1045       1141.79
+67      1015       1175.54         D-6
+68      986        1210.12
+69      959        1244.19         D#6
+70      931        1281.61
+71      905        1318.43         E-6
+72      879        1357.42
+73      854        1397.16         F-6
+74      829        1439.30
+75      806        1480.37         F#6
+76      783        1523.85
+77      760        1569.97         G-6
+78      739        1614.58
+79      718        1661.81         G#6
+80      697        1711.87
+81      677        1762.45         A-6
+82      658        1813.34
+83      640        1864.34         A#6
+84      621        1921.38
+85      604        1975.46         B-6
+86      586        2036.14
+87      570        2093.29         C-7
+88      553        2157.64
+89      538        2217.80         C#7
+90      522        2285.78
+91      507        2353.41         D-7
+92      493        2420.24
+93      479        2490.98         D#7
+94      465        2565.97
+95      452        2639.77         E-7
+
+
+[3]: Method of research
+=======================
+
+Although the basic structure of the file format is relatively trivial to
+reverse engineer, the mapping of sample values to actual frequencies has 
+not been known until now.
+
+The frequencies were found by running DOS Doom inside a modified version
+of DOSBox.  This version of DOSBox was instrumented to output the timer
+values written to the emulated 8253 timer chip (PCSPEAKER_SetCounter in
+dosbox/src/hardware/pcspeaker.cpp).  Doom was then run using a WAD
+containing a replacement DPPISTOL lump, crafted to cycle through all 
+of the sample values from 1..95.  The output from DOSBox then gave the
+timer countdown value for each sample.  These were put into a spreadsheet
+and used to calculate the corresponding frequency.
+
+

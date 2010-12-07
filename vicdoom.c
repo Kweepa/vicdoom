@@ -75,6 +75,23 @@ int __fastcall__ getObjectX(char o);
 int __fastcall__ getObjectY(char o);
 char __fastcall__ getObjectType(char o);
 
+#define SOUND_CLAW 0
+#define SOUND_DMPAIN 1
+#define SOUND_DOROPN 2
+#define SOUND_ITEMUP 3
+#define SOUND_OOF 4
+#define SOUND_PISTOL 5
+#define SOUND_PLPAIN 6
+#define SOUND_POPAIN 7
+#define SOUND_SGCOCK 8
+#define SOUND_SGTDTH 9
+#define SOUND_SHOTGN 10
+void __fastcall__ playSoundInitialize(void);
+void __fastcall__ playSound(char soundIndex);
+
+char dppistol[] = { 27, 29, 26, 48, 28, 25, 25, 30, 25, 38, 24, 27, 22, 30, 27, 18, 20, 13, 20, 11, 15, 11, 7, 13, 7, 9, 8, 6 };
+char dpclaw[] = { 59, 36, 53, 36, 52, 37, 52, 38, 52, 39, 52, 39, 52, 39, 52, 38, 53, 35, 54, 35, 54, 34, 54, 33, 36, 33, 29, 32, 22, 31, 14, 30, 7, 29, 0, 26, 0, 25, 0, 21, 0, 18, 0, 16, 0, 15, 0, 10, 0, 8, 0, 7, 0, 6, 0, 5, 0, 5, 0, 5 };
+
 signed char __fastcall__ get_sin(unsigned char angle)
 {
   return sinTab[angle & 63];
@@ -206,6 +223,12 @@ typedef struct objectT
 object player = { -17*256, -11*256, 8, 0, 0 };
 object *camera = &player;
 
+#define TYPE_DOOR 1
+#define TYPE_OBJECT 2
+char typeAtCenterOfView;
+char itemAtCenterOfView;
+char doorOpenAmount[128];
+
 #define SCREENWIDTH 32
 #define HALFSCREENWIDTH (SCREENWIDTH/2)
 #define SCREENHEIGHT 64
@@ -222,6 +245,7 @@ unsigned char frame = 0;
 void __fastcall__ drawColumn(char textureIndex, char texI, signed char curX, short curY, unsigned short h);
 void __fastcall__ drawColumnTransparent(char textureIndex, char texYStart, char texYEnd, char texI, signed char curX, short curY, unsigned short h);
 
+char __fastcall__ getEdgeIndex(char sectorIndex, char edgeIndex);
 char __fastcall__ getEdgeTexture(char sectorIndex, char edgeIndex);
 char __fastcall__ getEdgeLen(char sectorIndex, char edgeIndex);
 
@@ -256,11 +280,10 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
   x4 = (256*x_L + 128)/HALFSCREENWIDTH;
   for (curX = x_L; curX < x_R; ++curX)
   {
+     //x4 = (256*curX + 128)/HALFSCREENWIDTH;
      x4 += 16;
      if (testFilled(curX) == 0)
      {
-        //x4 = (256*curX + 128)/HALFSCREENWIDTH;
-
         // denom = dx - x4 * dy / 256;
         denom = muladd88(-x4, dy, dx);
         if (denom > 0)
@@ -291,6 +314,13 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
            
            setFilled(curX, curY);
 
+           if (curX == 0 && textureIndex == 4)
+           {
+			 char edgeGlobalIndex = getEdgeIndex(sectorIndex, curEdgeIndex);
+             typeAtCenterOfView = TYPE_DOOR;
+             itemAtCenterOfView = edgeGlobalIndex;
+           }
+
            // can look up the yStep (and starting texY) too
            // each is a 512 byte table - hooray for wasting memory
            // on the other hand, since I've already decided to waste 2k on a multiply table, I might as well use another 2k for lookups where appropriate
@@ -298,6 +328,77 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
         }
      }
   }
+}
+
+signed char drawDoor(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
+{
+  char edgeGlobalIndex = getEdgeIndex(sectorIndex, curEdgeIndex);
+  char doorOpenAmount = doorOpenAmount[edgeGlobalIndex];
+  char textureIndex, edgeLen;
+  int x1, y1, dx, dy, x4, numer, denom;
+  signed char curX;
+  unsigned int t, texI, curY, h;
+  
+  gotoxy(0,1);
+  cprintf("Door l %d r %d oa %d. ", x_L, x_R, doorOpenAmount);
+
+  if (doorOpenAmount == 0)
+  {
+    drawWall(sectorIndex, curEdgeIndex, nextEdgeIndex, x_L, x_R);
+    return x_R;
+  }
+  else if (doorOpenAmount == 255)
+  {
+    return x_L;
+  }
+  textureIndex = getEdgeTexture(sectorIndex, curEdgeIndex);
+  edgeLen = getEdgeLen(sectorIndex, curEdgeIndex);
+
+  // intersect the view direction and the edge
+  // http://local.wasp.uwa.edu.au/~pbourke/geometry/lineline2d/
+  x1 = getTransformedX(curEdgeIndex);
+  y1 = getTransformedY(curEdgeIndex);
+  dx = getTransformedX(nextEdgeIndex) - x1;
+  dy = getTransformedY(nextEdgeIndex) - y1;
+
+  // add 128 to correct for sampling in the center of the column
+  x4 = (256*x_L + 128)/HALFSCREENWIDTH;
+  for (curX = x_L; curX < x_R; ++curX)
+  {
+     x4 += 16;
+     if (testFilled(curX) == 0)
+     {
+        denom = muladd88(-x4, dy, dx);
+        if (denom > 0)
+        {
+           numer = muladd88(x4, y1, -x1);
+           t = div88(numer, denom);
+           if (t > doorOpenAmount)
+           {
+              return curX;
+           }
+           t = 255 - (doorOpenAmount - t);
+           curY = muladd88(t, dy, y1);
+           h = div88(128, curY);
+           // door or techwall, so fit to wall
+  		   texI = t >> 4;
+           
+           setFilled(curX, curY);
+
+           if (curX == 0)
+           {
+             typeAtCenterOfView = TYPE_DOOR;
+             itemAtCenterOfView = edgeGlobalIndex;
+           }
+
+           // can look up the yStep (and starting texY) too
+           // each is a 512 byte table - hooray for wasting memory
+           // on the other hand, since I've already decided to waste 2k on a multiply table, I might as well use another 2k for lookups where appropriate
+           drawColumn(textureIndex, texI, curX, curY, h);
+        }
+     }
+  }
+  return x_R;
 }
 
 void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R)
@@ -311,6 +412,7 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
   int sx;
   int leftX;
   int rightX;
+
   int startX;
   int endX;
   signed char curX;
@@ -332,6 +434,11 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
            if (testFilled(curX) == 0)
            {
               setFilled(curX, vy);
+              if (curX == 0)
+              {
+                typeAtCenterOfView = TYPE_OBJECT;
+                itemAtCenterOfView = o;
+              }
               // compensate for pixel samples being mid column
               //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
               texI = getObjectTexIndex(w, curX - leftX);
@@ -376,6 +483,11 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
            char height = objtypes[objectType].height;
            if (testFilledWithY(curX, vy) > 0)
            {
+              if (curX == 0)
+              {
+                typeAtCenterOfView = TYPE_OBJECT;
+                itemAtCenterOfView = o;
+              }
               // compensate for pixel samples being mid column
               //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
               texI = getObjectTexIndex(w, curX - leftX);
@@ -519,6 +631,7 @@ void drawSpans()
 
   clearFilled();
   numTransparent = 0;
+  typeAtCenterOfView = 0;
 
   spanStackSec[0] = camera->sector;
   spanStackL[0] = -HALFSCREENWIDTH;
@@ -562,11 +675,18 @@ void drawSpans()
         thatSector = getOtherSector(sectorIndex, curEdge); //edges[sec->edges[curEdge]].sector;
         if (thatSector != -1)
         {
-           // come back to this
-           ++stackTop;
-           spanStackSec[stackTop] = thatSector;
-           spanStackL[stackTop] = curX;
-           spanStackR[stackTop] = nextX;
+           if (getEdgeTexture(sectorIndex, curEdge) == 4)
+           {
+              curX = drawDoor(sectorIndex, curEdge, nextEdge, curX, nextX);
+           }
+           if (curX < nextX)
+           {
+			   // come back to this
+			   ++stackTop;
+			   spanStackSec[stackTop] = thatSector;
+			   spanStackL[stackTop] = curX;
+			   spanStackR[stackTop] = nextX;
+		   }           
         }
         else
         {
@@ -714,6 +834,8 @@ char health = 100;
 char shotgunStage = 0;
 char changeLookTime = 7;
 char lookDir = 0;
+
+char soundToPlay = 0;
   
 int main()
 {
@@ -765,6 +887,8 @@ int main()
   cprintf("$%%");
   gotoxy(10,22);
   cprintf("*+");
+  
+  playSoundInitialize();
 
   while (1)
   {
@@ -827,6 +951,20 @@ int main()
 		  cprintf("%02d", shells);
 		  POKE(0x900F, 8+1);
 		  shotgunStage = 7;
+		  
+		  playSound(soundToPlay);
+		  soundToPlay++;
+		  soundToPlay %= 12;
+#if 0		  
+		  POKE(0x900E,15);
+		  for (i = 0; i < dpclaw[0]; ++i)
+		  {
+		    for (x = 0; x < 64; ++x);
+		    POKE(0x900C, 160 + dpclaw[1+i]);		    
+		    POKE(0x900D, 160 + dpclaw[1+i]);		    
+		  }
+		  POKE(0x900E,0);
+#endif
 		}
 	  }
 
@@ -838,6 +976,17 @@ int main()
 		player.x -= 8*get_sin(player.angle);
 		player.y -= 8*get_cos(player.angle);
 	  }
+	  if ((keys & 16) == 0)
+	  {
+	      gotoxy(0,16);
+	      cprintf("hi %d. ", typeAtCenterOfView);
+	    // tried to open a door (pressed K)
+	    if (typeAtCenterOfView == TYPE_DOOR)
+	    {
+          doorOpenAmount[itemAtCenterOfView] = 255 - doorOpenAmount[itemAtCenterOfView];
+		  playSound(SOUND_DOROPN);
+        }
+      }
 
       //POKE(0x900f, 11);
 	  if (push_out(&player))

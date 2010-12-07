@@ -13,6 +13,7 @@
 .export _getSectorVertexY
 
 ; sector/edge functions
+.export _getEdgeIndex
 .export _getEdgeTexture
 .export _getEdgeLen
 .export _getOtherSector
@@ -490,6 +491,27 @@ jmp addysp
 
 .endproc
 
+.proc _getEdgeIndex : near
+
+; params:
+; A - edgeIndex
+; TOS - sectorIndex
+
+sta edgeIndex
+ldy #0
+lda (sp),y
+asl
+asl
+asl
+clc
+adc edgeIndex
+tay
+lda secEdges,y
+
+ldy #1
+jmp addysp
+
+.endproc
 
 .proc _getEdgeTexture : near
 
