@@ -900,7 +900,7 @@ int main()
 		  POKE(0x900F, 8+1);
 		  shotgunStage = 7;
 		  
-		  playSound(SOUND_SHOTGN);
+		  playSound(SOUND_PISTOL);
 		}
 	  }
 

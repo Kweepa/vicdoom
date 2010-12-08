@@ -4,31 +4,39 @@
 .export _playSound
 .import soundTable
 
-; do not use $90-$95! must be overwritten by NMI
+; do not use $90-$95! must be overwritten by irq
 soundPointer = $30
 soundIndex = $32
 soundCount = $33
 soundMax = $34
-soundVIA = $9120
+
 irqVector = $314
 irqContinue = $eabf
-; trigger every 7143 cycles (1000000/140)
-timerValue = 7141
 
 .segment "CODE"
 
 .proc playSoundIrq : near
+
+; check this came from timer 1
+bit $912d
+bpl end
 
 ; check we're playing a sound
 lda soundIndex
 cmp #$ff
 beq end
 
+; play next sample
 inc soundCount
 ldy soundCount
 cpy soundMax
 beq stopPlaying
 lda (soundPointer),y
+; scale the sample back from 0..15
+asl
+asl
+asl
+adc #127
 sta $900c
 sta $900d
 
@@ -79,25 +87,11 @@ rts
 lda #$ff
 sta soundIndex
 
-lda #$7f	; turn off all NMI
-sta $911e
-
-lda #<timerValue
-ldx #>timerValue
-sta soundVIA + $6
-stx soundVIA + $5
-
-lda #$40	; timer 1 free run
-sta soundVIA + $b
-
 ; insert into chain
 lda #<playSoundIrq
 ldx #>playSoundIrq
 sta irqVector
 stx irqVector+1
-
-lda #$C0    ; set timer 1 enable
-sta soundVIA + $e
 
 ; turn up the volume
 lda #0
