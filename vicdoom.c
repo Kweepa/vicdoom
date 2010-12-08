@@ -89,9 +89,6 @@ char __fastcall__ getObjectType(char o);
 void __fastcall__ playSoundInitialize(void);
 void __fastcall__ playSound(char soundIndex);
 
-char dppistol[] = { 27, 29, 26, 48, 28, 25, 25, 30, 25, 38, 24, 27, 22, 30, 27, 18, 20, 13, 20, 11, 15, 11, 7, 13, 7, 9, 8, 6 };
-char dpclaw[] = { 59, 36, 53, 36, 52, 37, 52, 38, 52, 39, 52, 39, 52, 39, 52, 38, 53, 35, 54, 35, 54, 34, 54, 33, 36, 33, 29, 32, 22, 31, 14, 30, 7, 29, 0, 26, 0, 25, 0, 21, 0, 18, 0, 16, 0, 15, 0, 10, 0, 8, 0, 7, 0, 6, 0, 5, 0, 5, 0, 5 };
-
 signed char __fastcall__ get_sin(unsigned char angle)
 {
   return sinTab[angle & 63];
@@ -102,68 +99,12 @@ signed char __fastcall__ get_cos(unsigned char angle)
   return sinTab[(angle + 16) & 63];
 }
 
+// use this to line up raster timing lines
 void waitforraster(void)
 {
     while (PEEK(0x9004) > 16) ;
     while (PEEK(0x9004) < 16) ;
 }
-
-#if 0
-typedef struct vertexT
-{
-  signed char x;
-  signed char y;
-} vertex;
-
-typedef struct edgeT
-{
-  signed char tex;
-  signed char sector;
-  signed char index;
-  char len;
-} edge;
-
-typedef struct sectorT
-{
-  char numverts;
-  char dummy;
-  char verts[7];
-  char edges[7];
-} sector;
-
-vertex verts[8] =
-{
-  { -20, -10 },
-  { -20, 10 },
-  { 20, 10 },
-  { 20, -10 },
-  { -10, 10 },
-  { -10, 20 },
-  { 0, 20 },
-  { 0, 10 }
-};
-
-edge edges[10] =
-{
-  { 0, -1, -1, 20 },
-  { 1, -1, -1, 10 },
-  { -1, 1, 1, 10 },
-  { 1, -1, -1, 20 },
-  { 2, -1, -1, 20 },
-  { 0, -1, -1, 40 },
-  { 1, -1, -1, 10 },
-  { 2, -1, -1, 10 },
-  { 0, -1, -1, 10 },
-  { -1, 0, 1, 10 }
-};
-
-sector sectors[2] =
-{
-  { 6, -1, { 0, 1, 4, 7, 2, 3 }, { 0, 1, 2, 3, 4, 5 } },
-  { 4, -1, { 4, 5, 6, 7 }, { 6, 7, 8, 9 } }
-};
-
-#endif
 
 char spanStackSec[10];
 signed char spanStackL[10];
@@ -939,7 +880,14 @@ int main()
 		player.x += 8*get_sin(player.angle);
 		player.y += 8*get_cos(player.angle);
 	  }
-	  if (shotgunStage > 0) shotgunStage--;
+	  if (shotgunStage > 0)
+	  {
+	    shotgunStage--;
+	    if (shotgunStage == 3)
+	    {
+			playSound(SOUND_SGCOCK);
+		}
+	  }
 	  if ((keys & 16) == 0)
 	  {
 		// pressed fire
@@ -952,19 +900,7 @@ int main()
 		  POKE(0x900F, 8+1);
 		  shotgunStage = 7;
 		  
-		  playSound(soundToPlay);
-		  soundToPlay++;
-		  soundToPlay %= 12;
-#if 0		  
-		  POKE(0x900E,15);
-		  for (i = 0; i < dpclaw[0]; ++i)
-		  {
-		    for (x = 0; x < 64; ++x);
-		    POKE(0x900C, 160 + dpclaw[1+i]);		    
-		    POKE(0x900D, 160 + dpclaw[1+i]);		    
-		  }
-		  POKE(0x900E,0);
-#endif
+		  playSound(SOUND_SHOTGN);
 		}
 	  }
 
