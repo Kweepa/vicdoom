@@ -36,6 +36,8 @@
 #include <conio.h>
 #include <dbg.h>
 
+#include "updateInput.h"
+
 #define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
 #define PEEK(addr) (*(unsigned char *)(addr))
 
@@ -781,6 +783,7 @@ char soundToPlay = 0;
 int main()
 {
   int i, x, y;
+  char keys;
 
   POKE(0x900E, 16*6 + (PEEK(0x900E)&15)); // blue aux color
   POKE(0x900F, 8 + 5); // green border, and black screen
@@ -835,11 +838,10 @@ int main()
   {
 	  // note: XXXXYZZZ (X = screen, Y = reverse mode, Z = border)
 	  POKE(0x900F, 8 + 5); // green border, and black screen
+	  
+	  keys = readInput();
 
- 	  // query the keyboard line containing <Ctrl>ADGJL;<Right>
-	  POKE(0x9120, 0xFB);
-	  keys = PEEK(0x9121);
-	  if ((keys & 16) == 0)
+	  if (keys & KEY_TURNLEFT)
 	  {
 	    if (turnSpeed < 2)
 	    {
@@ -847,7 +849,7 @@ int main()
     	}
 	    player.angle -= turnSpeed;
 	  }
-	  else if ((keys & 32) == 0)
+	  else if (keys & KEY_TURNRIGHT)
 	  {
 	    if (turnSpeed < 2)
 	    {
@@ -861,24 +863,26 @@ int main()
 	  }
 	  player.angle &= 63;
 	  setCameraAngle(player.angle);
-	  if ((keys & 2) == 0)
+	  if (keys & KEY_MOVELEFT)
 	  {
 		player.x -= 4*get_cos(player.angle);
 		player.y += 4*get_sin(player.angle);
 	  }
-	  if ((keys & 4) == 0)
+	  if (keys & KEY_MOVERIGHT)
 	  {
 		player.x += 4*get_cos(player.angle);
 		player.y -= 4*get_sin(player.angle);
 	  }
 
-	  // query the keyboard line containing <Left>WRYIP*<Ret>
-	  POKE(0x9120, 0xFD);
-	  keys = PEEK(0x9121);
-	  if ((keys & 2) == 0)
+	  if (keys & KEY_FORWARD)
 	  {
 		player.x += 8*get_sin(player.angle);
 		player.y += 8*get_cos(player.angle);
+	  }
+	  if (keys & KEY_BACK)
+	  {
+		player.x -= 4*get_sin(player.angle);
+		player.y -= 4*get_cos(player.angle);
 	  }
 	  if (shotgunStage > 0)
 	  {
@@ -888,7 +892,7 @@ int main()
 			playSound(SOUND_SGCOCK);
 		}
 	  }
-	  if ((keys & 16) == 0)
+	  if (keys & KEY_FIRE)
 	  {
 		// pressed fire
 		if (shells > 0 && shotgunStage == 0)
@@ -904,15 +908,7 @@ int main()
 		}
 	  }
 
-	  // query the keyboard line containing <CBM>SFHK:=<F3>
-	  POKE(0x9120, 0xDF);
-	  keys = PEEK(0x9121);
-	  if ((keys & 2) == 0)
-	  {
-		player.x -= 8*get_sin(player.angle);
-		player.y -= 8*get_cos(player.angle);
-	  }
-	  if ((keys & 16) == 0)
+	  if (keys & KEY_USE)
 	  {
 	      gotoxy(0,16);
 	      cprintf("hi %d. ", typeAtCenterOfView);

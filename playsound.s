@@ -3,6 +3,7 @@
 .export _playSoundInitialize
 .export _playSound
 .import soundTable
+.import updateInput
 
 irqVector = $314
 irqContinue = $eabf
@@ -45,6 +46,8 @@ soundMax:
 ; check this came from timer 1
 bit $912d
 bpl end
+
+jsr updateInput
 
 ; check we're playing a sound
 lda soundIndex
