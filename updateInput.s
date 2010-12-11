@@ -2,6 +2,7 @@
 
 .export updateInput
 .export _readInput
+.export _getControlKeys
 
 .segment "CODE"
 
@@ -14,12 +15,21 @@
 ;=
 ; SADWJLIK
 
+; 
+
 ; sometime soon I'm going to have to make a zero page map!
 ;  put this on the zero page to speed up the interrupt
 ; although, really I should only read the keys every third or so interrupt for speed
 keys = $34
+ctrlKeys = $35
 framesToNextUpdate:
 .byte 3
+storedKeys:
+.byte 0
+storedCtrlKeys:
+.byte 0
+somethingToRead:
+.byte 0
 
 .proc updateInput : near
 
@@ -31,26 +41,38 @@ read:
 
 lda #3
 sta framesToNextUpdate
+sta somethingToRead
 
 ; query the keyboard line containing <Ctrl>ADGJL;<Right>
 lda #$fb
 sta $9120
 lda $9121
 eor #$ff
+tax
 and #$36 ; get ADJL
 ora keys
 sta keys
+txa
+asl
+and #2
+ora ctrlKeys
+sta ctrlKeys
 
 ; query the keyboard line containing <Left>WRYIP*<Ret>
 lda #$fd
 sta $9120
 lda $9121
 eor #$ff
+tax
 asl
 asl
 and #$48 ; get WI
 ora keys
 sta keys
+txa
+and #$81
+ora ctrlKeys
+sta ctrlKeys
 
 ; query the keyboard line containing <CBM>SFHK:=<F3>
 lda #$df
@@ -76,10 +98,31 @@ rts
 
 .proc _readInput : near
 
+lda somethingToRead
+beq end
+
 ldx #0
+; keep the copy and clear as close as possible
+; so there's less chance of losing a keypress
+; even though we're reading key holds, not presses
+lda ctrlKeys
+stx ctrlKeys
+sta storedCtrlKeys
 lda keys
 stx keys
+sta storedKeys
 
+stx somethingToRead
+
+end:
+lda storedKeys
+rts
+
+.endproc
+
+.proc _getControlKeys : near
+
+lda storedCtrlKeys
 rts
 
 .endproc

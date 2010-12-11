@@ -2,14 +2,15 @@
 
 .export _playSoundInitialize
 .export _playSound
+.export _getEffectsVolume
+.export _setEffectsVolume
+.export _getMusicVolume
+.export _setMusicVolume
 .import soundTable
 .import updateInput
 
 irqVector = $314
 irqContinue = $eabf
-
-effectsVolume = $a
-musicVolume = $1
 
 .segment "CODE"
 
@@ -40,6 +41,10 @@ soundCount:
 .byte 0
 soundMax:
 .byte 0
+effectsVolume:
+.byte $a
+musicVolume:
+.byte $1
 
 .proc playSoundIrq : near
 
@@ -68,8 +73,6 @@ adc #127
 sta $900d
 
 jmp end
-;end:
-;jmp irqContinue
 
 stopPlaying:
 lda #127
@@ -81,7 +84,7 @@ sta soundIndex
 ; set to music volume
 lda $900e
 and #$f0
-ora #musicVolume
+ora musicVolume
 sta $900e
 
 jmp end
@@ -184,6 +187,12 @@ tay
 lda noteTable,y
 sta $900a,x
 
+; make sure to set the volume
+lda $900e
+and #$f0
+ora musicVolume
+sta $900e
+
 lda songIndex
 clc
 adc #2
@@ -226,7 +235,7 @@ sta $900c
 ; turn up volume a bit
 lda $900e
 and #$f0
-ora #effectsVolume
+ora effectsVolume
 sta $900e
 
 ; start the new sound playing
@@ -264,9 +273,26 @@ sta $900d
 ; set music volume
 lda $900e
 and #$f0
-ora #musicVolume
+ora musicVolume
 sta $900e
 
 rts
 
 .endproc
+
+
+_getEffectsVolume:
+lda effectsVolume
+rts
+
+_setEffectsVolume:
+sta effectsVolume
+rts
+
+_getMusicVolume:
+lda musicVolume
+rts
+
+_setMusicVolume:
+sta musicVolume
+rts

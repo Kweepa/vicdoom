@@ -37,6 +37,7 @@
 #include <dbg.h>
 
 #include "updateInput.h"
+#include "playSound.h"
 
 #define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
 #define PEEK(addr) (*(unsigned char *)(addr))
@@ -76,20 +77,6 @@ char __fastcall__ getObjectSector(char o);
 int __fastcall__ getObjectX(char o);
 int __fastcall__ getObjectY(char o);
 char __fastcall__ getObjectType(char o);
-
-#define SOUND_CLAW 0
-#define SOUND_DMPAIN 1
-#define SOUND_DOROPN 2
-#define SOUND_ITEMUP 3
-#define SOUND_OOF 4
-#define SOUND_PISTOL 5
-#define SOUND_PLPAIN 6
-#define SOUND_POPAIN 7
-#define SOUND_SGCOCK 8
-#define SOUND_SGTDTH 9
-#define SOUND_SHOTGN 10
-void __fastcall__ playSoundInitialize(void);
-void __fastcall__ playSound(char soundIndex);
 
 signed char __fastcall__ get_sin(unsigned char angle)
 {
@@ -282,8 +269,8 @@ signed char drawDoor(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, si
   signed char curX;
   unsigned int t, texI, curY, h;
   
-  gotoxy(0,1);
-  cprintf("Door l %d r %d oa %d. ", x_L, x_R, doorOpenAmount);
+  //gotoxy(0,1);
+  //cprintf("Door l %d r %d oa %d. ", x_L, x_R, doorOpenAmount);
 
   if (doorOpenAmount == 0)
   {
@@ -716,8 +703,8 @@ int push_out(object *obj)
               if (height < 0)
               {
                  obj->sector = thatSector;
-                 gotoxy(1,0);
-                 cprintf("sec%d ed%d ned%d ex%d ey%d. ", thatSector, i, ni, (int)ex, (int)ey);
+                 //gotoxy(1,0);
+                 //cprintf("sec%d ed%d ned%d ex%d ey%d. ", thatSector, i, ni, (int)ex, (int)ey);
                  return 1;
               }
            }
@@ -768,7 +755,7 @@ int push_out(object *obj)
 void clearSecondBuffer(void);
 void copyToPrimaryBuffer(void);
 
-char keys;
+char keyCards;
 char counter = 0;
 char turnSpeed = 0;
 char shells = 40;
@@ -779,16 +766,11 @@ char changeLookTime = 7;
 char lookDir = 0;
 
 char soundToPlay = 0;
-  
-int main()
+
+void setUpScreenForGameplay(void)
 {
   int i, x, y;
-  char keys;
-
-  POKE(0x900E, 16*6 + (PEEK(0x900E)&15)); // blue aux color
-  POKE(0x900F, 8 + 5); // green border, and black screen
-
-  for (i = 0; i < 512; ++i)
+  for (i = 0; i < (17*22); ++i)
   {
       // fill the screen with spaces
 	  POKE(0x1000 + i, 32);
@@ -805,41 +787,58 @@ int main()
       POKE(0x9400 + (x + 7) + 22*(y + 4), 8 + 2);
     }
   }
-  // set the character set to $1400
-  POKE(0x9005, 13 + (PEEK(0x9005)&240));
-  textcolor(6);
-  gotoxy(0,17);
-  cprintf("######################");
-  gotoxy(0,19);
-  cprintf("######################");
-  textcolor(2);
-  gotoxy(0,18);
-  cprintf("knee deep in the dead!");
-  gotoxy(0,21);
-  textcolor(3);
-  cprintf(" &40");
-  textcolor(5);
-  cprintf(" :000 ");
-  textcolor(7);
-  cprintf("()");
-  textcolor(2);
-  cprintf(" /100");
-  textcolor(6);
-  cprintf(" ;;;");
-  gotoxy(10,20);
-  textcolor(7);
-  cprintf("$%%");
-  gotoxy(10,22);
-  cprintf("*+");
+}
+
+void runMenu(char canReturn);
   
+int main()
+{
+  char keys;
+  char ctrlKeys;
+
   playSoundInitialize();
 
+  POKE(0x900E, 16*6 + (PEEK(0x900E)&15)); // blue aux color
+  POKE(0x900F, 8 + 5); // green border, and black screen
+  
+  // set the character set to $1400
+  POKE(0x9005, 13 + (PEEK(0x9005)&240));
+
+  runMenu(0);
+
+  setUpScreenForGameplay();
+
+  textcolor(6);
+  cputsxy(0, 17, "######################");
+  cputsxy(0, 19, "######################");
+  textcolor(2);
+  cputsxy(0, 18, "        hangar        ");
+  textcolor(3);
+  cputsxy(0, 21, " &40");
+  textcolor(5);
+  cputsxy(4, 21, " :000 ");
+  textcolor(2);
+  cputsxy(12, 21, " /100");
+  textcolor(6);
+  cputsxy(17, 21, " ;;;");
+  textcolor(7);
+  cputsxy(10, 20, "$%");
+  cputsxy(10, 21, "()");
+  cputsxy(10, 22, "*+");
+  
   while (1)
   {
 	  // note: XXXXYZZZ (X = screen, Y = reverse mode, Z = border)
 	  POKE(0x900F, 8 + 5); // green border, and black screen
 	  
 	  keys = readInput();
+	  ctrlKeys = getControlKeys();
+	  
+	  if (ctrlKeys & KEY_ESC)
+	  {
+	    runMenu(1);
+	    setUpScreenForGameplay();
+	  }
 
 	  if (keys & KEY_TURNLEFT)
 	  {
@@ -900,7 +899,7 @@ int main()
 		  shells--;
 		  gotoxy(2,21);
 		  textcolor(3);
-		  cprintf("%02d", shells);
+		  //cprintf("%02d", shells);
 		  POKE(0x900F, 8+1);
 		  shotgunStage = 7;
 		  
@@ -910,8 +909,8 @@ int main()
 
 	  if (keys & KEY_USE)
 	  {
-	      gotoxy(0,16);
-	      cprintf("hi %d. ", typeAtCenterOfView);
+	      //gotoxy(0,16);
+	      //cprintf("hi %d. ", typeAtCenterOfView);
 	    // tried to open a door (pressed K)
 	    if (typeAtCenterOfView == TYPE_DOOR)
 	    {
@@ -943,17 +942,16 @@ int main()
 	  if (changeLookTime == 0)
 	  {
 	    lookDir = 1 - lookDir;
-	    gotoxy(10,21);
 		textcolor(7);
 		if (lookDir == 0)
 		{
   	      changeLookTime = 12;
-  		  cprintf("[\\");
+  		  cputsxy(10, 21, "[\\");
   		}
   		else
   		{
   	      changeLookTime = 6;
-  		  cprintf("()");
+  		  cputsxy(10, 21, "()");
   		}
       }
 	  

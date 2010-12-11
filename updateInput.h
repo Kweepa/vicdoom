@@ -1,5 +1,6 @@
 
 char __fastcall__ readInput(void);
+char __fastcall__ getControlKeys(void);
 
 // SADWJLIK
 
@@ -21,3 +22,7 @@ char __fastcall__ readInput(void);
 #define KEY_TURNLEFT  KEY_J
 #define KEY_USE       KEY_K
 #define KEY_TURNRIGHT KEY_L
+
+#define KEY_CTRL   0x02
+#define KEY_ESC    0x01
+#define KEY_RETURN 0x80
