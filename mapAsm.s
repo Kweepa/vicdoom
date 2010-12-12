@@ -18,6 +18,7 @@
 .export _getEdgeLen
 .export _getOtherSector
 .export _getNextEdge
+.export _getGlobalEdgeTexture
 
 ; object functions
 .export _getNumObjects
@@ -659,3 +660,8 @@ lda objType,y
 rts
 
 .endproc
+
+_getGlobalEdgeTexture:
+tay
+lda edgeTex,y
+rts

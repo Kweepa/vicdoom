@@ -2,7 +2,7 @@
 
 .export soundTable
 
-.segment "SOUNDS"
+.segment "CODE"
 
 dpclaw:
 .byte 59, 9, 14, 9, 14, 10, 14, 10, 14, 10, 14, 10, 14, 10, 14, 10

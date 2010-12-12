@@ -157,7 +157,10 @@ object *camera = &player;
 #define TYPE_OBJECT 2
 char typeAtCenterOfView;
 char itemAtCenterOfView;
-char doorOpenAmount[128];
+char doorClosedAmount[128];
+char openDoors[4];
+char doorOpenTime[4];
+char numOpenDoors = 0;
 
 #define SCREENWIDTH 32
 #define HALFSCREENWIDTH (SCREENWIDTH/2)
@@ -178,6 +181,7 @@ void __fastcall__ drawColumnTransparent(char textureIndex, char texYStart, char 
 char __fastcall__ getEdgeIndex(char sectorIndex, char edgeIndex);
 char __fastcall__ getEdgeTexture(char sectorIndex, char edgeIndex);
 char __fastcall__ getEdgeLen(char sectorIndex, char edgeIndex);
+char __fastcall__ getGlobalEdgeTexture(char edgeIndex);
 
 void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
 {
@@ -263,7 +267,7 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
 signed char drawDoor(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
 {
   char edgeGlobalIndex = getEdgeIndex(sectorIndex, curEdgeIndex);
-  char doorOpenAmount = doorOpenAmount[edgeGlobalIndex];
+  char doorOpenAmount = 255 - doorClosedAmount[edgeGlobalIndex];
   char textureIndex, edgeLen;
   int x1, y1, dx, dy, x4, numer, denom;
   signed char curX;
@@ -673,6 +677,7 @@ int push_out(object *obj)
   long dist;
   long distanceToPush;
   long dx, dy;
+  char edgeGlobalIndex;
   char curSector = obj->sector;
   char secNumVerts = getNumVerts(curSector);
   
@@ -698,7 +703,8 @@ int push_out(object *obj)
         if (dist > 0 && dist < 256*edgeLen)
         {
            thatSector = getOtherSector(curSector, i);
-           if (thatSector != -1)
+           edgeGlobalIndex = getEdgeIndex(curSector, i);
+           if (thatSector != -1 && doorClosedAmount[edgeGlobalIndex] == 0)
            {
               if (height < 0)
               {
@@ -783,10 +789,11 @@ void setUpScreenForGameplay(void)
   {
     for (y = 0; y < 8; ++y)
     {
-      POKE(0x1000 + (x + 7) + 22*(y + 4), 64 + 8*x + y);
-      POKE(0x9400 + (x + 7) + 22*(y + 4), 8 + 2);
+      POKE(0x1000 + (x + 7) + 22*(y + 2), 64 + 8*x + y);
+      POKE(0x9400 + (x + 7) + 22*(y + 2), 8 + 2);
     }
   }
+  POKE(0x900F, 8 + 5); // green border, and black screen
 }
 
 void runMenu(char canReturn);
@@ -795,6 +802,7 @@ int main()
 {
   char keys;
   char ctrlKeys;
+  char i;
 
   playSoundInitialize();
 
@@ -804,7 +812,16 @@ int main()
   // set the character set to $1400
   POKE(0x9005, 13 + (PEEK(0x9005)&240));
 
+  setUpScreenForGameplay();
   runMenu(0);
+  
+  for (i = 0; i < 128; ++i)
+  {
+    if (getGlobalEdgeTexture(i) == 4)
+    {
+      doorClosedAmount[i] = 255;
+    }
+  }
 
   setUpScreenForGameplay();
 
@@ -907,14 +924,36 @@ int main()
 		}
 	  }
 
+      for (i = 0; i < 4; ++i)
+      {
+        if (doorOpenTime[i] > 0)
+        {
+          if (--doorOpenTime[i] == 0)
+          {
+            // try to close the door - should just get pushed out, so go ahead
+            doorClosedAmount[openDoors[i]] = 255;
+            playSound(SOUND_DOROPN);
+          }
+        }
+      }
+          
 	  if (keys & KEY_USE)
 	  {
 	      //gotoxy(0,16);
 	      //cprintf("hi %d. ", typeAtCenterOfView);
 	    // tried to open a door (pressed K)
-	    if (typeAtCenterOfView == TYPE_DOOR)
+	    if (typeAtCenterOfView == TYPE_DOOR && testFilled(0) < 4)
 	    {
-          doorOpenAmount[itemAtCenterOfView] = 255 - doorOpenAmount[itemAtCenterOfView];
+	      for (i = 0; i < 4; ++i)
+	      {
+	        if (doorOpenTime[i] == 0)
+	        {
+				openDoors[i] = itemAtCenterOfView;
+				doorOpenTime[i] = 20;
+				break;
+			}
+	      }
+          doorClosedAmount[itemAtCenterOfView] = 0;
 		  playSound(SOUND_DOROPN);
         }
       }

@@ -6,6 +6,8 @@
 #include "updateInput.h"
 #include "playSound.h"
 
+void __fastcall__ drawLogo(void);
+
 #define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
 
 char *caMenus[6][3] =
@@ -54,18 +56,6 @@ char menuStack[3];
 char itemStack[3];
 char stackDepth = 0;
 
-void clearScreen()
-{
-  int i;
-  for (i = 0; i < (17*22); ++i)
-  {
-      // fill the screen with spaces
-	  POKE(0x1000 + i, 32);
-	  // set the color memory
-	  POKE(0x9400 + i, 10); // main colour red, single colour
-  }
-}
-
 char oldKeys = 0;
 char oldCtrlKeys = 0;
 char moveKeys = 0;
@@ -95,10 +85,11 @@ void waitForEscReleased(void)
 
 #define TEXT_COLOR 2
 #define HILITE_COLOR 7
+#define MENU_Y 12
 
 void drawMenuItem(int i)
 {
-  char y = 8 + i;
+  char y = MENU_Y + i;
   char *itemStr = caMenus[menu][i];
   char len = strlen(itemStr);
   char x = 11 - len/2;
@@ -111,7 +102,7 @@ void drawMenu(void)
   // draw the menu
   for (i = 0; i < 3; ++i)
   {
-    y = 8 + i;
+    y = MENU_Y + i;
 	cputsxy(0, y, "                      ");
     if (i != item)
     {
@@ -170,17 +161,18 @@ char runMenu(char canReturn)
    playSound(SOUND_OOF);
    waitForEscReleased();
 
-   clearScreen();
+   drawLogo();
    
    enterNumberInMenuItem(caMenus[2][0] + 15, getEffectsVolume());
    enterNumberInMenuItem(caMenus[2][1] + 13, getMusicVolume());
 
    menu = 0;
    item = 0;
+   stackDepth = 0;
    
    drawMenu();
    
-   while (menu >= 0)
+   while (menu != 255)
    {
      oldKeys = moveKeys;
      oldCtrlKeys = ctrlKeys;
@@ -190,24 +182,24 @@ char runMenu(char canReturn)
 	 if (keyPressed(KEY_FORWARD))
 	 {
 	   textcolor(TEXT_COLOR);
-	   cputsxy(0, 8+item, " ");
+	   cputsxy(0, MENU_Y+item, " ");
 	   drawMenuItem(item);
 	   --item;
 	   if (item == 255) item = 2;
 	   textcolor(HILITE_COLOR);
-	   cputsxy(0, 8+item, "@");
+	   cputsxy(0, MENU_Y+item, "@");
 	   drawMenuItem(item);
 	   playSound(SOUND_OOF);
 	 }
 	 if (keyPressed(KEY_BACK))
 	 {
 	   textcolor(TEXT_COLOR);
-	   cputsxy(0, 8+item, " ");
+	   cputsxy(0, MENU_Y+item, " ");
 	   drawMenuItem(item);
 	   ++item;
 	   if (item == 3) item = 0;
 	   textcolor(HILITE_COLOR);
-	   cputsxy(0, 8+item, "@");
+	   cputsxy(0, MENU_Y+item, "@");
 	   drawMenuItem(item);
 	   playSound(SOUND_OOF);
 	 }
