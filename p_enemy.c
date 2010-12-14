@@ -26,6 +26,8 @@
 
 #include <stdlib.h>
 
+#include "playSound.h"
+
 #define fixed_t int
 #define boolean char
 #define false 0
@@ -36,8 +38,8 @@
 #define PLAYERRADIUS	(16*FRACUNIT) // for reference
 #define MELEERANGE		(64*FRACUNIT)
 
-#define sfx_pistol 1
-#define sfx_claw 2
+#define sfx_pistol SOUND_DPPISTOL
+#define sfx_claw SOUND_DPCLAW
 
 #define MF_JUSTHIT 1
 #define MF_JUSTATTACKED 2
@@ -47,6 +49,19 @@
 #define MF_WASSEENTHISFRAME 32
 
 #define MT_TROOPSHOT 6
+
+typedef struct
+{
+   char texture;
+   char animate;
+   
+   void (*action)(struct mobj_T *);
+}
+mobjState_t;
+
+mobjState_t states[] =
+{
+};
 
 typedef struct
 {
@@ -181,6 +196,9 @@ boolean P_LookForPlayers(mobj_t *actor)
 
 void S_StartSound(mobj_t *actor, char sound)
 {
+   // just try to play it
+   // will succeed or fail based on priorities
+   playSound(sound);
 }
 
 void P_SetMobjState(mobj_t *actor, char state)
@@ -314,7 +332,7 @@ boolean P_TryWalk (mobj_t* actor)
 {	
     if (!P_Move (actor))
     {
-	return false;
+	   return false;
     }
 
     actor->movecount = P_Random()&15;
@@ -688,7 +706,7 @@ void A_TroopAttack (mobj_t* actor)
     }
     
     // launch a missile
-    P_SpawnMissile (actor, actor->target, MT_TROOPSHOT);
+    //P_SpawnMissile (actor, actor->target, MT_TROOPSHOT);
 }
 
 

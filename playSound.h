@@ -1,14 +1,20 @@
-#define SOUND_CLAW 0
-#define SOUND_DMPAIN 1
-#define SOUND_DOROPN 2
-#define SOUND_ITEMUP 3
-#define SOUND_OOF 4
-#define SOUND_PISTOL 5
-#define SOUND_PLPAIN 6
-#define SOUND_POPAIN 7
-#define SOUND_SGCOCK 8
-#define SOUND_SGTDTH 9
-#define SOUND_SHOTGN 10
+enum ESound
+{
+	SOUND_CLAW,
+	SOUND_DMPAIN,
+	SOUND_DOROPN,
+	SOUND_DORCLS,
+	SOUND_ITEMUP,
+	SOUND_OOF,
+	SOUND_GURGLE,
+	SOUND_PISTOL,
+	SOUND_PLPAIN,
+	SOUND_POPAIN,
+	SOUND_SGCOCK,
+	SOUND_SGTDTH,
+	SOUND_SHOTGN,
+	SOUND_STNMOV
+};
 
 void __fastcall__ playSoundInitialize(void);
 void __fastcall__ playSound(char soundIndex);

@@ -297,16 +297,13 @@ lda texIndex
 and #1
 lsr
 ror
-adc texAddr+1
+ora texAddr+1
 sta texAddr+1
-lda #0
-adc #$1A
-sta texAddr+2
 
 lda texIndex
 lsr
 clc
-adc texAddr+2
+adc #$1A
 sta texAddr+2
 
 ; add texHi
@@ -542,17 +539,15 @@ lda texIndex
 and #1
 lsr
 ror
-adc texAddr+1
+ora texAddr+1
 sta texAddr+1
-lda #0
-adc #$1A ; start of texture memory
-sta texAddr+2
 
 lda texIndex
 lsr
 clc
-adc texAddr+2
+adc #$1A ; start of texture memory
 sta texAddr+2
+
 
 ; add texture offset
 lda texAddr+1

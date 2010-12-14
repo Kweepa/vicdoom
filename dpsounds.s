@@ -18,6 +18,11 @@ dpdoropn:
 .byte 5, 5, 5, 6, 6, 7, 7, 8, 7, 9, 6, 9, 5, 10, 5, 10
 .byte 4, 11, 4, 12, 3, 12, 3, 12, 3, 13, 2, 13, 2, 14, 1, 14
 .byte 1, 14, 0, 15
+dpdorcls:
+.byte 48, 15, 1, 14, 1, 13, 2, 12, 3, 11, 4, 10, 5, 10, 5, 9
+.byte 7, 9, 8, 7, 9, 7, 10, 7, 10, 6, 9, 5, 8, 5, 7, 0
+.byte 6, 0, 5, 0, 5, 0, 4, 0, 4, 0, 3, 0, 3, 0, 1, 0
+.byte 1
 dpitemup:
 .byte 53, 6, 6, 6, 6, 6, 6, 6, 6, 6, 15, 15, 15, 15, 15, 1
 .byte 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 15, 15, 15, 15, 15, 15
@@ -25,6 +30,14 @@ dpitemup:
 .byte 1, 1, 1, 1, 1, 1
 dpoof:
 .byte 10, 5, 10, 15, 15, 15, 15, 15, 5, 1, 1
+dpbgact:
+.byte 103, 11, 0, 10, 0, 9, 0, 9, 0, 8, 0, 8, 0, 8, 0, 8
+.byte 0, 8, 0, 9, 0, 9, 0, 10, 0, 11, 0, 12, 0, 12, 0, 13
+.byte 0, 13, 0, 14, 0, 14, 0, 15, 0, 15, 0, 15, 0, 14, 0, 14
+.byte 0, 14, 0, 14, 0, 13, 0, 13, 0, 12, 0, 12, 0, 11, 0, 10
+.byte 0, 10, 0, 8, 0, 8, 0, 7, 0, 7, 0, 6, 0, 6, 0, 5
+.byte 0, 5, 0, 5, 0, 4, 0, 4, 0, 3, 0, 3, 0, 2, 0, 1
+.byte 0, 1, 0, 1, 0, 1, 0, 1
 dppistol:
 .byte 27, 8, 7, 15, 8, 7, 7, 9, 7, 11, 7, 8, 6, 9, 8, 5
 .byte 5, 3, 5, 2, 4, 2, 1, 3, 1, 2, 1, 1
@@ -51,17 +64,22 @@ dpshotgn:
 .byte 47, 14, 9, 15, 9, 13, 11, 11, 11, 13, 8, 9, 8, 11, 11, 7
 .byte 10, 7, 8, 8, 11, 9, 7, 7, 4, 9, 4, 8, 6, 9, 4, 5
 .byte 6, 8, 4, 4, 5, 6, 3, 4, 6, 3, 1, 4, 1, 2, 1, 2
+dpstnmov:
+.byte 7, 1, 6, 9, 9, 12, 15, 15
 
-; total sound size 505
+; total sound size 672
 soundTable:
 .word dpclaw
 .word dpdmpain
 .word dpdoropn
+.word dpdorcls
 .word dpitemup
 .word dpoof
+.word dpbgact
 .word dppistol
 .word dpplpain
 .word dppopain
 .word dpsgcock
 .word dpsgtdth
 .word dpshotgn
+.word dpstnmov

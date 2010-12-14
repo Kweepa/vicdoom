@@ -158,7 +158,7 @@ void addToMusicVolume(char add)
 // returns 1 if should restart
 char runMenu(char canReturn)
 {
-   playSound(SOUND_OOF);
+   playSound(SOUND_STNMOV);
    waitForEscReleased();
 
    drawLogo();
@@ -189,7 +189,7 @@ char runMenu(char canReturn)
 	   textcolor(HILITE_COLOR);
 	   cputsxy(0, MENU_Y+item, "@");
 	   drawMenuItem(item);
-	   playSound(SOUND_OOF);
+	   playSound(SOUND_STNMOV);
 	 }
 	 if (keyPressed(KEY_BACK))
 	 {
@@ -201,7 +201,7 @@ char runMenu(char canReturn)
 	   textcolor(HILITE_COLOR);
 	   cputsxy(0, MENU_Y+item, "@");
 	   drawMenuItem(item);
-	   playSound(SOUND_OOF);
+	   playSound(SOUND_STNMOV);
 	 }
      if (menu == 2)
      {
@@ -259,7 +259,7 @@ char runMenu(char canReturn)
 
 	    if (nextMenu[menu][item] != -1)
 	    {
-          playSound(SOUND_OOF);
+          playSound(SOUND_PISTOL);
 	      menuStack[stackDepth] = menu;
 	      itemStack[stackDepth] = item;
 	      ++stackDepth;

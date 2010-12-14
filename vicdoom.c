@@ -125,19 +125,19 @@ typedef struct objtypeT
 objtype objtypes[16] =
 {
   { 6, 0, 3 }, // player spawn
-  { 9, 0, 3, 16, 16, 0, 16 }, // green armor
+  { 18, 0, 3, 16, 16, 0, 16 }, // green armor
   { 6, 0, 3 }, // backpack
-  { 11, 0, 8, 16, 16, 0, 16 }, // barrel
-  { 10, 0, 8, 16, 8, 8, 8 }, // blue keycard
-  { 6, 1, 3 }, // caco
-  { 10, 0, 8, 24, 8, 0, 8 }, // medikit
-  { 5, 1, 5 }, // imp
-  { 7, 1, 3 }, // demon
-  { 10, 0, 8, 24, 8, 8, 8 }, // red keycard
-  { 10, 0, 5, 8, 8, 0, 16 }, // bullets
-  { 5, 1, 5 }, // sargeant
-  { 8, 1, 5 }, // pillar
-  { 10, 0, 8, 16, 24, 0, 8 }, // green keycard
+  { 20, 0, 8, 16, 16, 0, 16 }, // barrel
+  { 19, 0, 8, 16, 8, 8, 8 }, // blue keycard
+  { 13, 1, 3 }, // caco
+  { 19, 0, 8, 24, 8, 0, 8 }, // medikit
+  { 8, 1, 5 }, // imp
+  { 11, 1, 3 }, // demon
+  { 19, 0, 8, 24, 8, 8, 8 }, // red keycard
+  { 19, 0, 5, 8, 8, 0, 16 }, // bullets
+  { 5, 1, 5 }, // possessed
+  { 17, 1, 5 }, // pillar
+  { 19, 0, 8, 16, 24, 0, 8 }, // green keycard
 };
 
 typedef struct objectT
@@ -773,15 +773,13 @@ char lookDir = 0;
 
 char soundToPlay = 0;
 
-void setUpScreenForGameplay(void)
+void setUpScreenForBitmap(void)
 {
   int i, x, y;
-  for (i = 0; i < (17*22); ++i)
+  // clear the screen
+  for (i = 0; i < 22*23; ++i)
   {
-      // fill the screen with spaces
-	  POKE(0x1000 + i, 32);
-	  // set the color memory
-	  POKE(0x9400 + i, 2); // main colour red, multicolour
+    POKE(0x1000 + i, 32);
   }
   // write an 8x8 block for the graphics
   // into the middle of the screen
@@ -792,6 +790,46 @@ void setUpScreenForGameplay(void)
       POKE(0x1000 + (x + 7) + 22*(y + 2), 64 + 8*x + y);
       POKE(0x9400 + (x + 7) + 22*(y + 2), 8 + 2);
     }
+  }
+}
+
+void setUpScreenForMenu(void)
+{
+  int i;
+  cputsxy(6, 1, "          ");
+  cputsxy(6, 10, "          ");
+  for (i = 2; i < 10; ++i)
+  {
+    cputsxy(6, i, " ");
+    cputsxy(15, i, " ");
+  }
+}
+
+void setUpScreenForGameplay(void)
+{
+  int i;
+  for (i = 0; i < 66; ++i)
+  {
+     POKE(0x1000 + 12*22 + i, 32);
+  }
+  for (i = 0; i < 512; ++i)
+  {
+     POKE(0x1600 + i, 0);
+  }
+  for (i = 0; i < (17*22); ++i)
+  {
+	  // set the color memory
+	  POKE(0x9400 + i, 8 + 2); // main colour red, multicolour
+  }
+  textcolor(6);
+  cputsxy(0, 17, "######################");
+  cputsxy(0, 19, "######################");
+  cputsxy(6, 1, "##########");
+  cputsxy(6, 10, "##########");
+  for (i = 2; i < 10; ++i)
+  {
+    cputsxy(6, i, "#");
+    cputsxy(15, i, "#");
   }
   POKE(0x900F, 8 + 5); // green border, and black screen
 }
@@ -811,10 +849,13 @@ int main()
   
   // set the character set to $1400
   POKE(0x9005, 13 + (PEEK(0x9005)&240));
-
-  setUpScreenForGameplay();
-  runMenu(0);
   
+  setUpScreenForBitmap();
+
+  setUpScreenForMenu();
+  runMenu(0);
+  setUpScreenForGameplay();
+
   for (i = 0; i < 128; ++i)
   {
     if (getGlobalEdgeTexture(i) == 4)
@@ -823,11 +864,6 @@ int main()
     }
   }
 
-  setUpScreenForGameplay();
-
-  textcolor(6);
-  cputsxy(0, 17, "######################");
-  cputsxy(0, 19, "######################");
   textcolor(2);
   cputsxy(0, 18, "        hangar        ");
   textcolor(3);
@@ -853,6 +889,7 @@ int main()
 	  
 	  if (ctrlKeys & KEY_ESC)
 	  {
+	    setUpScreenForMenu();
 	    runMenu(1);
 	    setUpScreenForGameplay();
 	  }
@@ -932,7 +969,7 @@ int main()
           {
             // try to close the door - should just get pushed out, so go ahead
             doorClosedAmount[openDoors[i]] = 255;
-            playSound(SOUND_DOROPN);
+            playSound(SOUND_DORCLS);
           }
         }
       }

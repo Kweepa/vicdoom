@@ -10,6 +10,7 @@
 	.importzp	sp, sreg, regsave, regbank, tmp1, ptr1, ptr2
 	.macpack	longbranch
 	.import		_abs
+	.export		_mobjinfo
 	.export		_player
 	.import		_P_Random
 	.export		_P_ApproxDistance
@@ -20,7 +21,6 @@
 	.export		_S_StartSound
 	.export		_P_SetMobjState
 	.export		_P_DamageMobj
-	.export		_P_SpawnMissile
 	.export		_P_RadiusAttack
 	.export		_P_CheckMeleeRange
 	.export		_P_CheckMissileRange
@@ -77,6 +77,8 @@ _yspeed:
 
 .segment	"BSS"
 
+_mobjinfo:
+	.res	14,$00
 _player:
 	.res	2,$00
 
@@ -106,7 +108,7 @@ _player:
 	ldy     #$03
 	jsr     ldaxysp
 	jsr     tosltax
-	jeq     L0009
+	jeq     L000A
 	ldy     #$03
 	jsr     ldaxysp
 	jsr     pushax
@@ -118,8 +120,8 @@ _player:
 	jsr     ldaxysp
 	jsr     asrax1
 	jsr     tossubax
-	jmp     L0002
-L0009:	ldy     #$03
+	jmp     L0003
+L000A:	ldy     #$03
 	jsr     ldaxysp
 	jsr     pushax
 	ldy     #$03
@@ -130,8 +132,8 @@ L0009:	ldy     #$03
 	jsr     ldaxysp
 	jsr     asrax1
 	jsr     tossubax
-	jmp     L0002
-L0002:	jsr     incsp4
+	jmp     L0003
+L0003:	jsr     incsp4
 	rts
 
 .endproc
@@ -156,11 +158,11 @@ L0002:	jsr     incsp4
 	ldy     #$06
 	jsr     ldauidx
 	jsr     toseqax
-	jeq     L001D
+	jeq     L001E
 	ldx     #$00
 	lda     #$01
-	jmp     L001C
-L001D:	ldy     #$03
+	jmp     L001D
+L001E:	ldy     #$03
 	jsr     ldaxysp
 	ldy     #$08
 	jsr     ldauidx
@@ -168,14 +170,14 @@ L001D:	ldy     #$03
 	and     #$20
 	stx     tmp1
 	ora     tmp1
-	jeq     L0020
+	jeq     L0021
 	ldx     #$00
 	lda     #$01
-	jmp     L001C
-L0020:	ldx     #$00
+	jmp     L001D
+L0021:	ldx     #$00
 	lda     #$00
-	jmp     L001C
-L001C:	jsr     incsp4
+	jmp     L001D
+L001D:	jsr     incsp4
 	rts
 
 .endproc
@@ -198,7 +200,7 @@ L001C:	jsr     incsp4
 	jsr     pushax
 	jsr     _P_CheckSight
 	tax
-	jeq     L0025
+	jeq     L0026
 	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
@@ -208,11 +210,11 @@ L001C:	jsr     incsp4
 	jsr     staxspidx
 	ldx     #$00
 	lda     #$01
-	jmp     L0024
-L0025:	ldx     #$00
+	jmp     L0025
+L0026:	ldx     #$00
 	lda     #$00
-	jmp     L0024
-L0024:	jsr     incsp2
+	jmp     L0025
+L0025:	jsr     incsp2
 	rts
 
 .endproc
@@ -274,13 +276,13 @@ L0024:	jsr     incsp2
 	jsr     ldaidx
 	sec
 	sbc     #$01
-	bvc     L0034
+	bvc     L0035
 	eor     #$80
-L0034:	asl     a
+L0035:	asl     a
 	lda     #$00
 	ldx     #$00
 	rol     a
-	jeq     L0032
+	jeq     L0033
 	ldy     #$07
 	jsr     ldaxysp
 	jsr     pushax
@@ -292,8 +294,8 @@ L0034:	asl     a
 	jsr     ldauidx
 	jsr     pusha
 	jsr     _P_SetMobjState
-	jmp     L0038
-L0032:	ldy     #$07
+	jmp     L0039
+L0033:	ldy     #$07
 	jsr     ldaxysp
 	jsr     pushax
 	ldy     #$08
@@ -301,45 +303,7 @@ L0032:	ldy     #$07
 	ora     #$02
 	ldy     #$08
 	jsr     staspidx
-L0038:	jsr     incsp8
-	rts
-
-.endproc
-
-; ---------------------------------------------------------------
-; void __near__ P_SpawnMissile (__near__ struct mobj_T*, __near__ struct mobj_T*, unsigned char)
-; ---------------------------------------------------------------
-
-.segment	"CODE"
-
-.proc	_P_SpawnMissile: near
-
-.segment	"CODE"
-
-	ldy     #$02
-	jsr     ldaxysp
-	ldy     #$01
-	jsr     ldaxidx
-	jsr     pushax
-	ldy     #$06
-	jsr     ldaxysp
-	ldy     #$01
-	jsr     ldaxidx
-	jsr     tossubax
-	jsr     pushax
-	ldy     #$04
-	jsr     ldaxysp
-	ldy     #$03
-	jsr     ldaxidx
-	jsr     pushax
-	ldy     #$08
-	jsr     ldaxysp
-	ldy     #$03
-	jsr     ldaxidx
-	jsr     tossubax
-	jsr     pushax
-	ldy     #$09
-	jsr     addysp
+L0039:	jsr     incsp8
 	rts
 
 .endproc
@@ -375,11 +339,11 @@ L0038:	jsr     incsp8
 	ldy     #$0F
 	jsr     ldaxidx
 	jsr     bnegax
-	jeq     L0040
+	jeq     L003E
 	ldx     #$00
 	lda     #$00
-	jmp     L003F
-L0040:	ldy     #$05
+	jmp     L003D
+L003E:	ldy     #$05
 	jsr     ldaxysp
 	ldy     #$0F
 	jsr     ldaxidx
@@ -415,17 +379,17 @@ L0040:	ldy     #$05
 	cmp     #$00
 	txa
 	sbc     #$40
-	bvs     L004C
+	bvs     L004A
 	eor     #$80
-L004C:	asl     a
+L004A:	asl     a
 	lda     #$00
 	ldx     #$00
 	rol     a
-	jeq     L0049
+	jeq     L0047
 	ldx     #$00
 	lda     #$00
-	jmp     L003F
-L0049:	ldy     #$05
+	jmp     L003D
+L0047:	ldy     #$05
 	jsr     ldaxysp
 	jsr     pushax
 	ldy     #$07
@@ -435,14 +399,14 @@ L0049:	ldy     #$05
 	jsr     pushax
 	jsr     _P_CheckSight
 	jsr     bnega
-	jeq     L004E
+	jeq     L004C
 	ldx     #$00
 	lda     #$00
-	jmp     L003F
-L004E:	ldx     #$00
+	jmp     L003D
+L004C:	ldx     #$00
 	lda     #$01
-	jmp     L003F
-L003F:	jsr     incsp6
+	jmp     L003D
+L003D:	jsr     incsp6
 	rts
 
 .endproc
@@ -468,11 +432,11 @@ L003F:	jsr     incsp6
 	jsr     pushax
 	jsr     _P_CheckSight
 	jsr     bnega
-	jeq     L0055
+	jeq     L0053
 	ldx     #$00
 	lda     #$00
-	jmp     L0054
-L0055:	ldy     #$03
+	jmp     L0052
+L0053:	ldy     #$03
 	jsr     ldaxysp
 	ldy     #$08
 	jsr     ldauidx
@@ -480,7 +444,7 @@ L0055:	ldy     #$03
 	and     #$01
 	stx     tmp1
 	ora     tmp1
-	jeq     L005A
+	jeq     L0058
 	ldy     #$03
 	jsr     ldaxysp
 	jsr     pushax
@@ -491,16 +455,16 @@ L0055:	ldy     #$03
 	jsr     staspidx
 	ldx     #$00
 	lda     #$01
-	jmp     L0054
-L005A:	ldy     #$03
+	jmp     L0052
+L0058:	ldy     #$03
 	jsr     ldaxysp
 	ldy     #$09
 	jsr     ldauidx
-	jeq     L005F
+	jeq     L005D
 	ldx     #$00
 	lda     #$00
-	jmp     L0054
-L005F:	ldy     #$03
+	jmp     L0052
+L005D:	ldy     #$03
 	jsr     ldaxysp
 	ldy     #$01
 	jsr     ldaxidx
@@ -540,12 +504,12 @@ L005F:	ldy     #$03
 	ldy     #$0B
 	jsr     ldauidx
 	jsr     bnega
-	jeq     L0066
+	jeq     L0064
 	ldx     #$80
 	lda     #$00
 	ldy     #$00
 	jsr     subeqysp
-L0066:	ldy     #$01
+L0064:	ldy     #$01
 	jsr     ldaxysp
 	ldy     #$00
 	jsr     staxysp
@@ -554,30 +518,30 @@ L0066:	ldy     #$01
 	cmp     #$C9
 	txa
 	sbc     #$00
-	bvs     L006E
+	bvs     L006C
 	eor     #$80
-L006E:	asl     a
+L006C:	asl     a
 	lda     #$00
 	ldx     #$00
 	rol     a
-	jeq     L006C
+	jeq     L006A
 	ldx     #$00
 	lda     #$C8
 	ldy     #$00
 	jsr     staxysp
-L006C:	jsr     _P_Random
+L006A:	jsr     _P_Random
 	jsr     pushax
 	ldy     #$03
 	jsr     ldaxysp
 	jsr     tosultax
-	jeq     L0071
+	jeq     L006F
 	ldx     #$00
 	lda     #$00
-	jmp     L0054
-L0071:	ldx     #$00
+	jmp     L0052
+L006F:	ldx     #$00
 	lda     #$01
-	jmp     L0054
-L0054:	jsr     incsp4
+	jmp     L0052
+L0052:	jsr     incsp4
 	rts
 
 .endproc
@@ -599,11 +563,11 @@ L0054:	jsr     incsp4
 	jsr     ldauidx
 	cmp     #$08
 	jsr     booleq
-	jeq     L0088
+	jeq     L0086
 	ldx     #$00
 	lda     #$00
-	jmp     L0087
-L0088:	ldy     #$05
+	jmp     L0085
+L0086:	ldy     #$05
 	jsr     ldaxysp
 	ldy     #$01
 	jsr     ldaxidx
@@ -673,8 +637,8 @@ L0088:	ldy     #$05
 	jsr     ldaxysp
 	jsr     pushax
 	jsr     _P_TryMove
-	jmp     L0087
-L0087:	jsr     incsp6
+	jmp     L0085
+L0085:	jsr     incsp6
 	rts
 
 .endproc
@@ -694,11 +658,11 @@ L0087:	jsr     incsp6
 	jsr     pushax
 	jsr     _P_Move
 	jsr     bnega
-	jeq     L0096
+	jeq     L0094
 	ldx     #$00
 	lda     #$00
-	jmp     L0095
-L0096:	ldy     #$01
+	jmp     L0093
+L0094:	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	jsr     _P_Random
@@ -708,8 +672,8 @@ L0096:	ldy     #$01
 	jsr     staspidx
 	ldx     #$00
 	lda     #$01
-	jmp     L0095
-L0095:	jsr     incsp2
+	jmp     L0093
+L0093:	jsr     incsp2
 	rts
 
 .endproc
@@ -780,97 +744,97 @@ L0095:	jsr     incsp2
 	cmp     #$01
 	txa
 	sbc     #$0A
-	bvs     L00AA
+	bvs     L00A8
 	eor     #$80
-L00AA:	asl     a
+L00A8:	asl     a
 	lda     #$00
 	ldx     #$00
 	rol     a
-	jeq     L00A8
+	jeq     L00A6
 	ldx     #$00
 	lda     #$00
 	ldy     #$08
 	jsr     staxysp
-	jmp     L00B5
-L00A8:	ldy     #$0F
+	jmp     L00B3
+L00A6:	ldy     #$0F
 	jsr     ldaxysp
 	cmp     #$00
 	txa
 	sbc     #$F6
-	bvc     L00B1
+	bvc     L00AF
 	eor     #$80
-L00B1:	asl     a
+L00AF:	asl     a
 	lda     #$00
 	ldx     #$00
 	rol     a
-	jeq     L00AF
+	jeq     L00AD
 	ldx     #$00
 	lda     #$04
 	ldy     #$08
 	jsr     staxysp
-	jmp     L00B5
-L00AF:	ldx     #$00
+	jmp     L00B3
+L00AD:	ldx     #$00
 	lda     #$08
 	ldy     #$08
 	jsr     staxysp
-L00B5:	ldy     #$0D
+L00B3:	ldy     #$0D
 	jsr     ldaxysp
 	cmp     #$00
 	txa
 	sbc     #$F6
-	bvc     L00BB
+	bvc     L00B9
 	eor     #$80
-L00BB:	asl     a
+L00B9:	asl     a
 	lda     #$00
 	ldx     #$00
 	rol     a
-	jeq     L00B9
+	jeq     L00B7
 	ldx     #$00
 	lda     #$06
 	ldy     #$0A
 	jsr     staxysp
-	jmp     L00BF
-L00B9:	ldy     #$0D
+	jmp     L00BD
+L00B7:	ldy     #$0D
 	jsr     ldaxysp
 	cmp     #$01
 	txa
 	sbc     #$0A
-	bvs     L00C2
+	bvs     L00C0
 	eor     #$80
-L00C2:	asl     a
+L00C0:	asl     a
 	lda     #$00
 	ldx     #$00
 	rol     a
-	jeq     L00C0
+	jeq     L00BE
 	ldx     #$00
 	lda     #$02
 	ldy     #$0A
 	jsr     staxysp
-	jmp     L00BF
-L00C0:	ldx     #$00
+	jmp     L00BD
+L00BE:	ldx     #$00
 	lda     #$08
 	ldy     #$0A
 	jsr     staxysp
-L00BF:	ldy     #$09
+L00BD:	ldy     #$09
 	jsr     ldaxysp
 	cpx     #$00
-	bne     L00CD
+	bne     L00CB
 	cmp     #$08
-L00CD:	jsr     boolne
-	jeq     L00CE
+L00CB:	jsr     boolne
+	jeq     L00CC
 	ldy     #$0B
 	jsr     ldaxysp
 	cpx     #$00
-	bne     L00D0
+	bne     L00CE
 	cmp     #$08
-L00D0:	jsr     boolne
-	jne     L00CB
-L00CE:	ldx     #$00
+L00CE:	jsr     boolne
+	jne     L00C9
+L00CC:	ldx     #$00
 	lda     #$00
-	jeq     L00D1
-L00CB:	ldx     #$00
+	jeq     L00CF
+L00C9:	ldx     #$00
 	lda     #$01
-L00D1:	jeq     L00D9
+L00CF:	jeq     L00D7
 	ldy     #$11
 	jsr     ldaxysp
 	jsr     pushax
@@ -887,9 +851,9 @@ L00D1:	jeq     L00D9
 	cmp     #$01
 	txa
 	sbc     #$00
-	bvs     L00D8
+	bvs     L00D6
 	eor     #$80
-L00D8:	asl     a
+L00D6:	asl     a
 	lda     #$00
 	ldx     #$00
 	rol     a
@@ -914,26 +878,26 @@ L00D8:	asl     a
 	ldy     #$03
 	jsr     ldaxysp
 	jsr     tosneax
-	jeq     L00DB
+	jeq     L00D9
 	ldy     #$11
 	jsr     ldaxysp
 	jsr     pushax
 	jsr     _P_TryWalk
 	tax
-	jne     L00DA
-L00DB:	ldx     #$00
+	jne     L00D8
+L00D9:	ldx     #$00
 	lda     #$00
-	jeq     L00DD
-L00DA:	ldx     #$00
+	jeq     L00DB
+L00D8:	ldx     #$00
 	lda     #$01
-L00DD:	jeq     L00D9
-	jmp     L009D
-L00D9:	jsr     _P_Random
+L00DB:	jeq     L00D7
+	jmp     L009B
+L00D7:	jsr     _P_Random
 	cmp     #$C9
 	lda     #$00
 	ldx     #$00
 	rol     a
-	jne     L00DF
+	jne     L00DD
 	ldy     #$0D
 	jsr     ldaxysp
 	jsr     _abs
@@ -942,13 +906,13 @@ L00D9:	jsr     _P_Random
 	jsr     ldaxysp
 	jsr     _abs
 	jsr     tosgtax
-	jne     L00DF
+	jne     L00DD
 	ldx     #$00
 	lda     #$00
-	jeq     L00E2
-L00DF:	ldx     #$00
+	jeq     L00E0
+L00DD:	ldx     #$00
 	lda     #$01
-L00E2:	jeq     L00DE
+L00E0:	jeq     L00DC
 	ldy     #$09
 	jsr     ldaxysp
 	ldy     #$04
@@ -961,35 +925,35 @@ L00E2:	jeq     L00DE
 	jsr     ldaxysp
 	ldy     #$0A
 	jsr     staxysp
-L00DE:	ldy     #$09
+L00DC:	ldy     #$09
 	jsr     ldaxysp
 	jsr     pushax
 	ldy     #$03
 	jsr     ldaxysp
 	jsr     toseqax
-	jeq     L00ED
+	jeq     L00EB
 	ldx     #$00
 	lda     #$08
 	ldy     #$08
 	jsr     staxysp
-L00ED:	ldy     #$0B
+L00EB:	ldy     #$0B
 	jsr     ldaxysp
 	jsr     pushax
 	ldy     #$03
 	jsr     ldaxysp
 	jsr     toseqax
-	jeq     L00F3
+	jeq     L00F1
 	ldx     #$00
 	lda     #$08
 	ldy     #$0A
 	jsr     staxysp
-L00F3:	ldy     #$09
+L00F1:	ldy     #$09
 	jsr     ldaxysp
 	cpx     #$00
-	bne     L00FC
+	bne     L00FA
 	cmp     #$08
-L00FC:	jsr     boolne
-	jeq     L00F9
+L00FA:	jsr     boolne
+	jeq     L00F7
 	ldy     #$11
 	jsr     ldaxysp
 	jsr     pushax
@@ -1003,15 +967,15 @@ L00FC:	jsr     boolne
 	jsr     pushax
 	jsr     _P_TryWalk
 	tax
-	jeq     L00F9
-	jmp     L009D
-L00F9:	ldy     #$0B
+	jeq     L00F7
+	jmp     L009B
+L00F7:	ldy     #$0B
 	jsr     ldaxysp
 	cpx     #$00
-	bne     L0106
+	bne     L0104
 	cmp     #$08
-L0106:	jsr     boolne
-	jeq     L010A
+L0104:	jsr     boolne
+	jeq     L0108
 	ldy     #$11
 	jsr     ldaxysp
 	jsr     pushax
@@ -1025,15 +989,15 @@ L0106:	jsr     boolne
 	jsr     pushax
 	jsr     _P_TryWalk
 	tax
-	jeq     L010A
-	jmp     L009D
-L010A:	ldy     #$03
+	jeq     L0108
+	jmp     L009B
+L0108:	ldy     #$03
 	jsr     ldaxysp
 	cpx     #$00
-	bne     L010F
+	bne     L010D
 	cmp     #$08
-L010F:	jsr     boolne
-	jeq     L0112
+L010D:	jsr     boolne
+	jeq     L0110
 	ldy     #$11
 	jsr     ldaxysp
 	jsr     pushax
@@ -1047,38 +1011,38 @@ L010F:	jsr     boolne
 	jsr     pushax
 	jsr     _P_TryWalk
 	tax
-	jeq     L0112
-	jmp     L009D
-L0112:	jsr     _P_Random
+	jeq     L0110
+	jmp     L009B
+L0110:	jsr     _P_Random
 	ldx     #$00
 	and     #$01
 	stx     tmp1
 	ora     tmp1
-	jeq     L0115
+	jeq     L0113
 	ldx     #$00
 	lda     #$00
 	ldy     #$04
 	jsr     staxysp
-L0117:	ldy     #$05
+L0115:	ldy     #$05
 	jsr     ldaxysp
 	cmp     #$08
 	txa
 	sbc     #$00
-	bvc     L011E
+	bvc     L011C
 	eor     #$80
-L011E:	asl     a
+L011C:	asl     a
 	lda     #$00
 	ldx     #$00
 	rol     a
-	jne     L011A
-	jmp     L0118
-L011A:	ldy     #$05
+	jne     L0118
+	jmp     L0116
+L0118:	ldy     #$05
 	jsr     ldaxysp
 	jsr     pushax
 	ldy     #$03
 	jsr     ldaxysp
 	jsr     tosneax
-	jeq     L0119
+	jeq     L0117
 	ldy     #$11
 	jsr     ldaxysp
 	jsr     pushax
@@ -1092,9 +1056,9 @@ L011A:	ldy     #$05
 	jsr     pushax
 	jsr     _P_TryWalk
 	tax
-	jeq     L0119
-	jmp     L009D
-L0119:	ldy     #$05
+	jeq     L0117
+	jmp     L009B
+L0117:	ldy     #$05
 	jsr     ldaxysp
 	sta     regsave
 	stx     regsave+1
@@ -1103,27 +1067,27 @@ L0119:	ldy     #$05
 	jsr     staxysp
 	lda     regsave
 	ldx     regsave+1
-	jmp     L0117
-L0118:	jmp     L0129
-L0115:	ldx     #$00
+	jmp     L0115
+L0116:	jmp     L0127
+L0113:	ldx     #$00
 	lda     #$07
 	ldy     #$04
 	jsr     staxysp
-L0128:	ldy     #$05
+L0126:	ldy     #$05
 	jsr     ldaxysp
 	cpx     #$FF
-	bne     L0130
+	bne     L012E
 	cmp     #$FF
-L0130:	jsr     boolne
-	jne     L012B
-	jmp     L0129
-L012B:	ldy     #$05
+L012E:	jsr     boolne
+	jne     L0129
+	jmp     L0127
+L0129:	ldy     #$05
 	jsr     ldaxysp
 	jsr     pushax
 	ldy     #$03
 	jsr     ldaxysp
 	jsr     tosneax
-	jeq     L012A
+	jeq     L0128
 	ldy     #$11
 	jsr     ldaxysp
 	jsr     pushax
@@ -1137,9 +1101,9 @@ L012B:	ldy     #$05
 	jsr     pushax
 	jsr     _P_TryWalk
 	tax
-	jeq     L012A
-	jmp     L009D
-L012A:	ldy     #$05
+	jeq     L0128
+	jmp     L009B
+L0128:	ldy     #$05
 	jsr     ldaxysp
 	sta     regsave
 	stx     regsave+1
@@ -1148,14 +1112,14 @@ L012A:	ldy     #$05
 	jsr     staxysp
 	lda     regsave
 	ldx     regsave+1
-	jmp     L0128
-L0129:	ldy     #$01
+	jmp     L0126
+L0127:	ldy     #$01
 	jsr     ldaxysp
 	cpx     #$00
-	bne     L013B
+	bne     L0139
 	cmp     #$08
-L013B:	jsr     boolne
-	jeq     L013E
+L0139:	jsr     boolne
+	jeq     L013C
 	ldy     #$11
 	jsr     ldaxysp
 	jsr     pushax
@@ -1169,16 +1133,16 @@ L013B:	jsr     boolne
 	jsr     pushax
 	jsr     _P_TryWalk
 	tax
-	jeq     L013E
-	jmp     L009D
-L013E:	ldy     #$11
+	jeq     L013C
+	jmp     L009B
+L013C:	ldy     #$11
 	jsr     ldaxysp
 	jsr     pushax
 	ldx     #$00
 	lda     #$08
 	ldy     #$07
 	jsr     staspidx
-L009D:	ldy     #$12
+L009B:	ldy     #$12
 	jsr     addysp
 	rts
 
@@ -1202,7 +1166,7 @@ L009D:	ldy     #$12
 	and     #$20
 	stx     tmp1
 	ora     tmp1
-	jne     L0145
+	jne     L0143
 	ldy     #$01
 	jsr     ldaxysp
 	ldy     #$06
@@ -1213,13 +1177,13 @@ L009D:	ldy     #$12
 	ldy     #$06
 	jsr     ldauidx
 	jsr     toseqax
-	jne     L0145
+	jne     L0143
 	ldx     #$00
 	lda     #$00
-	jeq     L0147
-L0145:	ldx     #$00
+	jeq     L0145
+L0143:	ldx     #$00
 	lda     #$01
-L0147:	jeq     L0144
+L0145:	jeq     L0142
 	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
@@ -1249,7 +1213,7 @@ L0147:	jeq     L0144
 	jsr     ldauidx
 	jsr     pusha
 	jsr     _P_SetMobjState
-L0144:	jsr     incsp2
+L0142:	jsr     incsp2
 	rts
 
 .endproc
@@ -1268,7 +1232,7 @@ L0144:	jsr     incsp2
 	jsr     ldaxysp
 	ldy     #$09
 	jsr     ldauidx
-	jeq     L0151
+	jeq     L014F
 	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
@@ -1280,12 +1244,12 @@ L0144:	jsr     incsp2
 	ldy     #$09
 	jsr     staspidx
 	pla
-L0151:	ldy     #$01
+L014F:	ldy     #$01
 	jsr     ldaxysp
 	ldy     #$0F
 	jsr     ldaxidx
 	jsr     bnegax
-	jne     L0155
+	jne     L0153
 	ldy     #$01
 	jsr     ldaxysp
 	ldy     #$0F
@@ -1295,21 +1259,21 @@ L0151:	ldy     #$01
 	ldx     #$00
 	and     #$04
 	jsr     bnegax
-	jne     L0155
+	jne     L0153
 	ldx     #$00
 	lda     #$00
-	jeq     L0157
-L0155:	ldx     #$00
+	jeq     L0155
+L0153:	ldx     #$00
 	lda     #$01
-L0157:	jeq     L0154
+L0155:	jeq     L0152
 	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	jsr     _P_LookForPlayers
 	tax
-	jeq     L0158
-	jmp     L0184
-L0158:	ldy     #$01
+	jeq     L0156
+	jmp     L0182
+L0156:	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	ldy     #$03
@@ -1320,8 +1284,8 @@ L0158:	ldy     #$01
 	jsr     ldauidx
 	jsr     pusha
 	jsr     _P_SetMobjState
-	jmp     L0184
-L0154:	ldy     #$01
+	jmp     L0182
+L0152:	ldy     #$01
 	jsr     ldaxysp
 	ldy     #$08
 	jsr     ldauidx
@@ -1329,7 +1293,7 @@ L0154:	ldy     #$01
 	and     #$02
 	stx     tmp1
 	ora     tmp1
-	jeq     L015E
+	jeq     L015C
 	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
@@ -1342,33 +1306,33 @@ L0154:	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	jsr     _P_NewChaseDir
-	jmp     L0184
-L015E:	ldy     #$01
+	jmp     L0182
+L015C:	ldy     #$01
 	jsr     ldaxysp
 	ldy     #$0D
 	jsr     ldaxidx
 	ldy     #$0B
 	jsr     ldauidx
-	jeq     L0166
+	jeq     L0164
 	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	jsr     _P_CheckMeleeRange
 	tax
-	jne     L0165
-L0166:	ldx     #$00
+	jne     L0163
+L0164:	ldx     #$00
 	lda     #$00
-	jeq     L0168
-L0165:	ldx     #$00
+	jeq     L0166
+L0163:	ldx     #$00
 	lda     #$01
-L0168:	jeq     L0164
+L0166:	jeq     L0162
 	ldy     #$01
 	jsr     ldaxysp
 	ldy     #$0D
 	jsr     ldaxidx
 	ldy     #$04
 	jsr     ldauidx
-	jeq     L0169
+	jeq     L0167
 	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
@@ -1380,7 +1344,7 @@ L0168:	jeq     L0164
 	jsr     ldauidx
 	jsr     pusha
 	jsr     _S_StartSound
-L0169:	ldy     #$01
+L0167:	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	ldy     #$03
@@ -1391,28 +1355,28 @@ L0169:	ldy     #$01
 	jsr     ldauidx
 	jsr     pusha
 	jsr     _P_SetMobjState
-	jmp     L0184
-L0164:	ldy     #$01
+	jmp     L0182
+L0162:	ldy     #$01
 	jsr     ldaxysp
 	ldy     #$0D
 	jsr     ldaxidx
 	ldy     #$0C
 	jsr     ldauidx
-	jeq     L0171
+	jeq     L016F
 	ldy     #$01
 	jsr     ldaxysp
 	ldy     #$0A
 	jsr     ldaidx
-	jeq     L0173
-	jmp     L0171
-L0173:	ldy     #$01
+	jeq     L0171
+	jmp     L016F
+L0171:	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	jsr     _P_CheckMissileRange
 	jsr     bnega
-	jeq     L0176
-	jmp     L0171
-L0176:	ldy     #$01
+	jeq     L0174
+	jmp     L016F
+L0174:	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	ldy     #$03
@@ -1431,8 +1395,8 @@ L0176:	ldy     #$01
 	ora     #$02
 	ldy     #$08
 	jsr     staspidx
-	jmp     L0184
-L0171:	ldy     #$01
+	jmp     L0182
+L016F:	ldy     #$01
 	jsr     ldaxysp
 	sta     ptr1
 	stx     ptr1+1
@@ -1446,40 +1410,40 @@ L0171:	ldy     #$01
 	lda     #$00
 	ldx     #$00
 	rol     a
-	jne     L017F
+	jne     L017D
 	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	jsr     _P_Move
 	jsr     bnega
-	jne     L017F
+	jne     L017D
 	ldx     #$00
 	lda     #$00
-	jeq     L0181
-L017F:	ldx     #$00
+	jeq     L017F
+L017D:	ldx     #$00
 	lda     #$01
-L0181:	jeq     L017E
+L017F:	jeq     L017C
 	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	jsr     _P_NewChaseDir
-L017E:	ldy     #$01
+L017C:	ldy     #$01
 	jsr     ldaxysp
 	ldy     #$0D
 	jsr     ldaxidx
 	ldy     #$02
 	jsr     ldauidx
-	jeq     L0186
+	jeq     L0184
 	jsr     _P_Random
 	cmp     #$03
 	jsr     boolult
-	jne     L0185
-L0186:	ldx     #$00
+	jne     L0183
+L0184:	ldx     #$00
 	lda     #$00
-	jeq     L0187
-L0185:	ldx     #$00
+	jeq     L0185
+L0183:	ldx     #$00
 	lda     #$01
-L0187:	jeq     L0184
+L0185:	jeq     L0182
 	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
@@ -1491,7 +1455,7 @@ L0187:	jeq     L0184
 	jsr     ldauidx
 	jsr     pusha
 	jsr     _S_StartSound
-L0184:	jsr     incsp2
+L0182:	jsr     incsp2
 	rts
 
 .endproc
@@ -1510,12 +1474,12 @@ L0184:	jsr     incsp2
 	jsr     ldaxysp
 	txa
 	jsr     boolge
-	jeq     L018C
+	jeq     L018A
 	ldy     #$01
 	jsr     ldaxysp
 	txa
 	jsr     boolge
-	jeq     L018E
+	jeq     L018C
 	ldy     #$03
 	jsr     ldaxysp
 	jsr     pushax
@@ -1526,12 +1490,12 @@ L0184:	jsr     incsp2
 	jsr     ldaxysp
 	jsr     tosmulax
 	jsr     tosgtax
-	jeq     L0190
+	jeq     L018E
 	ldx     #$00
 	lda     #$00
-	jmp     L018B
-	jmp     L0197
-L0190:	ldy     #$01
+	jmp     L0189
+	jmp     L0195
+L018E:	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	ldx     #$00
@@ -1541,16 +1505,16 @@ L0190:	ldy     #$01
 	jsr     ldaxysp
 	jsr     tosmulax
 	jsr     tosgtax
-	jeq     L0194
+	jeq     L0192
 	ldx     #$00
 	lda     #$02
-	jmp     L018B
-	jmp     L0197
-L0194:	ldx     #$00
+	jmp     L0189
+	jmp     L0195
+L0192:	ldx     #$00
 	lda     #$01
-	jmp     L018B
-L0197:	jmp     L01A3
-L018E:	ldy     #$01
+	jmp     L0189
+L0195:	jmp     L01A1
+L018C:	ldy     #$01
 	jsr     ldaxysp
 	jsr     negax
 	ldy     #$00
@@ -1565,12 +1529,12 @@ L018E:	ldy     #$01
 	jsr     ldaxysp
 	jsr     tosmulax
 	jsr     tosgtax
-	jeq     L019C
+	jeq     L019A
 	ldx     #$00
 	lda     #$00
-	jmp     L018B
-	jmp     L01A3
-L019C:	ldy     #$01
+	jmp     L0189
+	jmp     L01A1
+L019A:	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	ldx     #$00
@@ -1580,16 +1544,16 @@ L019C:	ldy     #$01
 	jsr     ldaxysp
 	jsr     tosmulax
 	jsr     tosgtax
-	jeq     L01A0
+	jeq     L019E
 	ldx     #$00
 	lda     #$06
-	jmp     L018B
-	jmp     L01A3
-L01A0:	ldx     #$00
+	jmp     L0189
+	jmp     L01A1
+L019E:	ldx     #$00
 	lda     #$07
-	jmp     L018B
-L01A3:	jmp     L01BD
-L018C:	ldy     #$03
+	jmp     L0189
+L01A1:	jmp     L01BB
+L018A:	ldy     #$03
 	jsr     ldaxysp
 	jsr     negax
 	ldy     #$02
@@ -1598,7 +1562,7 @@ L018C:	ldy     #$03
 	jsr     ldaxysp
 	txa
 	jsr     boolge
-	jeq     L01A8
+	jeq     L01A6
 	ldy     #$03
 	jsr     ldaxysp
 	jsr     pushax
@@ -1609,12 +1573,12 @@ L018C:	ldy     #$03
 	jsr     ldaxysp
 	jsr     tosmulax
 	jsr     tosgtax
-	jeq     L01AA
+	jeq     L01A8
 	ldx     #$00
 	lda     #$04
-	jmp     L018B
-	jmp     L01B1
-L01AA:	ldy     #$01
+	jmp     L0189
+	jmp     L01AF
+L01A8:	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	ldx     #$00
@@ -1624,16 +1588,16 @@ L01AA:	ldy     #$01
 	jsr     ldaxysp
 	jsr     tosmulax
 	jsr     tosgtax
-	jeq     L01AE
+	jeq     L01AC
 	ldx     #$00
 	lda     #$02
-	jmp     L018B
-	jmp     L01B1
-L01AE:	ldx     #$00
+	jmp     L0189
+	jmp     L01AF
+L01AC:	ldx     #$00
 	lda     #$01
-	jmp     L018B
-L01B1:	jmp     L01BD
-L01A8:	ldy     #$01
+	jmp     L0189
+L01AF:	jmp     L01BB
+L01A6:	ldy     #$01
 	jsr     ldaxysp
 	jsr     negax
 	ldy     #$00
@@ -1648,12 +1612,12 @@ L01A8:	ldy     #$01
 	jsr     ldaxysp
 	jsr     tosmulax
 	jsr     tosgtax
-	jeq     L01B6
+	jeq     L01B4
 	ldx     #$00
 	lda     #$04
-	jmp     L018B
-	jmp     L01BD
-L01B6:	ldy     #$01
+	jmp     L0189
+	jmp     L01BB
+L01B4:	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	ldx     #$00
@@ -1663,18 +1627,18 @@ L01B6:	ldy     #$01
 	jsr     ldaxysp
 	jsr     tosmulax
 	jsr     tosgtax
-	jeq     L01BA
+	jeq     L01B8
 	ldx     #$00
 	lda     #$06
-	jmp     L018B
-	jmp     L01BD
-L01BA:	ldx     #$00
+	jmp     L0189
+	jmp     L01BB
+L01B8:	ldx     #$00
 	lda     #$05
-	jmp     L018B
-L01BD:	ldx     #$00
+	jmp     L0189
+L01BB:	ldx     #$00
 	lda     #$00
-	jmp     L018B
-L018B:	jsr     incsp4
+	jmp     L0189
+L0189:	jsr     incsp4
 	rts
 
 .endproc
@@ -1694,9 +1658,9 @@ L018B:	jsr     incsp4
 	ldy     #$0F
 	jsr     ldaxidx
 	jsr     bnegax
-	jeq     L01C1
-	jmp     L01C0
-L01C1:	ldy     #$01
+	jeq     L01BF
+	jmp     L01BE
+L01BF:	ldy     #$01
 	jsr     ldaxysp
 	jsr     pushax
 	ldy     #$08
@@ -1736,7 +1700,7 @@ L01C1:	ldy     #$01
 	jsr     _R_PointToAngle
 	ldy     #$07
 	jsr     staspidx
-L01C0:	jsr     incsp2
+L01BE:	jsr     incsp2
 	rts
 
 .endproc
@@ -1757,9 +1721,9 @@ L01C0:	jsr     incsp2
 	ldy     #$0F
 	jsr     ldaxidx
 	jsr     bnegax
-	jeq     L01CA
-	jmp     L01DA
-L01CA:	ldy     #$05
+	jeq     L01C8
+	jmp     L01D8
+L01C8:	ldy     #$05
 	jsr     ldaxysp
 	jsr     pushax
 	jsr     _A_FaceTarget
@@ -1803,25 +1767,25 @@ L01CA:	ldy     #$05
 	cmp     #$DD
 	txa
 	sbc     #$00
-	bvs     L01D7
+	bvs     L01D5
 	eor     #$80
-L01D7:	asl     a
+L01D5:	asl     a
 	lda     #$00
 	ldx     #$00
 	rol     a
-	jeq     L01D5
+	jeq     L01D3
 	ldy     #$01
 	jsr     ldaxysp
 	cpx     #$00
-	bne     L01D9
+	bne     L01D7
 	cmp     #$DC
-L01D9:	jsr     booleq
-L01D5:	jsr     _P_Random
+L01D7:	jsr     booleq
+L01D3:	jsr     _P_Random
 	jsr     pushax
 	ldy     #$03
 	jsr     ldaxysp
 	jsr     tosugtax
-	jeq     L01DA
+	jeq     L01D8
 	jsr     _P_Random
 	ldx     #$00
 	and     #$03
@@ -1844,7 +1808,7 @@ L01D5:	jsr     _P_Random
 	jsr     ldaxysp
 	jsr     pushax
 	jsr     _P_DamageMobj
-L01DA:	jsr     incsp6
+L01D8:	jsr     incsp6
 	rts
 
 .endproc
@@ -1865,9 +1829,9 @@ L01DA:	jsr     incsp6
 	ldy     #$0F
 	jsr     ldaxidx
 	jsr     bnegax
-	jeq     L01E6
-	jmp     L01E5
-L01E6:	ldy     #$03
+	jeq     L01E4
+	jmp     L01E8
+L01E4:	ldy     #$03
 	jsr     ldaxysp
 	jsr     pushax
 	jsr     _A_FaceTarget
@@ -1876,7 +1840,7 @@ L01E6:	ldy     #$03
 	jsr     pushax
 	jsr     _P_CheckMeleeRange
 	tax
-	jeq     L01EA
+	jeq     L01E8
 	jsr     _P_Random
 	ldx     #$00
 	and     #$07
@@ -1899,19 +1863,8 @@ L01E6:	ldy     #$03
 	jsr     ldaxysp
 	jsr     pushax
 	jsr     _P_DamageMobj
-	jmp     L01E5
-L01EA:	ldy     #$03
-	jsr     ldaxysp
-	jsr     pushax
-	ldy     #$05
-	jsr     ldaxysp
-	ldy     #$0F
-	jsr     ldaxidx
-	jsr     pushax
-	lda     #$06
-	jsr     pusha
-	jsr     _P_SpawnMissile
-L01E5:	jsr     incsp4
+	jmp     L01E8
+L01E8:	jsr     incsp4
 	rts
 
 .endproc
