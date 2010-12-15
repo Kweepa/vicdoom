@@ -9,6 +9,7 @@
 void __fastcall__ drawLogo(void);
 
 #define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
+#define PEEK(addr) (*(unsigned char *)(addr))
 
 char *caMenus[6][3] =
 {
@@ -85,11 +86,11 @@ void waitForEscReleased(void)
 
 #define TEXT_COLOR 2
 #define HILITE_COLOR 7
-#define MENU_Y 12
+#define MENU_Y 11
 
 void drawMenuItem(int i)
 {
-  char y = MENU_Y + i;
+  char y = MENU_Y + (i<<1);
   char *itemStr = caMenus[menu][i];
   char len = strlen(itemStr);
   char x = 11 - len/2;
@@ -102,7 +103,7 @@ void drawMenu(void)
   // draw the menu
   for (i = 0; i < 3; ++i)
   {
-    y = MENU_Y + i;
+    y = MENU_Y + (i<<1);
 	cputsxy(0, y, "                      ");
     if (i != item)
     {
@@ -158,9 +159,12 @@ void addToMusicVolume(char add)
 // returns 1 if should restart
 char runMenu(char canReturn)
 {
-   playSound(SOUND_STNMOV);
+   if (canReturn)
+   {
+     playSound(SOUND_STNMOV);
+   }
    waitForEscReleased();
-
+   
    drawLogo();
    
    enterNumberInMenuItem(caMenus[2][0] + 15, getEffectsVolume());
@@ -182,24 +186,24 @@ char runMenu(char canReturn)
 	 if (keyPressed(KEY_FORWARD))
 	 {
 	   textcolor(TEXT_COLOR);
-	   cputsxy(0, MENU_Y+item, " ");
+	   cputsxy(0, MENU_Y+(item<<1), " ");
 	   drawMenuItem(item);
 	   --item;
 	   if (item == 255) item = 2;
 	   textcolor(HILITE_COLOR);
-	   cputsxy(0, MENU_Y+item, "@");
+	   cputsxy(0, MENU_Y+(item<<1), "@");
 	   drawMenuItem(item);
 	   playSound(SOUND_STNMOV);
 	 }
 	 if (keyPressed(KEY_BACK))
 	 {
 	   textcolor(TEXT_COLOR);
-	   cputsxy(0, MENU_Y+item, " ");
+	   cputsxy(0, MENU_Y+(item<<1), " ");
 	   drawMenuItem(item);
 	   ++item;
 	   if (item == 3) item = 0;
 	   textcolor(HILITE_COLOR);
-	   cputsxy(0, MENU_Y+item, "@");
+	   cputsxy(0, MENU_Y+(item<<1), "@");
 	   drawMenuItem(item);
 	   playSound(SOUND_STNMOV);
 	 }

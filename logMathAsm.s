@@ -12,6 +12,10 @@
 .export _setCameraAngle
 .export _setCameraX
 .export _setCameraY
+.export _get_sin
+.export _get_cos
+.export _getSinOf
+.export _getCosOf
 .importzp sp
 
 .segment "LUTS"
@@ -692,14 +696,23 @@ rts
 .proc _setCameraAngle:near
 
 sta angle
+tay
+lda sintab,y
+sta sina
+tya
+clc
+adc #16
+and #63
+tay
+lda sintab,y
+sta cosa
+
+lda angle
 and #15
 beq sca_done
 
-ldy angle
-lda sintab,y
-sta sina
-tax
 lda #0
+ldx sina
 cpx #0
 bpl sca_sinPositive
 jsr negax
@@ -716,15 +729,8 @@ txa
 sbc #$06
 sta logsina+1
 
-lda angle
-clc
-adc #16
-and #63
-tay
-lda sintab,y
-sta cosa
-tax
 lda #0
+ldx cosa
 cpx #0
 bpl sca_cosPositive
 jsr negax
@@ -761,3 +767,26 @@ sta cameraY
 stx cameraY+1
 rts
 .endproc
+
+
+_get_sin:
+lda sina
+rts
+
+_get_cos:
+lda cosa
+rts
+
+
+_getSinOf:
+tay
+lda sintab,y
+rts
+
+_getCosOf:
+clc
+adc #16
+and #63
+tay
+lda sintab,y
+rts

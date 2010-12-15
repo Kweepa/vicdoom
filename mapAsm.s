@@ -34,6 +34,19 @@
 
 
 .segment "MAPDATA"
+; summary data (4 bytes)
+numVerts:
+.byte 94
+numEdges:
+.byte 126
+numSectors:
+.byte 31
+numObj:
+.byte 30
+
+; pad
+.res 92,0
+
 ; sector info
 secNumVerts:
 .byte 4, 4, 7, 4, 8, 4, 5, 4, 8, 4, 4, 5, 4, 6, 4, 7
@@ -46,20 +59,9 @@ objXhi:
 .byte 28, 23, 46, 40, 12, 38, 31, 49, 41, 38, 58, 59, 42, 30
 .res 2, 0
 
-objXlo:
-.res 32, 0
-
 objYhi:
 .byte 25, 0, 7, 7, 0, 0, 7, 11, 3, 7, -8, -42, 3, 19, 27, 28
 .byte -14, -14, -18, -34, 3, 11, -30, -30, -5, 0, -7, 0, -46, -34
-.res 2, 0
-
-objYlo:
-.res 32, 0
-
-objAng:
-.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-.byte 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 .res 2, 0
 
 objType:
@@ -175,16 +177,14 @@ secEdges:
 .byte 88, 89, 83, 85, 86, 87, 0, 0
 .res 8, 0
 
-; summary data (4 bytes)
-numVerts:
-.byte 94
-numEdges:
-.byte 126
-numSectors:
-.byte 31
-numObj:
-.byte 30
 
+.segment "CODE"
+
+objXlo:
+.res 32, 0
+
+objYlo:
+.res 32, 0
 
 ; r/w parts (48 bytes)
 xfvertXhi:
@@ -200,10 +200,6 @@ xfvertScreenXhi:
 xfvertScreenXlo:
 .res 8, 0
 
-padFromHere:
-; final two pages for future expansion
-.res 512 - 52, 0
-
 vertexCount = $60
 vertexCounter = $61
 vertexCounterPP = $62
@@ -214,7 +210,6 @@ outsideSector = $67
 xToTransform = $68
 yToTransform = $6A
 
-.segment "CODE"
 
 .proc _getScreenX: near
 tay

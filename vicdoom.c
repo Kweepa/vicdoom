@@ -10,17 +10,16 @@
 // 5. enemy AI (update only visible enemies, plus enemies in the current sector)
 // 5.5. per sector objects (link list)
 // 6. add keys and doors
-// 7. add health and weapon
+// 7. add health and weapons
 // 8. advance levels
-// 9. menus
+// X 9. menus
 // 10. more optimization?
-// 11. use a double buffer scheme that draws to two different sets of characters and just copies the characters over
+// X 11. use a double buffer scheme that draws to two different sets of characters and just copies the characters over
 // 12. optimize push_out code
 
 // memory map:
 // see the .cfg file for how to do this
-// startup code is $82 bytes long
-// to make this work, I needed a "padding.s" that included ".segment "UDG" .res $77F,0"
+// startup code is $82 bytes long - fix with fill = yes
 // 1000-11FF screen
 // 1200-13FF startup + random data
 // 1400-15FF character font, copied from rom
@@ -38,18 +37,10 @@
 
 #include "updateInput.h"
 #include "playSound.h"
+#include "mapAsm.h"
 
 #define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
 #define PEEK(addr) (*(unsigned char *)(addr))
-
-// 64 * sin( 64 values [0...2pi) )
-static const signed char sinTab[64] =
-{
-   0, 6, 12, 19, 24, 30, 36, 41, 45, 49, 53, 56, 59, 61, 63, 64,
-   64, 64, 63, 61, 59, 56, 53, 49, 45, 41, 36, 30, 24, 19, 12, 6,
-   0, -6, -12, -19, -24, -30, -36, -41, -45, -49, -53, -56, -59, -61, -63, -63,
-   -64, -64, -63, -61, -59, -56, -53, -49, -45, -41, -36, -30, -24, -19, -12, -6
-};
 
 int __fastcall__ muladd88(int x, int y, int z);
 unsigned int __fastcall__ div88(unsigned int x, unsigned int y);
@@ -67,26 +58,9 @@ char __fastcall__ testFilled(signed char col);
 signed char __fastcall__ testFilledWithY(signed char col, unsigned int y);
 void __fastcall__ setFilled(signed char col, unsigned int y);
 
-unsigned char *secNumVerts;
-int __fastcall__ getScreenX(unsigned char i);
-int __fastcall__ getTransformedX(unsigned char i);
-int __fastcall__ getTransformedY(unsigned char i);
-
-char __fastcall__ getNumObjects(void);
-char __fastcall__ getObjectSector(char o);
-int __fastcall__ getObjectX(char o);
-int __fastcall__ getObjectY(char o);
-char __fastcall__ getObjectType(char o);
-
-signed char __fastcall__ get_sin(unsigned char angle)
-{
-  return sinTab[angle & 63];
-}
-
-signed char __fastcall__ get_cos(unsigned char angle)
-{
-  return sinTab[(angle + 16) & 63];
-}
+// these get the player sin/cos
+signed char __fastcall__ get_sin(void);
+signed char __fastcall__ get_cos(void);
 
 // use this to line up raster timing lines
 void waitforraster(void)
@@ -110,48 +84,51 @@ typedef struct xfvertexT
 // transformed sector verts
 xfvertex xfverts[8];
 
-typedef struct objtypeT
+typedef struct
 {
   char texture;
+  char animate;
   char solid;
   char widthScale;
   char startY; // from the bottom of the texture
   char height;
   char startX;
   char width; // either 8 or 16
-  char dummy;
-} objtype;
+}
+texFrame;
 
-objtype objtypes[16] =
+texFrame texFrames[16] =
 {
-  { 6, 0, 3 }, // player spawn
-  { 18, 0, 3, 16, 16, 0, 16 }, // green armor
-  { 6, 0, 3 }, // backpack
-  { 20, 0, 8, 16, 16, 0, 16 }, // barrel
-  { 19, 0, 8, 16, 8, 8, 8 }, // blue keycard
-  { 13, 1, 3 }, // caco
-  { 19, 0, 8, 24, 8, 0, 8 }, // medikit
-  { 8, 1, 5 }, // imp
-  { 11, 1, 3 }, // demon
-  { 19, 0, 8, 24, 8, 8, 8 }, // red keycard
-  { 19, 0, 5, 8, 8, 0, 16 }, // bullets
-  { 5, 1, 5 }, // possessed
-  { 17, 1, 5 }, // pillar
-  { 19, 0, 8, 16, 24, 0, 8 }, // green keycard
+  { 6, 0, 0, 3 }, // player spawn
+  { 18, 0, 0, 3, 16, 16, 0, 16 }, // green armor
+  { 6, 0, 0, 3 }, // backpack
+  { 20, 0, 0, 8, 16, 16, 0, 16 }, // barrel
+  { 19, 0, 0, 8, 16, 8, 8, 8 }, // blue keycard
+  { 13, 1, 1, 3 }, // caco
+  { 19, 0, 0, 8, 24, 8, 0, 8 }, // medikit
+  { 8, 1, 1, 5 }, // imp
+  { 11, 1, 1, 3 }, // demon
+  { 19, 0, 0, 8, 24, 8, 8, 8 }, // red keycard
+  { 19, 0, 0, 5, 8, 8, 0, 16 }, // bullets
+  { 5, 1, 1, 5 }, // possessed
+  { 17, 0, 1, 5 }, // pillar
+  { 19, 0, 0, 8, 16, 24, 0, 8 }, // green keycard
 };
 
-typedef struct objectT
+typedef struct
 {
   short x;
   short y;
   char angle;
-  char type;
+  char texFrame;
   char sector;
-  char dummy;
-} object;
+  char mobjIndex; // FF for no mobj
+}
+object;
 
-object player = { -17*256, -11*256, 8, 0, 0 };
-object *camera = &player;
+int playerx = -17*256, playery = -11*256;
+char playera = 8;
+char playerSector = 0;
 
 #define TYPE_DOOR 1
 #define TYPE_OBJECT 2
@@ -185,10 +162,8 @@ char __fastcall__ getGlobalEdgeTexture(char edgeIndex);
 
 void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
 {
-  //sector *sec = &sectors[sectorIndex];
-  //edge *curEdge = &edges[sec->edges[curEdgeIndex]];
-  char textureIndex = getEdgeTexture(sectorIndex, curEdgeIndex); // curEdge->tex;
-  char edgeLen = getEdgeLen(sectorIndex, curEdgeIndex); // curEdge->len;
+  char textureIndex = getEdgeTexture(sectorIndex, curEdgeIndex);
+  char edgeLen = getEdgeLen(sectorIndex, curEdgeIndex);
 
   // intersect the view direction and the edge
   // http://local.wasp.uwa.edu.au/~pbourke/geometry/lineline2d/
@@ -267,71 +242,13 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
 signed char drawDoor(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
 {
   char edgeGlobalIndex = getEdgeIndex(sectorIndex, curEdgeIndex);
-  char doorOpenAmount = 255 - doorClosedAmount[edgeGlobalIndex];
-  char textureIndex, edgeLen;
-  int x1, y1, dx, dy, x4, numer, denom;
-  signed char curX;
-  unsigned int t, texI, curY, h;
-  
-  //gotoxy(0,1);
-  //cprintf("Door l %d r %d oa %d. ", x_L, x_R, doorOpenAmount);
+  char doorClosedAmount = doorClosedAmount[edgeGlobalIndex];
 
-  if (doorOpenAmount == 0)
-  {
-    drawWall(sectorIndex, curEdgeIndex, nextEdgeIndex, x_L, x_R);
-    return x_R;
-  }
-  else if (doorOpenAmount == 255)
+  if (doorClosedAmount == 0)
   {
     return x_L;
   }
-  textureIndex = getEdgeTexture(sectorIndex, curEdgeIndex);
-  edgeLen = getEdgeLen(sectorIndex, curEdgeIndex);
-
-  // intersect the view direction and the edge
-  // http://local.wasp.uwa.edu.au/~pbourke/geometry/lineline2d/
-  x1 = getTransformedX(curEdgeIndex);
-  y1 = getTransformedY(curEdgeIndex);
-  dx = getTransformedX(nextEdgeIndex) - x1;
-  dy = getTransformedY(nextEdgeIndex) - y1;
-
-  // add 128 to correct for sampling in the center of the column
-  x4 = (256*x_L + 128)/HALFSCREENWIDTH;
-  for (curX = x_L; curX < x_R; ++curX)
-  {
-     x4 += 16;
-     if (testFilled(curX) == 0)
-     {
-        denom = muladd88(-x4, dy, dx);
-        if (denom > 0)
-        {
-           numer = muladd88(x4, y1, -x1);
-           t = div88(numer, denom);
-           if (t > doorOpenAmount)
-           {
-              return curX;
-           }
-           t = 255 - (doorOpenAmount - t);
-           curY = muladd88(t, dy, y1);
-           h = div88(128, curY);
-           // door or techwall, so fit to wall
-  		   texI = t >> 4;
-           
-           setFilled(curX, curY);
-
-           if (curX == 0)
-           {
-             typeAtCenterOfView = TYPE_DOOR;
-             itemAtCenterOfView = edgeGlobalIndex;
-           }
-
-           // can look up the yStep (and starting texY) too
-           // each is a 512 byte table - hooray for wasting memory
-           // on the other hand, since I've already decided to waste 2k on a multiply table, I might as well use another 2k for lookups where appropriate
-           drawColumn(textureIndex, texI, curX, curY, h);
-        }
-     }
-  }
+  drawWall(sectorIndex, curEdgeIndex, nextEdgeIndex, x_L, x_R);
   return x_R;
 }
 
@@ -340,9 +257,9 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
   // perspective transform (see elsewhere for optimization)
   //int h = (SCREENHEIGHT/16) * 512 / (vy/16);
   unsigned int h = div88(128, vy);
-  char objectType = getObjectType(o);
-  unsigned int w = h/objtypes[objectType].widthScale;
-  char textureIndex = objtypes[objectType].texture;
+  char texFrameIndex = getObjectType(o);
+  unsigned int w = h/texFrames[texFrameIndex].widthScale;
+  char textureIndex = texFrames[texFrameIndex].texture;
   int sx;
   int leftX;
   int rightX;
@@ -376,7 +293,10 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
               // compensate for pixel samples being mid column
               //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
               texI = getObjectTexIndex(w, curX - leftX);
-              if ((frame & 4) != 0) texI = (TEXWIDTH - 1) - texI;
+              if (texFrames[texFrameIndex].animate)
+              {
+                if ((frame & 4) != 0) texI = (TEXWIDTH - 1) - texI;
+              }
               drawColumn(textureIndex, texI, curX, vy, h);
            }
         }
@@ -389,9 +309,9 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
   // perspective transform (see elsewhere for optimization)
   //int h = (SCREENHEIGHT/16) * 512 / (vy/16);
   unsigned int h = div88(128, vy);
-  char objectType = getObjectType(o);
-  unsigned int w = h/objtypes[objectType].widthScale;
-  char textureIndex = objtypes[objectType].texture;
+  char texFrameIndex = getObjectType(o);
+  unsigned int w = h/texFrames[texFrameIndex].widthScale;
+  char textureIndex = texFrames[texFrameIndex].texture;
   int sx;
   int leftX;
   int rightX;
@@ -413,8 +333,8 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
      {
         for (curX = startX; curX < endX; ++curX)
         {
-           char startY = objtypes[objectType].startY;
-           char height = objtypes[objectType].height;
+           char startY = texFrames[texFrameIndex].startY;
+           char height = texFrames[texFrameIndex].height;
            if (testFilledWithY(curX, vy) > 0)
            {
               if (curX == 0)
@@ -425,9 +345,9 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
               // compensate for pixel samples being mid column
               //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
               texI = getObjectTexIndex(w, curX - leftX);
-              if (objtypes[objectType].width != 16)
+              if (texFrames[texFrameIndex].width != 16)
               {
-                 texI = objtypes[objectType].startX + (texI>>1);
+                 texI = texFrames[texFrameIndex].startX + (texI>>1);
               }
               drawColumnTransparent(textureIndex, startY, height, texI, curX, vy, h);
            }
@@ -507,7 +427,7 @@ void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 	     char type;
 		 objInst = &unsorted[sorted[i]];
 		 type = getObjectType(objInst->o);
-		 if (objtypes[type].solid)
+		 if (texFrames[type].solid)
 		 {
 		   drawObjectInSector(objInst->o, objInst->x, objInst->y, x_L, x_R);
 		 }
@@ -523,7 +443,7 @@ void queueTransparentObjects(signed char x_L, signed char x_R)
    {
         objInst = &unsorted[sorted[i]];
 		type = getObjectType(objInst->o);
-		if (!objtypes[type].solid)
+		if (!texFrames[type].solid)
         {
            transp = &transparent[numTransparent];
            transp->o = objInst->o;
@@ -567,7 +487,7 @@ void drawSpans()
   numTransparent = 0;
   typeAtCenterOfView = 0;
 
-  spanStackSec[0] = camera->sector;
+  spanStackSec[0] = playerSector;
   spanStackL[0] = -HALFSCREENWIDTH;
   spanStackR[0] = HALFSCREENWIDTH;
 
@@ -606,7 +526,7 @@ void drawSpans()
         nextX = getScreenX(nextEdge);
         if (nextX < curX || nextX > x_R) nextX = x_R;
 
-        thatSector = getOtherSector(sectorIndex, curEdge); //edges[sec->edges[curEdge]].sector;
+        thatSector = getOtherSector(sectorIndex, curEdge);
         if (thatSector != -1)
         {
            if (getEdgeTexture(sectorIndex, curEdge) == 4)
@@ -661,7 +581,7 @@ char __fastcall__ getNumVerts(char sectorIndex);
 signed char __fastcall__ getSectorVertexX(char sectorIndex, char vertexIndex);
 signed char __fastcall__ getSectorVertexY(char sectorIndex, char vertexIndex);
 
-int push_out(object *obj)
+int push_out()
 {
   // probably a good idea to check the edges we can cross first
   // if any of them teleport us, move, then push_out in the new sector
@@ -678,7 +598,7 @@ int push_out(object *obj)
   long distanceToPush;
   long dx, dy;
   char edgeGlobalIndex;
-  char curSector = obj->sector;
+  char curSector = playerSector;
   char secNumVerts = getNumVerts(curSector);
   
   // see which edge the new coordinate is behind
@@ -691,8 +611,8 @@ int push_out(object *obj)
      v2y = getSectorVertexY(curSector, ni);
      ex = ((long)v2x) - v1x;
      ey = ((long)v2y) - v1y;
-     px = obj->x - 256*v1x;
-     py = obj->y - 256*v1y;
+     px = playerx - 256*v1x;
+     py = playery - 256*v1y;
      // need to precalc 65536/edge.len
      edgeLen = getEdgeLen(curSector, i);
      height = (px * ey - py * ex) / edgeLen;
@@ -708,7 +628,7 @@ int push_out(object *obj)
            {
               if (height < 0)
               {
-                 obj->sector = thatSector;
+                 playerSector = thatSector;
                  //gotoxy(1,0);
                  //cprintf("sec%d ed%d ned%d ex%d ey%d. ", thatSector, i, ni, (int)ex, (int)ey);
                  return 1;
@@ -718,8 +638,8 @@ int push_out(object *obj)
            {
               // try just pushing out
               distanceToPush = OUTERCOLLISIONRADIUS - height;
-              obj->x += distanceToPush * ey / edgeLen;
-              obj->y -= distanceToPush * ex / edgeLen;
+              playerx += distanceToPush * ey / edgeLen;
+              playery -= distanceToPush * ex / edgeLen;
               return 1;
            }
         }
@@ -733,22 +653,22 @@ int push_out(object *obj)
 			   if (distanceToPush > 0)
 			   {
 				  distanceToPush += COLLISIONDELTA;
-				  obj->x += distanceToPush * px / height;
-				  obj->y += distanceToPush * py / height;
+				  playerx += distanceToPush * px / height;
+				  playery += distanceToPush * py / height;
 				  return 1;
 			   }
 			}
 			else
 			{
-			   dx = obj->x - 256*v2x;
-			   dy = obj->y - 256*v2y;
+			   dx = playerx - 256*v2x;
+			   dy = playery - 256*v2y;
 			   height = sqrt(dx * dx + dy * dy);
 			   distanceToPush = INNERCOLLISIONRADIUS - height;
 			   if (distanceToPush > 0)
 			   {
 				  distanceToPush += COLLISIONDELTA;
-				  obj->x += distanceToPush * dx / height;
-				  obj->y += distanceToPush * dy / height;
+				  playerx += distanceToPush * dx / height;
+				  playery += distanceToPush * dy / height;
 				  return 1;
 			   }
 			}
@@ -808,9 +728,9 @@ void setUpScreenForMenu(void)
 void setUpScreenForGameplay(void)
 {
   int i;
-  for (i = 0; i < 66; ++i)
+  for (i = 0; i < 110; ++i)
   {
-     POKE(0x1000 + 12*22 + i, 32);
+     POKE(0x1000 + 11*22 + i, 32);
   }
   for (i = 0; i < 512; ++i)
   {
@@ -841,6 +761,7 @@ int main()
   char keys;
   char ctrlKeys;
   char i;
+  signed char ca, sa;
 
   playSoundInitialize();
 
@@ -900,7 +821,7 @@ int main()
 	    {
     	    turnSpeed++;
     	}
-	    player.angle -= turnSpeed;
+	    playera -= turnSpeed;
 	  }
 	  else if (keys & KEY_TURNRIGHT)
 	  {
@@ -908,34 +829,36 @@ int main()
 	    {
     	    turnSpeed++;
     	}
-	    player.angle += turnSpeed;
+	    playera += turnSpeed;
 	  }
 	  else
 	  {
 	    turnSpeed = 0;
 	  }
-	  player.angle &= 63;
-	  setCameraAngle(player.angle);
+	  playera &= 63;
+	  setCameraAngle(playera);
+	  ca = get_cos();
+	  sa = get_sin();
 	  if (keys & KEY_MOVELEFT)
 	  {
-		player.x -= 4*get_cos(player.angle);
-		player.y += 4*get_sin(player.angle);
+		playerx -= 2*ca;
+		playery += 2*sa;
 	  }
 	  if (keys & KEY_MOVERIGHT)
 	  {
-		player.x += 4*get_cos(player.angle);
-		player.y -= 4*get_sin(player.angle);
+		playerx += 2*ca;
+		playery -= 2*sa;
 	  }
 
 	  if (keys & KEY_FORWARD)
 	  {
-		player.x += 8*get_sin(player.angle);
-		player.y += 8*get_cos(player.angle);
+		playerx += 4*sa;
+		playery += 4*ca;
 	  }
 	  if (keys & KEY_BACK)
 	  {
-		player.x -= 4*get_sin(player.angle);
-		player.y -= 4*get_cos(player.angle);
+		playerx -= 2*sa;
+		playery -= 2*ca;
 	  }
 	  if (shotgunStage > 0)
 	  {
@@ -996,14 +919,14 @@ int main()
       }
 
       //POKE(0x900f, 11);
-	  if (push_out(&player))
+	  if (push_out())
 	  {
-		push_out(&player);
+		push_out();
 	  }
       //POKE(0x900f, 13);
 
-      setCameraX(player.x);
-      setCameraY(player.y);
+      setCameraX(playerx);
+      setCameraY(playery);
 
       clearSecondBuffer();
 	  // draw to second buffer

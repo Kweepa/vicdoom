@@ -27,6 +27,8 @@
 #include <stdlib.h>
 
 #include "playSound.h"
+#include "p_enemy.h"
+#include "player.h"
 
 #define fixed_t int
 #define boolean char
@@ -38,8 +40,8 @@
 #define PLAYERRADIUS	(16*FRACUNIT) // for reference
 #define MELEERANGE		(64*FRACUNIT)
 
-#define sfx_pistol SOUND_DPPISTOL
-#define sfx_claw SOUND_DPCLAW
+#define sfx_pistol SOUND_PISTOL
+#define sfx_claw SOUND_CLAW
 
 #define MF_JUSTHIT 1
 #define MF_JUSTATTACKED 2
@@ -50,61 +52,90 @@
 
 #define MT_TROOPSHOT 6
 
+// TODO: fill out
+mobjInfo_t mobjinfo[1] =
+{
+  { 16, -1, SOUND_GURGLE, SOUND_POPAIN, -1, SOUND_PISTOL, 30, 50,
+    STATE_POSLOOK, STATE_POSCHASE, STATE_POSPAIN, -1, STATE_POSSHOOT, STATE_POSFALL }
+};
+
+void A_Look(mobj_t *);
+void A_Chase(mobj_t *);
+void A_Flinch(mobj_t *);
+void A_TroopAttack(mobj_t *);
+void A_ImpAttack(mobj_t *);
+void A_Fall(mobj_t *);
+
+#define ACTION_LOOK 0
+#define ACTION_CHASE 1
+#define ACTION_FLINCH 2
+#define ACTION_TROOPATTACK 3
+#define ACTION_IMPATTACK 4
+#define ACTION_FALL 5
+
 typedef struct
 {
    char texture;
-   char animate;
-   
-   void (*action)(struct mobj_T *);
+   char actionIndex;
 }
 mobjState_t;
 
 mobjState_t states[] =
 {
+  { 5, ACTION_LOOK },
+  { 5, ACTION_CHASE },
+  { 7, ACTION_FLINCH },
+  { 6, ACTION_TROOPATTACK },
+  { 7, ACTION_FALL }
 };
 
-typedef struct
+void callAction(mobj_t *obj)
 {
-   char speed;
-   char seesound;
-   char activesound;
-   char painsound;
-   char meleesound;
-   char missilesound;
-   
-   char spawnhealth;
-   char painchance;
-
-   char spawnstate;
-   char chasestate;
-   char painstate;
-   char meleestate;
-   char shootstate;
-   char deathstate;
+   switch (states[obj->stateIndex].actionIndex)
+   {
+   case ACTION_LOOK:
+     A_Look(obj);
+     break;
+   case ACTION_CHASE:
+     A_Chase(obj);
+     break;
+   case ACTION_FLINCH:
+     A_Flinch(obj);
+     break;
+   case ACTION_TROOPATTACK:
+     A_TroopAttack(obj);
+     break;
+   case ACTION_IMPATTACK:
+     A_ImpAttack(obj);
+     break;
+   case ACTION_FALL:
+     A_Fall(obj);
+     break;
+   }
 }
-mobjInfo_t;
 
-// TODO: fill out
-mobjInfo_t mobjinfo[1];
-
-typedef struct mobj_T
+char getTexture(mobj_t *obj)
 {
-   int x;
-   int y;
-   signed char momx;
-   signed char momy;
-   char sector;
-   char movedir;
-   char flags;
-   char reactiontime;
-   signed char movecount;
-   signed char health;
-   mobjInfo_t *info;
-   struct mobj_T *target;
-   
-   void (*action)(struct mobj_T *);
+   return states[obj->stateIndex].texture;
 }
-mobj_t;
+
+char numMobj = 0;
+#define MAX_MOBJ 16
+mobj_t mobjs[MAX_MOBJ];
+
+char allocMobj(void)
+{
+  char i;
+  for (i = 0; i < MAX_MOBJ; ++i)
+  {
+    if (!mobjs[i].allocated)
+    {
+      mobjs[i].allocated = true;
+      return i;
+    }
+  }
+  return -1;
+}
 
 mobj_t *player;
 
@@ -175,9 +206,9 @@ dirtype_t diags[] =
 // hacked version of this for D20M
 //
 
-boolean P_CheckSight(mobj_t *actor, mobj_t *other)
+boolean P_CheckSight(mobj_t *actor)
 {
-  if (actor->sector == other->sector) return true;
+  if (actor->sector == playerSector) return true;
   // this table will be cleared at the start of render
   // and filled in during render
   if (actor->flags & MF_WASSEENTHISFRAME) return true;
@@ -186,9 +217,8 @@ boolean P_CheckSight(mobj_t *actor, mobj_t *other)
 
 boolean P_LookForPlayers(mobj_t *actor)
 {
-	if (P_CheckSight(actor, player))
+	if (P_CheckSight(actor))
 	{
-		actor->target = player;
 		return true;
 	}
 	return false;
@@ -198,20 +228,22 @@ void S_StartSound(mobj_t *actor, char sound)
 {
    // just try to play it
    // will succeed or fail based on priorities
+   // perhaps set a volume based on actor position?
    playSound(sound);
 }
 
 void P_SetMobjState(mobj_t *actor, char state)
 {
+  actor->stateIndex = state;
 }
 
-void P_DamageMobj(mobj_t *actor, mobj_t *damager, mobj_t *owner, int damage)
+void P_DamageMobj(mobj_t *actor, int damage)
 {
 	actor->health -= damage;
 	if (actor->health <= 0)
 	{
 		// kill actor - FIX!
-		P_SetMobjState(actor, actor->info->deathstate);
+		P_SetMobjState(actor, mobjinfo[actor->infoType].deathstate);
 	}
 	else
 	{
@@ -219,28 +251,31 @@ void P_DamageMobj(mobj_t *actor, mobj_t *damager, mobj_t *owner, int damage)
 	}
 }
 
-void P_RadiusAttack(mobj_t *actor, mobj_t *target, int dist)
+void P_RadiusAttack(mobj_t *actor, int radius)
 {
+   // attempt to damage the player
+    fixed_t	dist;
+	
+    dist = P_ApproxDistance(playerx-actor->x, playery-actor->y);
+    if (dist < radius)
+    {
+      damagePlayer(20);
+    }
 }
 
 //
 // P_CheckMeleeRange
 //
-boolean P_CheckMeleeRange (mobj_t*	actor)
+boolean P_CheckMeleeRange(mobj_t *actor)
 {
-    mobj_t*	pl;
     fixed_t	dist;
 	
-    if (!actor->target)
-	return false;
-		
-    pl = actor->target;
-    dist = P_ApproxDistance (pl->x-actor->x, pl->y-actor->y);
+    dist = P_ApproxDistance(playerx - actor->x, playery - actor->y);
 
-    if (dist >= MELEERANGE) //-20*FRACUNIT+pl->info->radius)
+    if (dist >= MELEERANGE)
 	return false;
 	
-    if (! P_CheckSight (actor, actor->target) )
+    if (! P_CheckSight (actor) )
 	return false;
 							
     return true;		
@@ -253,7 +288,7 @@ boolean P_CheckMissileRange (mobj_t* actor)
 {
     fixed_t	dist;
 	
-    if (! P_CheckSight (actor, actor->target) )
+    if (! P_CheckSight (actor) )
 	return false;
 	
     if ( actor->flags & MF_JUSTHIT )
@@ -268,10 +303,10 @@ boolean P_CheckMissileRange (mobj_t* actor)
 	return false;	// do not attack yet
 		
     // OPTIMIZE: get this from a global checksight
-    dist = P_ApproxDistance ( actor->x-actor->target->x,
-			     actor->y-actor->target->y) - 64*FRACUNIT;
+    dist = P_ApproxDistance ( actor->x - playerx,
+			     actor->y - playery) - 64*FRACUNIT;
 
-    if (!actor->info->meleestate)
+    if (!mobjinfo[actor->infoType].meleestate)
 	dist -= 128*FRACUNIT;	// no melee attack, so fire more
 
     dist >>= 16;
@@ -295,7 +330,14 @@ boolean P_CheckMissileRange (mobj_t* actor)
 fixed_t	xspeed[8] = {FRACUNIT,FU_45,0,-FU_45,-FRACUNIT,-FU_45,0,FU_45};
 fixed_t yspeed[8] = {0,FU_45,FRACUNIT,FU_45,0,-FU_45,-FRACUNIT,-FU_45};
 
-boolean P_TryMove(mobj_t *actor, fixed_t tryx, fixed_t tryy);
+boolean P_TryMove(mobj_t *actor, fixed_t tryx, fixed_t tryy)
+{
+   // TODO: check the move is valid
+   // also, copy the position to the object
+   actor->x = tryx;
+   actor->y = tryy;
+   return true;
+}
 
 boolean P_Move (mobj_t*	actor)
 {
@@ -308,8 +350,8 @@ boolean P_Move (mobj_t*	actor)
     if (actor->movedir == DI_NODIR)
 	return false;
 		
-    tryx = actor->x + actor->info->speed*xspeed[actor->movedir];
-    tryy = actor->y + actor->info->speed*yspeed[actor->movedir];
+    tryx = actor->x + mobjinfo[actor->infoType].speed*xspeed[actor->movedir];
+    tryy = actor->y + mobjinfo[actor->infoType].speed*yspeed[actor->movedir];
 
 	// need to replace this function with one of my own devising
 	// should just check the lines of this sector
@@ -357,8 +399,8 @@ void P_NewChaseDir (mobj_t*	actor)
     olddir = actor->movedir;
     turnaround=opposite[olddir];
 
-    deltax = actor->target->x - actor->x;
-    deltay = actor->target->y - actor->y;
+    deltax = playerx - actor->x;
+    deltay = playery - actor->y;
 
     if (deltax>10*FRACUNIT)
 	d[1]= DI_EAST;
@@ -479,12 +521,11 @@ void P_NewChaseDir (mobj_t*	actor)
 void A_Look (mobj_t* actor)
 {
     if ((actor->flags & MF_WASSEENTHISFRAME)
-		|| actor->sector == player->sector)
+		|| actor->sector == playerSector)
 	{
-		actor->target = player;
-	    S_StartSound (actor, actor->info->seesound);
+	    S_StartSound (actor, mobjinfo[actor->infoType].seesound);
 	    // go into chase state
-	    P_SetMobjState (actor, actor->info->chasestate);
+	    P_SetMobjState (actor, mobjinfo[actor->infoType].chasestate);
 	}
 }
 
@@ -499,17 +540,6 @@ void A_Chase (mobj_t*	actor)
     if (actor->reactiontime)
 	actor->reactiontime--;
 				
-    if (!actor->target
-	|| !(actor->target->flags&MF_SHOOTABLE))
-    {
-	// look for a new target
-	if (P_LookForPlayers(actor))
-	    return; 	// got a new target
-	
-	P_SetMobjState (actor, actor->info->spawnstate);
-	return;
-    }
-    
     // do not attack twice in a row
     if (actor->flags & MF_JUSTATTACKED)
     {
@@ -519,18 +549,18 @@ void A_Chase (mobj_t*	actor)
     }
     
     // check for melee attack
-    if (actor->info->meleestate
+    if (mobjinfo[actor->infoType].meleestate != 0xff
 	&& P_CheckMeleeRange (actor))
     {
-	if (actor->info->meleesound)
-	    S_StartSound (actor, actor->info->meleesound);
+	if (mobjinfo[actor->infoType].meleesound != 0xff)
+	    S_StartSound (actor, mobjinfo[actor->infoType].meleesound);
 
-	P_SetMobjState (actor, actor->info->meleestate);
+	P_SetMobjState (actor, mobjinfo[actor->infoType].meleestate);
 	return;
     }
     
     // check for missile attack
-    if (actor->info->shootstate)
+    if (mobjinfo[actor->infoType].shootstate)
     {
 	if (actor->movecount)
 	{
@@ -540,7 +570,7 @@ void A_Chase (mobj_t*	actor)
 	if (!P_CheckMissileRange (actor))
 	    goto nomissile;
 	
-	P_SetMobjState (actor, actor->info->shootstate);
+	P_SetMobjState (actor, mobjinfo[actor->infoType].shootstate);
 	actor->flags |= MF_JUSTATTACKED;
 	return;
     }
@@ -556,10 +586,10 @@ void A_Chase (mobj_t*	actor)
     }
     
     // make active sound
-    if (actor->info->activesound
+    if (mobjinfo[actor->infoType].activesound != -1
 		&& P_Random () < 3)
     {
-		S_StartSound (actor, actor->info->activesound);
+		S_StartSound (actor, mobjinfo[actor->infoType].activesound);
     }
 }
 
@@ -649,13 +679,10 @@ char R_PointToAngle(int x, int y)
 //
 void A_FaceTarget (mobj_t* actor)
 {	
-    if (!actor->target)
-	return;
-    
     actor->flags &= ~MF_AMBUSH;
 	
-    actor->movedir = R_PointToAngle (actor->x - actor->target->x,
-				    actor->y - actor->target->y);
+    actor->movedir = R_PointToAngle (actor->x - playerx,
+				    actor->y - playery);
 }
 
 
@@ -669,18 +696,15 @@ void A_PosAttack (mobj_t* actor)
     int		damage;
     fixed_t dist;
 	
-    if (!actor->target)
-	return;
-		
     A_FaceTarget (actor);
 
     S_StartSound (actor, sfx_pistol);
-    dist = P_ApproxDistance(actor->x - actor->target->x, actor->y - actor->target->y);
+    dist = P_ApproxDistance(actor->x - playerx, actor->y - playery);
     if (dist > 220) dist == 220;
     if (P_Random() > dist)
     {
 	    damage = ((P_Random()&3)+2)*3; // this was ((r%5)+1)*3
-	    P_DamageMobj (actor->target, actor, actor, damage);
+	    damagePlayer(damage);
 	}
 }
 
@@ -694,29 +718,26 @@ void A_TroopAttack (mobj_t* actor)
 {
     int		damage;
 	
-    if (!actor->target)
-	return;
-		
     A_FaceTarget (actor);
     if (P_CheckMeleeRange (actor))
     {
 		damage = ((P_Random()&7)+1)*3;
-		P_DamageMobj (actor->target, actor, actor, damage);
+		damagePlayer (damage);
 		return;
     }
     
     // launch a missile
-    //P_SpawnMissile (actor, actor->target, MT_TROOPSHOT);
+    //P_SpawnMissile (actor, MT_TROOPSHOT);
 }
 
 
 void A_Fall (mobj_t *actor)
 {
-    // actor is on ground, it can be walked over
-    actor->flags &= ~MF_SOLID;
-
-    // So change this if corpse objects
-    // are meant to be obstacles.
+   if (--actor->reactiontime == 0)
+   {
+     // make the object into a static corpse
+     mobjs[actor->mobjIndex].allocated = false;
+   }
 }
 
 
@@ -725,5 +746,5 @@ void A_Fall (mobj_t *actor)
 //
 void A_Explode (mobj_t* thingy)
 {
-    P_RadiusAttack ( thingy, thingy->target, 128 );
+    P_RadiusAttack ( thingy, 128 );
 }
