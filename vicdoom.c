@@ -34,6 +34,7 @@
 #include <string.h>
 #include <conio.h>
 #include <dbg.h>
+#include <cbm.h>
 
 #include "updateInput.h"
 #include "playSound.h"
@@ -762,10 +763,19 @@ int main()
   char ctrlKeys;
   char i;
   signed char ca, sa;
+  FILE *fp;
 
   playSoundInitialize();
-
+  
+  fp = fopen("textures", "r");
+  if (fp != NULL)
+  {
   POKE(0x900E, 16*6 + (PEEK(0x900E)&15)); // blue aux color
+    fread((void *)0x400, 0xC00, 1, fp);
+    fclose(fp);
+  }
+
+//  POKE(0x900E, 16*6 + (PEEK(0x900E)&15)); // blue aux color
   POKE(0x900F, 8 + 5); // green border, and black screen
   
   // set the character set to $1400

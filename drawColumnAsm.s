@@ -284,7 +284,7 @@ adc scrbuf+1
 sta scrbuf+1
 sta scrbuf2+1
 
-;     texAddr = $1A00 + 128*textureIndex + TEXHEIGHT*(texI/4);
+;     texAddr = $400 + 128*textureIndex + TEXHEIGHT*(texI/4);
 
 lda texI
 and #$fc
@@ -303,7 +303,7 @@ sta texAddr+1
 lda texIndex
 lsr
 clc
-adc #$1A
+adc #$4 ; $400 hibyte
 sta texAddr+2
 
 ; add texHi
@@ -353,7 +353,7 @@ ldy texY
 ; so that's on average 32x32x48 per frame
 loop:
 texAddr:
-lda $1A00 ; self modified texture address
+lda $400 ; self modified texture address
 ; shift into position for the screen
 ; modify these as required (asl/lsr/nop)
 shiftcodegoeshere:
@@ -526,7 +526,7 @@ adc scrbuf+1
 sta scrbuf+1
 sta scrbuf2+1
 
-;     texAddr = $1A00 + 128*textureIndex + TEXHEIGHT*(texI/4);
+;     texAddr = $400 + 128*textureIndex + TEXHEIGHT*(texI/4);
 
 lda texI
 and #$fc
@@ -545,7 +545,7 @@ sta texAddr+1
 lda texIndex
 lsr
 clc
-adc #$1A ; start of texture memory
+adc #$4 ; start of texture memory
 sta texAddr+2
 
 
@@ -617,7 +617,7 @@ ldy texY
 ; so that's on average 32x32x48 per frame
 loop:
 texAddr:
-lda $1A00 ; self modified texture address
+lda $400 ; self modified texture address
 ; shift into position for the screen
 ; modify these as required (asl/lsr/nop)
 shiftcodegoeshere:
