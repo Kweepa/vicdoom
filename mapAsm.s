@@ -13,6 +13,7 @@
 .export _getSectorVertexY
 
 ; sector/edge functions
+.export _getNumSectors
 .export _getEdgeIndex
 .export _getEdgeTexture
 .export _getEdgeLen
@@ -26,12 +27,10 @@
 .export _getObjectX
 .export _getObjectY
 .export _getObjectType
-.export secNumVerts
 .export vertX
 .export edgeTex
 .export secVerts
 .export numVerts
-
 
 .segment "MAPDATA"
 ; summary data (4 bytes)
@@ -659,4 +658,9 @@ rts
 _getGlobalEdgeTexture:
 tay
 lda edgeTex,y
+rts
+
+_getNumSectors:
+lda numSectors
+ldx #0
 rts

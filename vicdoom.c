@@ -39,6 +39,8 @@
 #include "updateInput.h"
 #include "playSound.h"
 #include "mapAsm.h"
+#include "drawColumn.h"
+#include "automap.h"
 
 #define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
 #define PEEK(addr) (*(unsigned char *)(addr))
@@ -185,6 +187,8 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
   unsigned int texI;
   unsigned int curY;
   unsigned int h;
+  
+  automap_sawEdge(getEdgeIndex(sectorIndex, curEdgeIndex));
 
   // add 128 to correct for sampling in the center of the column
   x4 = (256*x_L + 128)/HALFSCREENWIDTH;
@@ -679,9 +683,6 @@ int push_out()
   return 0;
 }
 
-void clearSecondBuffer(void);
-void copyToPrimaryBuffer(void);
-
 char keyCards;
 char counter = 0;
 char turnSpeed = 0;
@@ -822,6 +823,11 @@ int main()
 	  {
 	    setUpScreenForMenu();
 	    runMenu(1);
+	    setUpScreenForGameplay();
+	  }
+	  else if (ctrlKeys & KEY_CTRL)
+	  {
+	    automap();
 	    setUpScreenForGameplay();
 	  }
 
