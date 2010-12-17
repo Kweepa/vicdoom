@@ -49,79 +49,62 @@ void automap_enter(void)
   offsetY = 0;
 }
 
-void automap_drawEdgeToSecondBuffer(int x1, int y1, int x2, int y2)
+void automap_drawEdgeToSecondBuffer(int x0, int y0, int x1, int y1)
 {
-   int maxx, maxy, minx, miny;
-   signed char xStepDir, yStepDir;
-   if (x1 > x2)
+   signed char err, e2;
+   char drewAPixel = 0;
+   int maxx = x1;
+   int maxy = y1;
+   int minx = x0;
+   int miny = y0;
+   signed char sx = 1;
+   signed char sy = 1;
+   signed char dx = x1-x0;
+   signed char dy = y1-y0;
+   if (dx < 0)
    {
-      maxx = x1;
-      minx = x2;
-      xStepDir = -1;
+     sx = -1;
+     dx = -dx;
+     maxx = x0;
+     minx = x1;
    }
-   else
+   if (dy < 0)
    {
-      minx = x1;
-      maxx = x2;
-      xStepDir = 1;
-   }
-   if (y1 > y2)
-   {
-      maxy = y1;
-      miny = y2;
-      yStepDir = -1;
-   }
-   else
-   {
-      miny = y1;
-      maxy = y2;
-      yStepDir = 1;
+     sy = -1;
+     dy = -dy;
+     maxy = y0;
+     miny = y1;
    }
    if (maxx >= 0 && minx < 64 && maxy >= 0 && miny < 64)
    {
-      if (maxx - minx > maxy - miny)
-      {
-         // horizontal
-         int bigY = y1<<8;
-         int yStep = y2 - y1;
-         if (yStep)
-         {
-           yStep = 256*((y2 - y1))/(maxx - minx);
-         }
-         for (; x1 != x2; x1 += xStepDir)
-         {
-            signed char y = bigY>>8;
-            //if (x1 >= 0 && x1 < 64 && y >= 0 && y < 64)
-            signed char chk = (x1 & 0xc0) | (y & 0xc0);
-            if (!chk)
-            {
-              int a = 0x1800 + ((x1&0xf8)<<3) + y;
-              POKE(a, PEEK(a) | shift[x1&7]);
-            }
-            bigY += yStep;
-         }
-      }
-      else
-      {
-         int bigX = x1<<8;
-         int xStep = x2 - x1;
-         if (xStep)
-         {
-           xStep = 256*((x2 - x1))/(maxy - miny);
-         }
-         for (; y1 != y2; y1 += yStepDir)
-         {
-            signed char x = bigX>>8;
-            //if (x >= 0 && x < 64 && y1 >= 0 && y1 < 64)
-            signed char chk = (x & 0xc0) | (y1 & 0xc0);
-            if (!chk)
-            {
-              int a = 0x1800 + ((x&0xf8)<<3) + y1;
-              POKE(a, PEEK(a) | shift[x&7]);
-            }
-            bigX += xStep;
-         }
-      }
+	   err = (dx > dy) ? dx>>1 : -(dy>>1);
+	   do
+	   {
+		 signed char chk = (x0 & 0xc0) | (y0 & 0xc0);
+		 if (!chk)
+		 {
+		   int a = 0x1800 + ((x0&0xf8)<<3) + y0;
+		   POKE(a, PEEK(a) | shift[x0&7]);
+		   drewAPixel = 1;
+		 }
+		 else
+		 {
+		   if (drewAPixel) return;
+		 }
+		 if (x0 == x1 && y0 == y1) return;
+		 e2 = err;
+		 if (e2 > -dx)
+		 {
+		   err -= dy;
+		   x0 += sx;
+		 }
+		 if (e2 < dy)
+		 {
+		   err += dx;
+		   y0 += sy;
+		 }
+	   }
+	   while (1);
    }
 }
 
