@@ -21,6 +21,10 @@
 .export _getNextEdge
 .export _getGlobalEdgeTexture
 
+.export getOtherSector
+.export getEdgeIndex
+.export getSectorVertexXY
+
 ; object functions
 .export _getNumObjects
 .export _getObjectSector
@@ -438,6 +442,29 @@ rts
 
 .endproc
 
+
+getSectorVertexXY:
+
+; A - vertexIndex
+; X - sectorIndex
+
+sta edgeIndex
+txa
+asl
+asl
+asl
+clc
+adc edgeIndex
+tay
+lda secVerts,y
+tay
+lda vertX,y
+tax
+lda vertY,y
+tay
+
+rts
+
 .proc _getSectorVertexX : near
 
 ; params:
@@ -485,6 +512,24 @@ ldy #1
 jmp addysp
 
 .endproc
+
+
+
+getEdgeIndex:
+
+; A - edge index
+; X = sector index
+
+sta edgeIndex
+txa
+asl
+asl
+asl
+clc
+adc edgeIndex
+tay
+lda secEdges,y
+rts
 
 .proc _getEdgeIndex : near
 
@@ -555,6 +600,34 @@ ldy #1
 jmp addysp
 
 .endproc
+
+
+getOtherSector:
+
+; params:
+; A - edgeIndex
+; X - sectorIndex
+
+sta edgeIndex
+txa
+sta sectorIndex
+asl
+asl
+asl
+clc
+adc edgeIndex
+tay
+lda secEdges,y
+tay
+lda edgeSec1,y
+cmp #$ff
+beq @end
+cmp sectorIndex
+bne @end
+lda edgeSec2,y
+
+@end:
+rts
 
 .proc _getOtherSector : near
 
