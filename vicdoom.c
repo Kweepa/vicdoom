@@ -150,11 +150,6 @@ unsigned char frame = 0;
 void __fastcall__ drawColumn(char textureIndex, char texI, signed char curX, short curY, unsigned short h);
 void __fastcall__ drawColumnTransparent(char textureIndex, char texYStart, char texYEnd, char texI, signed char curX, short curY, unsigned short h);
 
-char __fastcall__ getEdgeIndex(char sectorIndex, char edgeIndex);
-char __fastcall__ getEdgeTexture(char sectorIndex, char edgeIndex);
-char __fastcall__ getEdgeLen(char sectorIndex, char edgeIndex);
-char __fastcall__ getGlobalEdgeTexture(char edgeIndex);
-
 void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
 {
   char textureIndex = getEdgeTexture(sectorIndex, curEdgeIndex);
@@ -465,9 +460,6 @@ void drawTransparentObjects()
    }
 }
 
-char __fastcall__ getOtherSector(char sectorIndex, char edgeIndex);
-char __fastcall__ getNextEdge(char sectorIndex, char edgeIndex);
-
 void drawSpans()
 {
   signed char stackTop = 0;
@@ -727,10 +719,8 @@ void setUpScreenForGameplay(void)
   {
      POKE(0x1000 + 11*22 + i, 32);
   }
-  for (i = 0; i < 512; ++i)
-  {
-     POKE(0x1600 + i, 0);
-  }
+  clearSecondBuffer();
+  copyToPrimaryBuffer();
   for (i = 0; i < (17*22); ++i)
   {
 	  // set the color memory
@@ -769,18 +759,20 @@ int main()
   signed char ca, sa;
   char numObj;
   
-  read_data_file("e1m1mus", 0xA600, 0x900);
+  read_data_file("e1m1mus", 0xB200, 0x900);
+  read_data_file("sounds", 0xBB00, 0xC00);
 
   playSoundInitialize();
 
-  read_data_file("textures", 0x400, 0xC00);
-  read_data_file("e1m1", 0xA000, 0x600);
+  read_data_file("sluts", 0x400, 0x400);
+  read_data_file("textures", 0xA000, 0xC00);
+  read_data_file("e1m1", 0xAC00, 0x600);
 
-  POKE(0x900E, 16*6 + (PEEK(0x900E)&15)); // blue aux color
+  POKE(0x900E, (6<<4) + (PEEK(0x900E)&0x0f)); // blue aux color
   POKE(0x900F, 8 + 5); // green border, and black screen
   
   // set the character set to $1400
-  POKE(0x9005, 13 + (PEEK(0x9005)&240));
+  POKE(0x9005, 13 + (PEEK(0x9005)&0xf0));
   
   setUpScreenForBitmap();
 

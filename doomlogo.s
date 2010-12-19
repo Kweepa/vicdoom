@@ -3,6 +3,8 @@
 
 .segment "CODE"
 
+bitmap = $1600
+
 logo:
 .include "doomlogo.inc"
 
@@ -24,26 +26,26 @@ ldy #0
 copy1:
 lda logo,x
 inx
-sta $1600,y
+sta bitmap,y
 iny
-sta $1600,y
+sta bitmap,y
 iny
-sta $1600,y
+sta bitmap,y
 iny
-sta $1600,y
+sta bitmap,y
 iny
 bne copy1
 
 copy2:
 lda logo,x
 inx
-sta $1700,y
+sta bitmap+$100,y
 iny
-sta $1700,y
+sta bitmap+$100,y
 iny
-sta $1700,y
+sta bitmap+$100,y
 iny
-sta $1700,y
+sta bitmap+$100,y
 iny
 bne copy2
 

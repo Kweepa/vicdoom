@@ -17,6 +17,11 @@
 	.export     _testFilledWithY
 	.export     _setFilled
 
+;
+textures = $A000
+bitmap = $1600
+buffer = $BE00
+
 .macro loadaxfromstack offs
 	ldy #offs
 	lda (sp),y
@@ -262,7 +267,7 @@ iny
 lda (sp),y
 sta texIndex
 
-;     screenAddr = 0x1800 + SCREENHEIGHT*(curX/4) + (HALFSCREENHEIGHT - h);
+;     screenAddr = buffer + SCREENHEIGHT*(curX/4) + (HALFSCREENHEIGHT - h);
 
 lda curX
 and #$1c
@@ -271,7 +276,7 @@ asl
 asl
 rol
 sta scrbuf+1
-lda #$18
+lda #>buffer
 adc #0 ; plus carry
 sta scrbuf+2
 sta scrbuf2+2
@@ -284,7 +289,7 @@ adc scrbuf+1
 sta scrbuf+1
 sta scrbuf2+1
 
-;     texAddr = $400 + 128*textureIndex + TEXHEIGHT*(texI/4);
+;     texAddr = textures + 128*textureIndex + TEXHEIGHT*(texI/4);
 
 lda texI
 and #$fc
@@ -303,7 +308,7 @@ sta texAddr+1
 lda texIndex
 lsr
 clc
-adc #$4 ; $400 hibyte
+adc #>textures
 sta texAddr+2
 
 ; add texHi
@@ -504,7 +509,7 @@ ldy #6
 lda (sp),y
 sta texIndex
 
-;     screenAddr = 0x1800 + SCREENHEIGHT*(curX/4) + (HALFSCREENHEIGHT - h);
+;     screenAddr = buffer + SCREENHEIGHT*(curX/4) + (HALFSCREENHEIGHT - h);
 
 lda curX
 and #$1c
@@ -513,7 +518,7 @@ asl
 asl
 rol
 sta scrbuf+1
-lda #$18
+lda #>buffer
 adc #0 ; plus carry
 sta scrbuf+2
 sta scrbuf2+2
@@ -669,14 +674,14 @@ jmp addysp
 	ldx #63
 	lda #0
 clearLoop:
-	sta $1800,x
-	sta $1840,x
-	sta $1880,x
-	sta $18C0,x
-	sta $1900,x
-	sta $1940,x
-	sta $1980,x
-	sta $19C0,x
+	sta buffer,x
+	sta buffer + $40,x
+	sta buffer + $80,x
+	sta buffer + $C0,x
+	sta buffer + $100,x
+	sta buffer + $140,x
+	sta buffer + $180,x
+	sta buffer + $1C0,x
 	dex
 	bpl clearLoop
 	rts
@@ -687,14 +692,14 @@ clearLoop:
 
 	ldx #127
 copyLoop:
-	lda $1800,x
-	sta $1600,x
-	lda $1880,x
-	sta $1680,x
-	lda $1900,x
-	sta $1700,x
-	lda $1980,x
-	sta $1780,x
+	lda buffer,x
+	sta bitmap,x
+	lda buffer + $80,x
+	sta bitmap + $80,x
+	lda buffer + $100,x
+	sta bitmap + $100,x
+	lda buffer + $180,x
+	sta bitmap + $180,x
 	dex
 	bpl copyLoop
 	rts	

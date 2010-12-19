@@ -7,6 +7,8 @@
 .export _automap_sawEdge
 .export _automap_resetEdges
 
+buffer = $BE00
+
 minx:
 .word 0
 maxx:
@@ -238,7 +240,7 @@ lda drewAPixel
 beq @checkForEnd
 rts
 
-; int a = 0x1800 + ((x0&0xf8)<<3) + y0;
+; int a = buffer + ((x0&0xf8)<<3) + y0;
 ; POKE(a, PEEK(a) | shift[x0&7]);
 ; drewAPixel = 1;
 
@@ -250,7 +252,7 @@ asl
 asl
 asl
 sta addr
-lda #$18
+lda #>buffer
 adc #0
 sta addr+1
 txa
