@@ -1,4 +1,4 @@
-.setcpu		"6502"
+.setcpu	"6502"
 .autoimport	on
 .importzp sp
 .export _transformSectorToScreenSpace
@@ -36,6 +36,10 @@
 .export secVerts
 .export numVerts
 
+.export _setObjectX
+.export _setObjectY
+.export _setObjectSector
+
 .segment "MAPDATA"
 ; summary data (4 bytes)
 numVerts:
@@ -46,10 +50,14 @@ numSectors:
 .byte 31
 numObj:
 .byte 30
-
-; pad
-.res 92,0
-
+playerSpawnX:
+.byte 126
+playerSpawnY:
+.byte 142
+playerSpawnAngle:
+.byte 0
+pad:
+.res 89, 0
 ; sector info
 secNumVerts:
 .byte 4, 4, 7, 4, 8, 4, 5, 4, 8, 4, 4, 5, 4, 6, 4, 7
@@ -58,23 +66,23 @@ secNumVerts:
 
 ; object data
 objXhi:
-.byte 17, -19, -19, -11, -11, -46, -46, -14, -60, -50, 51, 40, -56, 6, 16, 23
-.byte 28, 23, 46, 40, 12, 38, 31, 49, 41, 38, 58, 59, 42, 30
+.byte -19, -19, -11, -11, -46, -46, -14, -60, -50, 51, 40, -56, 6, 16, 23, 28
+.byte 46, 40, 12, 38, 31, 49, 42, 38, 58, 59, 42, 30, 47, 36
 .res 2, 0
 
 objYhi:
-.byte 25, 0, 7, 7, 0, 0, 7, 11, 3, 7, -8, -42, 3, 19, 27, 28
-.byte -14, -14, -18, -34, 3, 11, -30, -30, -5, 0, -7, 0, -46, -34
+.byte 0, 7, 7, 0, 0, 7, 11, 3, 7, -8, -42, 3, 19, 27, 28, -14
+.byte -18, -34, 3, 11, -30, -30, -5, 0, -7, 0, -46, -34, 2, -4
 .res 2, 0
 
 objType:
-.byte 11, 12, 12, 12, 12, 12, 12, 3, 1, 11, 7, 7, 11, 11, 11, 11
-.byte 11, 11, 11, 11, 1, 11, 3, 3, 11, 11, 10, 10, 6, 7
+.byte 13, 13, 13, 13, 13, 13, 12, 5, 0, 1, 1, 0, 0, 0, 0, 0
+.byte 0, 0, 6, 0, 12, 12, 1, 0, 7, 7, 8, 1, 15, 15
 .res 2, 0
 
 objSec:
-.byte 9, 2, 2, 2, 2, 4, 4, 2, 5, 4, 20, 30, 5, 8, 9, 11
-.byte 23, 23, 21, 27, 25, 14, 28, 29, 15, 15, 19, 19, 30, 28
+.byte 2, 2, 2, 2, 4, 4, 2, 5, 4, 20, 30, 5, 8, 9, 11, 23
+.byte 21, 27, 25, 14, 28, 29, 15, 15, 19, 19, 30, 28, 16, 15
 .res 2, 0
 
 ; vertex data
@@ -692,6 +700,10 @@ rts
 
 .endproc
 
+_setObjectSector:
+ldy #1
+jmp addysp
+
 .proc _getObjectSector : near
 
 tay
@@ -709,6 +721,30 @@ lda objXlo,y
 rts
 
 .endproc
+
+_setObjectX:
+pha
+ldy #0
+lda (sp),y
+tay
+pla
+sta objXlo,y
+txa
+sta objXhi,y
+ldy #1
+jmp addysp
+
+_setObjectY:
+pha
+ldy #0
+lda (sp),y
+tay
+pla
+sta objYlo,y
+txa
+sta objYhi,y
+ldy #1
+jmp addysp
 
 .proc _getObjectY : near
 

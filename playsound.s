@@ -12,13 +12,15 @@
 irqVector = $314
 irqContinue = $eabf
 
-.segment "CODE"
 
 ; format of a song is
 ; statusByte [note] [statusByte [note]]* $ff
 ; status byte is [on/off:1][voice:2][timeToNextEvent:5]
 
+.segment "MUSIC"
 .include "e1m1.s"
+
+.segment "CODE"
 
 timeToNextEvent:
 .byte 0

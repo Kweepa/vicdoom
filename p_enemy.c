@@ -29,6 +29,7 @@
 #include "playSound.h"
 #include "p_enemy.h"
 #include "player.h"
+#include "mapAsm.h"
 
 #define fixed_t int
 #define boolean char
@@ -55,7 +56,7 @@
 // TODO: fill out
 mobjInfo_t mobjinfo[1] =
 {
-  { 16, -1, SOUND_GURGLE, SOUND_POPAIN, -1, SOUND_PISTOL, 30, 50,
+  { 4, -1, SOUND_GURGLE, SOUND_POPAIN, -1, SOUND_PISTOL, 30, 50,
     STATE_POSLOOK, STATE_POSCHASE, STATE_POSPAIN, -1, STATE_POSSHOOT, STATE_POSFALL }
 };
 
@@ -63,14 +64,14 @@ void A_Look(mobj_t *);
 void A_Chase(mobj_t *);
 void A_Flinch(mobj_t *);
 void A_TroopAttack(mobj_t *);
-void A_ImpAttack(mobj_t *);
+void A_PosAttack(mobj_t *);
 void A_Fall(mobj_t *);
 
 #define ACTION_LOOK 0
 #define ACTION_CHASE 1
 #define ACTION_FLINCH 2
 #define ACTION_TROOPATTACK 3
-#define ACTION_IMPATTACK 4
+#define ACTION_POSATTACK 4
 #define ACTION_FALL 5
 
 typedef struct
@@ -105,8 +106,8 @@ void callAction(mobj_t *obj)
    case ACTION_TROOPATTACK:
      A_TroopAttack(obj);
      break;
-   case ACTION_IMPATTACK:
-     A_ImpAttack(obj);
+   case ACTION_POSATTACK:
+     A_PosAttack(obj);
      break;
    case ACTION_FALL:
      A_Fall(obj);
@@ -121,23 +122,81 @@ char getTexture(mobj_t *obj)
 
 char numMobj = 0;
 #define MAX_MOBJ 16
+#define MAX_OBJ 32
 mobj_t mobjs[MAX_MOBJ];
 
-char allocMobj(void)
+char objForMobj[MAX_MOBJ];
+char mobjForObj[MAX_OBJ];
+
+char allocMobj(char o)
 {
   char i;
+  mobj_t *mobj;
   for (i = 0; i < MAX_MOBJ; ++i)
   {
-    if (!mobjs[i].allocated)
+	mobj = &mobjs[i];
+    if (!mobj->allocated)
     {
-      mobjs[i].allocated = true;
+      objForMobj[i] = o;
+      mobjForObj[o] = i;
+
+      mobj->allocated = true;
+      mobj->mobjIndex = i;
+      mobj->x = getObjectX(o);
+      mobj->y = getObjectY(o);
+      mobj->momx = 0;
+      mobj->momy = 0;
+      mobj->sector = getObjectSector(o);
+      mobj->movedir = 0;
+      mobj->flags = 0;
+      mobj->reactiontime = 2;
+      mobj->movecount = 0;
+      switch (getObjectType(o))
+      {
+      case 0:
+        mobj->health = 20;
+        mobj->infoType = 0;
+        mobj->stateIndex = STATE_POSCHASE;
+        break;
+      case 1:
+        mobj->health = 50;
+        mobj->infoType = 0;
+        mobj->stateIndex = STATE_POSCHASE;
+        break;
+      case 2:
+        mobj->health = 50;
+        mobj->infoType = 0;
+        mobj->stateIndex = STATE_POSCHASE;
+        break;
+      case 3:
+        mobj->health = 100;
+        mobj->infoType = 0;
+        mobj->stateIndex = STATE_POSCHASE;
+        break;
+      case 4:
+        mobj->health = 300;
+        mobj->infoType = 0;
+        mobj->stateIndex = STATE_POSCHASE;
+        break;
+      }
       return i;
     }
   }
   return -1;
 }
 
-mobj_t *player;
+void p_enemy_think(char o)
+{
+  if (getObjectType(o) < 5)
+  {
+    char mobjIndex = mobjForObj[o];
+    mobj_t *mobj = &mobjs[mobjIndex];
+    callAction(mobj);
+    setObjectX(o, mobj->x);
+    setObjectY(o, mobj->y);
+    setObjectSector(o, mobj->sector);
+  }
+}
 
 char P_Random(void);
 
@@ -259,7 +318,7 @@ void P_RadiusAttack(mobj_t *actor, int radius)
     dist = P_ApproxDistance(playerx-actor->x, playery-actor->y);
     if (dist < radius)
     {
-      damagePlayer(20);
+      //damagePlayer(20);
     }
 }
 
@@ -326,14 +385,16 @@ boolean P_CheckMissileRange (mobj_t* actor)
 // Move in the current direction,
 // returns false if the move is blocked.
 //
-#define FU_45 181
-fixed_t	xspeed[8] = {FRACUNIT,FU_45,0,-FU_45,-FRACUNIT,-FU_45,0,FU_45};
-fixed_t yspeed[8] = {0,FU_45,FRACUNIT,FU_45,0,-FU_45,-FRACUNIT,-FU_45};
+#define MIN_SPEED 64
+#define FU_45 45
+fixed_t	xspeed[8] = {MIN_SPEED,FU_45,0,-FU_45,-MIN_SPEED,-FU_45,0,FU_45};
+fixed_t yspeed[8] = {0,FU_45,MIN_SPEED,FU_45,0,-FU_45,-MIN_SPEED,-FU_45};
 
 boolean P_TryMove(mobj_t *actor, fixed_t tryx, fixed_t tryy)
 {
    // TODO: check the move is valid
    // also, copy the position to the object
+   // and, update the sector!
    actor->x = tryx;
    actor->y = tryy;
    return true;
@@ -704,7 +765,7 @@ void A_PosAttack (mobj_t* actor)
     if (P_Random() > dist)
     {
 	    damage = ((P_Random()&3)+2)*3; // this was ((r%5)+1)*3
-	    damagePlayer(damage);
+	    //damagePlayer(damage);
 	}
 }
 
@@ -722,7 +783,7 @@ void A_TroopAttack (mobj_t* actor)
     if (P_CheckMeleeRange (actor))
     {
 		damage = ((P_Random()&7)+1)*3;
-		damagePlayer (damage);
+		//damagePlayer (damage);
 		return;
     }
     
@@ -740,6 +801,13 @@ void A_Fall (mobj_t *actor)
    }
 }
 
+void A_Flinch(mobj_t *actor)
+{
+  if (--actor->reactiontime == 0)
+  {
+	P_SetMobjState (actor, mobjinfo[actor->infoType].chasestate);
+  }
+}
 
 //
 // A_Explode

@@ -48,4 +48,5 @@ mobj_t;
 
 extern mobj_t mobjs[];
 
-char allocMobj(void);
+char allocMobj(char o);
+void p_enemy_think(char o);

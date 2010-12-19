@@ -41,6 +41,7 @@
 #include "mapAsm.h"
 #include "drawColumn.h"
 #include "automap.h"
+#include "p_enemy.h"
 
 #define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
 #define PEEK(addr) (*(unsigned char *)(addr))
@@ -102,32 +103,23 @@ texFrame;
 
 texFrame texFrames[16] =
 {
-  { 6, 0, 0, 3 }, // player spawn
-  { 18, 0, 0, 3, 16, 16, 0, 16 }, // green armor
-  { 6, 0, 0, 3 }, // backpack
-  { 20, 0, 0, 8, 16, 16, 0, 16 }, // barrel
-  { 19, 0, 0, 8, 16, 8, 8, 8 }, // blue keycard
-  { 13, 1, 1, 3 }, // caco
-  { 19, 0, 0, 8, 24, 8, 0, 8 }, // medikit
+  { 5, 1, 1, 5 }, // possessed
   { 8, 1, 1, 5 }, // imp
   { 11, 1, 1, 3 }, // demon
-  { 19, 0, 0, 8, 24, 8, 8, 8 }, // red keycard
+  { 13, 1, 1, 3 }, // caco
+  { 8, 1, 1, 5 }, // baron
+  { 18, 0, 0, 3, 16, 16, 0, 16 }, // green armor
+  { 18, 0, 0, 3, 0, 16, 0, 16 }, // blue armor
   { 19, 0, 0, 5, 8, 8, 0, 16 }, // bullets
-  { 5, 1, 1, 5 }, // possessed
-  { 17, 0, 1, 5 }, // pillar
+  { 19, 0, 0, 8, 24, 8, 0, 8 }, // medikit
+  { 19, 0, 0, 8, 24, 8, 8, 8 }, // red keycard
   { 19, 0, 0, 8, 16, 24, 0, 8 }, // green keycard
+  { 19, 0, 0, 8, 16, 8, 8, 8 }, // blue keycard
+  { 20, 0, 0, 8, 16, 16, 0, 16 }, // barrel
+  { 17, 0, 1, 5 }, // pillar
+  { 20, 0, 0, 8, 16, 16, 0, 16 }, // skullpile - fix
+  { 17, 0, 1, 5 }, // acid - fix
 };
-
-typedef struct
-{
-  short x;
-  short y;
-  char angle;
-  char texFrame;
-  char sector;
-  char mobjIndex; // FF for no mobj
-}
-object;
 
 int playerx = -17*256, playery = -11*256;
 char playera = 8;
@@ -435,6 +427,7 @@ void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 		 if (texFrames[type].solid)
 		 {
 		   drawObjectInSector(objInst->o, objInst->x, objInst->y, x_L, x_R);
+		   p_enemy_think(objInst->o);
 		 }
 	  }
 	}
@@ -757,26 +750,33 @@ void setUpScreenForGameplay(void)
 }
 
 void runMenu(char canReturn);
-  
+
+void read_data_file(char *name, int addr, int maxSize)
+{
+  FILE *fp = fopen(name, "r");
+  if (fp != NULL)
+  {
+    fread((void *)addr, maxSize, 1, fp);
+    fclose(fp);
+  }
+}
+
 int main()
 {
   char keys;
   char ctrlKeys;
   char i;
   signed char ca, sa;
-  FILE *fp;
+  char numObj;
+  
+  read_data_file("e1m1mus", 0xA600, 0x900);
 
   playSoundInitialize();
-  
-  fp = fopen("textures", "r");
-  if (fp != NULL)
-  {
-  POKE(0x900E, 16*6 + (PEEK(0x900E)&15)); // blue aux color
-    fread((void *)0x400, 0xC00, 1, fp);
-    fclose(fp);
-  }
 
-//  POKE(0x900E, 16*6 + (PEEK(0x900E)&15)); // blue aux color
+  read_data_file("textures", 0x400, 0xC00);
+  read_data_file("e1m1", 0xA000, 0x600);
+
+  POKE(0x900E, 16*6 + (PEEK(0x900E)&15)); // blue aux color
   POKE(0x900F, 8 + 5); // green border, and black screen
   
   // set the character set to $1400
@@ -794,6 +794,14 @@ int main()
     {
       doorClosedAmount[i] = 255;
     }
+  }
+  
+  for (i = 0; i < numObj; ++i)
+  {
+    if (getObjectType(i) < 5)
+    {
+      allocMobj(i);
+    }  
   }
 
   textcolor(2);
@@ -816,6 +824,7 @@ int main()
 	  // note: XXXXYZZZ (X = screen, Y = reverse mode, Z = border)
 	  POKE(0x900F, 8 + 5); // green border, and black screen
 	  
+
 	  keys = readInput();
 	  ctrlKeys = getControlKeys();
 	  
