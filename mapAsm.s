@@ -701,6 +701,16 @@ rts
 .endproc
 
 _setObjectSector:
+
+; TOS - object
+; A - sector
+
+tax
+ldy #0
+lda (sp),y
+tay
+txa
+sta objSec,y
 ldy #1
 jmp addysp
 

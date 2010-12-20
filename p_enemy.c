@@ -38,14 +38,9 @@
 #define true 1
 #define FRACUNIT 256
 
-// player radius for movement checking
-#define PLAYERRADIUS	(16*FRACUNIT) // for reference
-#define MELEERANGE		(64*FRACUNIT)
+#define MELEERANGE 2
 
 #define INNERCOLLISIONRADIUS 512
-
-#define sfx_pistol SOUND_PISTOL
-#define sfx_claw SOUND_CLAW
 
 #define MF_JUSTHIT 1
 #define MF_JUSTATTACKED 2
@@ -112,12 +107,13 @@ mobjInfo_t mobjinfo[1] =
     STATE_POSLOOK, STATE_POSCHASE, STATE_POSPAIN, -1, STATE_POSSHOOT, STATE_POSFALL }
 };
 
-void A_Look(mobj_t *);
-void A_Chase(mobj_t *);
-void A_Flinch(mobj_t *);
-void A_Melee(mobj_t *);
-void A_Shoot(mobj_t *);
-void A_Fall(mobj_t *);
+void A_Look(void);
+void A_Chase(void);
+void A_Flinch(void);
+void A_Melee(void);
+void A_Missile(void);
+void A_Shoot(void);
+void A_Fall(void);
 
 // actions are global
 #define ACTION_LOOK 0
@@ -143,40 +139,46 @@ mobjState_t states[] =
   { 7, ACTION_FALL }
 };
 
-void callAction(mobj_t *obj)
+mobj_t *actor;
+mobjInfo_t *info;
+mobjState_t *state;
+
+void callAction(void)
 {
    gotoxy(1,0);
-   switch (states[obj->stateIndex].actionIndex)
+   switch (state->actionIndex)
    {
    case ACTION_LOOK:
      cputs("look. ");
-     A_Look(obj);
+     A_Look();
      break;
    case ACTION_CHASE:
      cputs("chase. ");
-     A_Chase(obj);
+     A_Chase();
      break;
    case ACTION_FLINCH:
      cputs("flinch. ");
-     A_Flinch(obj);
+     A_Flinch();
      break;
    case ACTION_MELEE:
      cputs("melee. ");
-     A_Melee(obj);
+     A_Melee();
      break;
    case ACTION_SHOOT:
      cputs("shoot. ");
-     A_Shoot(obj);
+     A_Shoot();
      break;
    case ACTION_FALL:
      cputs("fall. ");
-     A_Fall(obj);
+     A_Fall();
      break;
    }
+   #if 0
    gotoxy(0,1);
-   cprintf("x %d y %d s %d. ", obj->x, obj->y, obj->sector);
+   cprintf("x %d y %d s %d. ", actor->x, actor->y, actor->sector);
    gotoxy(0,2);
-   cprintf("dir %d rt %d mc %d. ", obj->movedir, obj->reactiontime, obj->movecount);
+   cprintf("dir %d rt %d mc %d. ", actor->movedir, actor->reactiontime, actor->movecount);
+   #endif
 }
 
 char getTexture(mobj_t *obj)
@@ -257,8 +259,10 @@ void p_enemy_think(char o)
   if (getObjectType(o) < 5)
   {
     char mobjIndex = mobjForObj[o];
-    mobj_t *mobj = &mobjs[mobjIndex];
-    callAction(mobj);
+    actor = &mobjs[mobjIndex];
+    info = &mobjinfo[actor->infoType];
+    state = &states[actor->stateIndex];
+    callAction();
   }
 }
 
@@ -269,17 +273,7 @@ char P_Random(void);
 // Gives an estimation of distance (not exact)
 //
 
-fixed_t
-P_ApproxDistance
-( fixed_t	dx,
-  fixed_t	dy )
-{
-    dx = abs(dx);
-    dy = abs(dy);
-    if (dx < dy)
-		return dx+dy-(dx>>1);
-    return dx+dy-(dy>>1);
-}
+char __fastcall__ P_ApproxDistance( fixed_t dx, fixed_t dy );
 
 
 typedef enum
@@ -329,7 +323,7 @@ dirtype_t diags[] =
 // hacked version of this for D20M
 //
 
-boolean P_CheckSight(mobj_t *actor)
+boolean P_CheckSight(void)
 {
   if (actor->sector == playerSector) return true;
   // this table will be cleared at the start of render
@@ -338,43 +332,49 @@ boolean P_CheckSight(mobj_t *actor)
   return false;
 }
 
-boolean P_LookForPlayers(mobj_t *actor)
+boolean P_LookForPlayers(void)
 {
-	if (P_CheckSight(actor))
+	if (P_CheckSight())
 	{
 		return true;
 	}
 	return false;
 }
 
-void S_StartSound(mobj_t *actor, char sound)
+void S_StartSound(char sound)
 {
    // just try to play it
    // will succeed or fail based on priorities
-   // perhaps set a volume based on actor position?
+   // TODO: perhaps set a volume based on actor position?
    playSound(sound);
 }
 
-void P_SetMobjState(mobj_t *actor, char state)
+void P_SetMobjState(char stateIndex)
 {
-  actor->stateIndex = state;
+  actor->stateIndex = stateIndex;
+  state = &states[stateIndex];
 }
 
-void P_DamageMobj(mobj_t *actor, int damage)
+void P_DamageMobj(int damage)
 {
 	actor->health -= damage;
 	if (actor->health <= 0)
 	{
 		// kill actor - FIX!
-		P_SetMobjState(actor, mobjinfo[actor->infoType].deathstate);
+		P_SetMobjState(info->deathstate);
 	}
 	else
 	{
 		actor->flags |= MF_JUSTATTACKED;
+		// maybe flinch, depending on threshold
+		if (damage > info->painchance)
+		{
+		  P_SetMobjState(info->painstate);
+		}
 	}
 }
 
-void P_RadiusAttack(mobj_t *actor, int radius)
+void P_RadiusAttack(int radius)
 {
    // attempt to damage the player
     fixed_t	dist;
@@ -389,57 +389,52 @@ void P_RadiusAttack(mobj_t *actor, int radius)
 //
 // P_CheckMeleeRange
 //
-boolean P_CheckMeleeRange(mobj_t *actor)
+boolean P_CheckMeleeRange(void)
 {
-    fixed_t	dist;
-	
-    dist = P_ApproxDistance(playerx - actor->x, playery - actor->y);
+    char dist = P_ApproxDistance(playerx - actor->x, playery - actor->y);
 
     if (dist >= MELEERANGE)
 	return false;
 	
-    if (! P_CheckSight (actor) )
+    if (! P_CheckSight() )
 	return false;
 							
-    return true;		
+    return true;
 }
 
 //
 // P_CheckMissileRange
 //
-boolean P_CheckMissileRange (mobj_t* actor)
+boolean P_CheckMissileRange(void)
 {
-    fixed_t	dist;
+    char dist;
 	
-    if (! P_CheckSight (actor) )
-	return false;
+    if (! P_CheckSight() )
+		return false;
 	
     if ( actor->flags & MF_JUSTHIT )
     {
-	// the target just hit the enemy,
-	// so fight back!
-	actor->flags &= ~MF_JUSTHIT;
-	return true;
+		// the target just hit the enemy,
+		// so fight back!
+		actor->flags &= ~MF_JUSTHIT;
+		return true;
     }
 	
     if (actor->reactiontime)
-	return false;	// do not attack yet
+		return false;	// do not attack yet
 		
     // OPTIMIZE: get this from a global checksight
-    dist = P_ApproxDistance ( actor->x - playerx,
-			     actor->y - playery) - 64*FRACUNIT;
-
-    if (!mobjinfo[actor->infoType].meleestate)
-	dist -= 128*FRACUNIT;	// no melee attack, so fire more
-
-    dist >>= 16;
+    dist = P_ApproxDistance( actor->x - playerx, actor->y - playery);
     
-    if (dist > 200)
-	dist = 200;
+    if (!info->meleestate && dist >= 20)
+		dist -= 20; // no melee attack, so fire more
+
+    if (dist > 50)
+		dist = 50;
 		
-    if (P_Random () < dist)
-	return false;
-		
+    if ((P_Random()>>2) < dist)
+		return false;
+
     return true;
 }
 
@@ -449,12 +444,8 @@ boolean P_CheckMissileRange (mobj_t* actor)
 // Move in the current direction,
 // returns false if the move is blocked.
 //
-#define MIN_SPEED 32
-#define FU_45 22
-fixed_t	xspeed[8] = {MIN_SPEED,FU_45,0,-FU_45,-MIN_SPEED,-FU_45,0,FU_45};
-fixed_t yspeed[8] = {0,FU_45,MIN_SPEED,FU_45,0,-FU_45,-MIN_SPEED,-FU_45};
 
-int try_move(mobj_t *actor, int tryx, int tryy)
+int try_move(int tryx, int tryy)
 {
   // probably a good idea to check the edges we can cross first
   // if any of them teleport us, move, then push_out in the new sector
@@ -468,7 +459,6 @@ int try_move(mobj_t *actor, int tryx, int tryy)
   long height;
   long edgeLen;
   long dist;
-  long dx, dy;
   char edgeGlobalIndex;
   char curSector = actor->sector;
   char secNumVerts = getNumVerts(curSector);
@@ -513,8 +503,8 @@ int try_move(mobj_t *actor, int tryx, int tryy)
         {
           if (dist > 0)
           {
-			   dx = tryx - 256*v2x;
-			   dy = tryy - 256*v2y;
+			   px = tryx - 256*v2x;
+			   py = tryy - 256*v2y;
 		  }
 		   height = px * px + py * py;
 		   if (height < INNERCOLLISIONRADIUS*INNERCOLLISIONRADIUS)
@@ -529,28 +519,35 @@ int try_move(mobj_t *actor, int tryx, int tryy)
 
 
 
-boolean P_TryMove(mobj_t *actor, fixed_t tryx, fixed_t tryy)
+boolean P_TryMove(fixed_t tryx, fixed_t tryy)
 {
-   // TODO: check the move is valid
-   // also, copy the position to the object
-   // and, update the sector!
-   char nextSector = try_move(actor, tryx, tryy);
+   // check the move is valid
+   char nextSector = try_move(tryx, tryy);
    if (nextSector != -1)
    {
      char o = objForMobj[actor->mobjIndex];
      actor->x = tryx;
      actor->y = tryy;
      actor->sector = nextSector;
+
+     // also, copy the position to the object
+     // and, update the sector!
+     setObjectX(o, tryx);
+     setObjectY(o, tryy);
+     setObjectSector(o, nextSector);
      
-     setObjectX(o, actor->x);
-     setObjectY(o, actor->y);
-     setObjectSector(o, actor->sector);
+     return true;
    }
 
-   return true;
+   return false;
 }
 
-boolean P_Move (mobj_t*	actor)
+#define MIN_SPEED 32
+#define FU_45 22
+signed char xspeed[8] = {MIN_SPEED,FU_45,0,-FU_45,-MIN_SPEED,-FU_45,0,FU_45};
+signed char yspeed[8] = {0,FU_45,MIN_SPEED,FU_45,0,-FU_45,-MIN_SPEED,-FU_45};
+
+boolean P_Move(void)
 {
     fixed_t	tryx;
     fixed_t	tryy;
@@ -560,13 +557,11 @@ boolean P_Move (mobj_t*	actor)
 		
     if (actor->movedir == DI_NODIR)
 	return false;
-		
-    tryx = actor->x + mobjinfo[actor->infoType].speed*xspeed[actor->movedir];
-    tryy = actor->y + mobjinfo[actor->infoType].speed*yspeed[actor->movedir];
 
-	// need to replace this function with one of my own devising
-	// should just check the lines of this sector
-    return P_TryMove (actor, tryx, tryy);
+    tryx = actor->x + info->speed*xspeed[actor->movedir];
+    tryy = actor->y + info->speed*yspeed[actor->movedir];
+
+    return P_TryMove(tryx, tryy);
 }
 
 
@@ -581,9 +576,9 @@ boolean P_Move (mobj_t*	actor)
 // If a door is in the way,
 // an OpenDoor call is made to start it opening.
 //
-boolean P_TryWalk (mobj_t* actor)
+boolean P_TryWalk(void)
 {	
-    if (!P_Move (actor))
+    if (!P_Move())
     {
 	   return false;
     }
@@ -595,12 +590,12 @@ boolean P_TryWalk (mobj_t* actor)
 
 
 
-void P_NewChaseDir (mobj_t*	actor)
+void P_NewChaseDir(void)
 {
     fixed_t	deltax;
     fixed_t	deltay;
     
-    dirtype_t	d[3];
+    dirtype_t	d1, d2;
     
     int		tdir;
     dirtype_t	olddir;
@@ -614,30 +609,32 @@ void P_NewChaseDir (mobj_t*	actor)
     deltay = playery - actor->y;
 
     if (deltax>FRACUNIT)
-	d[1]= DI_EAST;
+	d1= DI_EAST;
     else if (deltax<-FRACUNIT)
-	d[1]= DI_WEST;
+	d1= DI_WEST;
     else
-	d[1]=DI_NODIR;
+	d1=DI_NODIR;
 
     if (deltay<-FRACUNIT)
-	d[2]= DI_SOUTH;
+	d2= DI_SOUTH;
     else if (deltay>FRACUNIT)
-	d[2]= DI_NORTH;
+	d2= DI_NORTH;
     else
-	d[2]=DI_NODIR;
+	d2=DI_NODIR;
 	
+	#if 0
 	gotoxy(0,12);
 	cprintf("dx %d dy %d. ", deltax, deltay);
 	gotoxy(0,13);
-	cprintf("d1 %d d2 %d. ", d[1], d[2]);
+	cprintf("d1 %d d2 %d. ", d1, d2);
+	#endif
 
     // try direct route
-    if (d[1] != DI_NODIR
-	&& d[2] != DI_NODIR)
+    if (d1 != DI_NODIR
+	&& d2 != DI_NODIR)
     {
 	actor->movedir = diags[((deltay<0)<<1)+(deltax>0)];
-	if (actor->movedir != turnaround && P_TryWalk(actor))
+	if (actor->movedir != turnaround && P_TryWalk())
 	    return;
     }
 
@@ -645,31 +642,31 @@ void P_NewChaseDir (mobj_t*	actor)
     if (P_Random() > 200
 	||  abs(deltay)>abs(deltax))
     {
-	tdir=d[1];
-	d[1]=d[2];
-	d[2]=tdir;
+	tdir=d1;
+	d1=d2;
+	d2=tdir;
     }
 
-    if (d[1]==turnaround)
-	d[1]=DI_NODIR;
-    if (d[2]==turnaround)
-	d[2]=DI_NODIR;
+    if (d1==turnaround)
+	d1=DI_NODIR;
+    if (d2==turnaround)
+	d2=DI_NODIR;
 	
-    if (d[1]!=DI_NODIR)
+    if (d1!=DI_NODIR)
     {
-	actor->movedir = d[1];
-	if (P_TryWalk(actor))
+	actor->movedir = d1;
+	if (P_TryWalk())
 	{
 	    // either moved forward or attacked
 	    return;
 	}
     }
 
-    if (d[2]!=DI_NODIR)
+    if (d2!=DI_NODIR)
     {
-	actor->movedir =d[2];
+	actor->movedir =d2;
 
-	if (P_TryWalk(actor))
+	if (P_TryWalk())
 	    return;
     }
 
@@ -679,7 +676,7 @@ void P_NewChaseDir (mobj_t*	actor)
     {
 	actor->movedir =olddir;
 
-	if (P_TryWalk(actor))
+	if (P_TryWalk())
 	    return;
     }
 
@@ -694,7 +691,7 @@ void P_NewChaseDir (mobj_t*	actor)
 	    {
 		actor->movedir =tdir;
 		
-		if ( P_TryWalk(actor) )
+		if ( P_TryWalk() )
 		    return;
 	    }
 	}
@@ -709,7 +706,7 @@ void P_NewChaseDir (mobj_t*	actor)
 	    {
 		actor->movedir =tdir;
 		
-		if ( P_TryWalk(actor) )
+		if ( P_TryWalk() )
 		    return;
 	    }
 	}
@@ -718,7 +715,7 @@ void P_NewChaseDir (mobj_t*	actor)
     if (turnaround !=  DI_NODIR)
     {
 	actor->movedir =turnaround;
-	if ( P_TryWalk(actor) )
+	if ( P_TryWalk() )
 	    return;
     }
 
@@ -734,14 +731,14 @@ void P_NewChaseDir (mobj_t*	actor)
 // A_Look
 // Stay in state until a player is sighted.
 //
-void A_Look (mobj_t* actor)
+void A_Look(void)
 {
     if ((actor->flags & MF_WASSEENTHISFRAME)
 		|| actor->sector == playerSector)
 	{
-	    S_StartSound (actor, mobjinfo[actor->infoType].seesound);
+	    S_StartSound(info->seesound);
 	    // go into chase state
-	    P_SetMobjState (actor, mobjinfo[actor->infoType].chasestate);
+	    P_SetMobjState(info->chasestate);
 	}
 }
 
@@ -751,7 +748,7 @@ void A_Look (mobj_t* actor)
 // Actor has a melee attack,
 // so it tries to close as fast as possible
 //
-void A_Chase (mobj_t*	actor)
+void A_Chase(void)
 {
     if (actor->reactiontime)
 	actor->reactiontime--;
@@ -760,35 +757,32 @@ void A_Chase (mobj_t*	actor)
     if (actor->flags & MF_JUSTATTACKED)
     {
 		actor->flags &= ~MF_JUSTATTACKED;
-	    P_NewChaseDir (actor);
+	    P_NewChaseDir();
 		return;
     }
     
     // check for melee attack
-    if (mobjinfo[actor->infoType].meleestate != 0xff
-	&& P_CheckMeleeRange (actor))
+    if (info->meleestate != 0xff
+		&& P_CheckMeleeRange())
     {
-	if (mobjinfo[actor->infoType].meleesound != 0xff)
-	    S_StartSound (actor, mobjinfo[actor->infoType].meleesound);
-
-	P_SetMobjState (actor, mobjinfo[actor->infoType].meleestate);
-	return;
+		P_SetMobjState(info->meleestate);
+		return;
     }
     
     // check for missile attack
-    if (mobjinfo[actor->infoType].shootstate)
+    if (info->shootstate != 0xff)
     {
-	if (actor->movecount)
-	{
-	    goto nomissile;
-	}
-	
-	if (!P_CheckMissileRange (actor))
-	    goto nomissile;
-	
-	P_SetMobjState (actor, mobjinfo[actor->infoType].shootstate);
-	actor->flags |= MF_JUSTATTACKED;
-	return;
+		if (actor->movecount)
+		{
+			goto nomissile;
+		}
+		
+		if (!P_CheckMissileRange())
+			goto nomissile;
+		
+		P_SetMobjState(info->shootstate);
+		actor->flags |= MF_JUSTATTACKED;
+		return;
     }
 
     // ?
@@ -796,16 +790,16 @@ void A_Chase (mobj_t*	actor)
     
     // chase towards player
     if (--actor->movecount < 0
-		|| !P_Move (actor))
+		|| !P_Move())
     {
-		P_NewChaseDir (actor);
+		P_NewChaseDir();
     }
     
     // make active sound
-    if (mobjinfo[actor->infoType].activesound != -1
-		&& P_Random () < 3)
+    if (info->activesound != -1
+		&& P_Random() < 3)
     {
-		S_StartSound (actor, mobjinfo[actor->infoType].activesound);
+		S_StartSound(info->activesound);
     }
 }
 
@@ -893,8 +887,8 @@ char R_PointToAngle(int x, int y)
 //
 // A_FaceTarget
 //
-void A_FaceTarget (mobj_t* actor)
-{	
+void A_FaceTarget(void)
+{
     actor->flags &= ~MF_AMBUSH;
 	
     actor->movedir = R_PointToAngle (actor->x - playerx,
@@ -905,68 +899,70 @@ void A_FaceTarget (mobj_t* actor)
 //
 // A_Shoot
 //
-void A_Shoot (mobj_t* actor)
+void A_Shoot(void)
 {
     int		damage;
     fixed_t dist;
 	
-    A_FaceTarget (actor);
+    A_FaceTarget();
 
-    S_StartSound (actor, sfx_pistol);
+    S_StartSound(info->missilesound);
     dist = P_ApproxDistance(actor->x - playerx, actor->y - playery);
-    if (dist > 220) dist == 220;
-    if (P_Random() > dist)
+    if (dist > 55) dist = 55;
+    if ((P_Random()>>2) > dist)
     {
 	    damage = ((P_Random()&3)+2)*3; // this was ((r%5)+1)*3
 	    //damagePlayer(damage);
 	}
-	P_SetMobjState (actor, mobjinfo[actor->infoType].chasestate);
+	P_SetMobjState(info->chasestate);
 }
 
+//
+// A_Missile
+//
+void A_Missile(void)
+{
+    A_FaceTarget();
+	// launch a missile
+	//P_SpawnMissile(MT_TROOPSHOT);
+	P_SetMobjState(info->chasestate);
+}
 
 //
 // A_Melee
 //
-void A_Melee (mobj_t* actor)
+void A_Melee(void)
 {
-    int		damage;
+    int damage = ((P_Random()&7)+1)*3;
 	
-    A_FaceTarget (actor);
-    if (P_CheckMeleeRange (actor))
-    {
-		damage = ((P_Random()&7)+1)*3;
-		//damagePlayer (damage);
-    }
-    else
-    {    
-		// launch a missile
-		//P_SpawnMissile (actor, MT_TROOPSHOT);
-	}
-	P_SetMobjState (actor, mobjinfo[actor->infoType].chasestate);
+    A_FaceTarget();
+    if (info->meleesound != 0xff)
+		S_StartSound(info->meleesound);
+	//damagePlayer(damage);
 }
 
 
-void A_Fall (mobj_t *actor)
+void A_Fall(void)
 {
-   if (--actor->reactiontime == 0)
+   if (--actor->movecount == 0)
    {
      // make the object into a static corpse
-     mobjs[actor->mobjIndex].allocated = false;
+     actor->allocated = false;
    }
 }
 
-void A_Flinch(mobj_t *actor)
+void A_Flinch(void)
 {
-  if (--actor->reactiontime == 0)
+  if (--actor->movecount == 0)
   {
-	P_SetMobjState (actor, mobjinfo[actor->infoType].chasestate);
+	P_SetMobjState(info->chasestate);
   }
 }
 
 //
 // A_Explode
 //
-void A_Explode (mobj_t* thingy)
+void A_Explode(void)
 {
-    P_RadiusAttack ( thingy, 128 );
+    P_RadiusAttack( 5 );
 }
