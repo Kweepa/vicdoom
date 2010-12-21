@@ -3,7 +3,7 @@
 ; then optimized (replaced)
 ;
 	.fopt		compiler,"cc65 v 2.13.2"
-	.setcpu		"6502"
+	.setcpu		"6502X"
 	.autoimport	on
 	.case		on
 	.debuginfo	off
@@ -62,16 +62,20 @@ lsr
 
 lsr
 lsr
-nop
-nop
+bit 0
+; nop
+; nop
 
-nop
-nop
-nop
-nop
+bit 0
+bit 0
+;nop
+;nop
+;nop
+;nop
 
-nop
-nop
+;nop
+;nop
+bit 0
 asl
 asl
 
@@ -253,16 +257,18 @@ clc
 adc #16
 sta curX
 
+iny
+lda (sp),y
+sta texI
+
 ; modify mask code
+; now the mask is done before the shift to save using clc during the inner loop
 
 and #$03
 tax
 lda tmasktab,x
 sta tmask+1
 
-iny
-lda (sp),y
-sta texI
 iny
 lda (sp),y
 sta texIndex
@@ -353,29 +359,16 @@ dex
 ; texLo is kept in y
 ldy texY
 
-; cycles 4+2+2+2+2+2+4+5+2+2+2+2+2+2+4+2+4+3
-; approx 48 cycles per pixel
-; so that's on average 32x32x48 per frame
-loop:
-texAddr:
-lda textures ; self modified texture address
-; shift into position for the screen
-; modify these as required (asl/lsr/nop)
-shiftcodegoeshere:
-lsr
-lsr
-lsr
-lsr
-tmask:
-and #0 ; self modified immediate operand
-scrbuf:
-ora buffer,x ; self modified screen addr
-scrbuf2:
-sta buffer,x ; self modified screen addr
-dex
-bmi end
-tya
 clc
+jmp insideloop
+
+; cycles 2+2+2+4+2+4 +4+2+7+4+5+2+3
+; approx 43 cycles per pixel
+; so that's on average 32x32x43 per frame
+
+loop:
+
+tya
 stepLo:
 adc #0 ; self modified immediate operand
 tay
@@ -383,8 +376,25 @@ lda texAddr+1
 stepHi:
 adc #0 ; self modified immediate operand
 sta texAddr+1
-jmp loop
 
+insideloop:
+texAddr:
+lda textures ; self modified texture address
+tmask:
+and #0 ; self modified immediate operand
+; shift into position for the screen
+; modify these as required (asl/lsr/nop)
+shiftcodegoeshere:
+lsr
+lsr
+lsr
+lsr
+scrbuf:
+ora buffer,x ; self modified screen addr
+scrbuf2:
+sta buffer,x ; self modified screen addr
+dex
+bpl loop
 
 end:
 ldy #5
@@ -492,18 +502,24 @@ clc
 adc #16
 sta curX
 
-; modify mask code
+; modify screen mask code
 
 and #$03
 tax
 lda tmasktab,x
-sta tmask+1
 eor #$ff
 sta smask+1
 
 iny
 lda (sp),y
 sta texI
+
+; modify texture mask code
+
+and #$03
+tax
+lda tmasktab,x
+sta tmask+1
 
 ldy #6
 lda (sp),y
@@ -617,35 +633,12 @@ dex
 ; texLo is kept in y
 ldy texY
 
-; cycles 4+2+2+2+2+2+4+5+2+2+2+2+2+2+4+2+4+3
-; approx 48 cycles per pixel
-; so that's on average 32x32x48 per frame
-loop:
-texAddr:
-lda textures ; self modified texture address
-; shift into position for the screen
-; modify these as required (asl/lsr/nop)
-shiftcodegoeshere:
-lsr
-lsr
-lsr
-lsr
-tmask:
-and #0 ; self modified immediate operand
-beq dontWrite
-sta tmp
-smask:
-lda #0 ; self modified immediate operand
-scrbuf:
-and $1800,x
-ora tmp
-scrbuf2:
-sta $1800,x ; self modified screen addr
-dontWrite:
-dex
-bmi end
-tya
 clc
+jmp insideloop
+
+loop:
+
+tya
 stepLo:
 adc #0 ; self modified immediate operand
 tay
@@ -657,8 +650,34 @@ texLimit:
 cmp #0 ; self modified immediate operand
 bpl end ; off the end of the texture piece
 sta texAddr+1
-jmp loop
 
+; cycles 4+2+2+2+2+2+4+5+2+2+2+2+2+2+4+2+4+3
+; approx 48 cycles per pixel
+; so that's on average 32x32x48 per frame
+insideloop:
+texAddr:
+lda textures ; self modified texture address
+; shift into position for the screen
+; modify these as required (asl/lsr/nop)
+tmask:
+and #0 ; self modified immediate operand
+beq dontWrite
+shiftcodegoeshere:
+lsr
+lsr
+lsr
+lsr
+sta tmp
+smask:
+lda #0 ; self modified immediate operand
+scrbuf:
+and $1800,x
+ora tmp
+scrbuf2:
+sta $1800,x ; self modified screen addr
+dontWrite:
+dex
+bpl loop
 
 end:
 ldy #7

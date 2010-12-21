@@ -36,7 +36,6 @@
 #define boolean char
 #define false 0
 #define true 1
-#define FRACUNIT 256
 
 #define MELEERANGE 2
 
@@ -45,7 +44,6 @@
 #define MF_JUSTHIT 1
 #define MF_JUSTATTACKED 2
 #define MF_SHOOTABLE 4
-#define MF_AMBUSH 8
 #define MF_SOLID 16
 #define MF_WASSEENTHISFRAME 32
 
@@ -200,7 +198,7 @@ char allocMobj(char o)
   char i;
   mobj_t *mobj;
   if (allocated) return -1;
-  allocated = 1;
+//  allocated = 1;
   for (i = 0; i < MAX_MOBJ; ++i)
   {
 	mobj = &mobjs[i];
@@ -252,6 +250,24 @@ char allocMobj(char o)
     }
   }
   return -1;
+}
+
+void p_enemy_startframe(void)
+{
+   char i;
+   for (i = 0; i < MAX_MOBJ; ++i)
+   {
+      mobjs[i].flags &= ~MF_WASSEENTHISFRAME;
+   }
+}
+
+void p_enemy_wasseenthisframe(char o)
+{
+   if (getObjectType(o) < 5)
+   {
+     char i = mobjForObj[o];
+     mobjs[i].flags |= MF_WASSEENTHISFRAME;
+   }
 }
 
 void p_enemy_think(char o)
@@ -330,15 +346,6 @@ boolean P_CheckSight(void)
   // and filled in during render
   if (actor->flags & MF_WASSEENTHISFRAME) return true;
   return false;
-}
-
-boolean P_LookForPlayers(void)
-{
-	if (P_CheckSight())
-	{
-		return true;
-	}
-	return false;
 }
 
 void S_StartSound(char sound)
@@ -438,6 +445,15 @@ boolean P_CheckMissileRange(void)
     return true;
 }
 
+#define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
+#define PEEK(addr) (*(unsigned char *)(addr))
+
+// use this to line up raster timing lines
+void waitforraster(void)
+{
+    while (PEEK(0x9004) > 16) ;
+    while (PEEK(0x9004) < 16) ;
+}
 
 //
 // P_Move
@@ -445,24 +461,28 @@ boolean P_CheckMissileRange(void)
 // returns false if the move is blocked.
 //
 
-int try_move(int tryx, int tryy)
+int try_move(int trydx, int trydy)
 {
   // probably a good idea to check the edges we can cross first
   // if any of them teleport us, move, then push_out in the new sector
-
+  
   char thatSector;
   char i, ni;
-  int v1x, v1y, v2x, v2y;
-  long ex;
-  long ey;
-  long px, py;
-  long height;
-  long edgeLen;
-  long dist;
+  signed char v1x, v1y, v2x, v2y;
+  signed char ex;
+  signed char ey;
+  signed char px, py;
+  int dot, height;
+  char edgeLen;
+  int dist;
   char edgeGlobalIndex;
   char curSector = actor->sector;
+  char sectorToReturn = curSector;
   char secNumVerts = getNumVerts(curSector);
   
+  waitforraster();
+	  POKE(0x900F, 8 + 4); // green border, and black screen
+
   // see which edge the new coordinate is behind
   for (i = 0; i < secNumVerts; ++i)
   {
@@ -471,69 +491,75 @@ int try_move(int tryx, int tryy)
      v1y = getSectorVertexY(curSector, i);
      v2x = getSectorVertexX(curSector, ni);
      v2y = getSectorVertexY(curSector, ni);
-     ex = ((long)v2x) - v1x;
-     ey = ((long)v2y) - v1y;
-     px = tryx - 256*v1x;
-     py = tryy - 256*v1y;
-     edgeLen = getEdgeLen(curSector, i);
-     height = (px * ey - py * ex) / edgeLen;
-     if (height < INNERCOLLISIONRADIUS)
+     ex = v2x - v1x;
+     ey = v2y - v1y;
+     dot = trydx*ey - trydy*ex;
+     if (dot <= 0)
      {
-        // check we're within the extents of the edge
-        dist = (px * ex + py * ey)/edgeLen;
-        if (dist > 0 && dist < 256*edgeLen)
-        {
-           thatSector = getOtherSector(curSector, i);
-           edgeGlobalIndex = getEdgeIndex(curSector, i);
-           if (thatSector != -1)// && doorClosedAmount[edgeGlobalIndex] == 0)
-           {
-              if (height < 0)
-              {
-                 return thatSector;
-              }
-           }
-           else
-           {
-              // hit a wall
-              return -1;
-           }
-        }
-        else if (dist > -INNERCOLLISIONRADIUS
-          && dist < 256*edgeLen + INNERCOLLISIONRADIUS)
-        {
-          if (dist > 0)
-          {
-			   px = tryx - 256*v2x;
-			   py = tryy - 256*v2y;
-		  }
-		   height = px * px + py * py;
-		   if (height < INNERCOLLISIONRADIUS*INNERCOLLISIONRADIUS)
-		   {
-		      return -1;
-		   }
-		}
-     }
+		 px = ((actor->x + trydx)/256) - v1x;
+		 py = ((actor->y + trydy)/256) - v1y;
+		 edgeLen = getEdgeLen(curSector, i);
+		 height = px * ey - py * ex;
+		 if (height < 2*edgeLen)
+		 {
+			// check we're within the extents of the edge
+			thatSector = getOtherSector(curSector, i);
+			edgeGlobalIndex = getEdgeIndex(curSector, i);
+			if (thatSector != -1)// && doorClosedAmount[edgeGlobalIndex] == 0)
+			{
+			   dist = px * ex + py * ey;
+			   #if 0
+  			   gotoxy(0,3);
+			   cprintf("%d %d %d %d %d. ", curSector, dist, edgeLen, dot, height);
+			   #endif
+			   if (dist > edgeLen && dist < edgeLen*edgeLen - edgeLen)
+			   {
+				  if (height <= 0)
+				  {
+				     #if 0
+					 gotoxy(0,4);
+					 cprintf("%d. ", thatSector);
+					 #endif
+		  POKE(0x900F, 8 + 5); // green border, and black screen
+					 return thatSector;
+				  }
+				  return curSector;
+			   }
+			   else
+			   {
+				  // hit a wall
+				  sectorToReturn = -1;
+			   }
+			}
+			else
+			{
+			  // hit a wall
+			  sectorToReturn = -1;
+			}
+		 }
+	  }
   }
-  return curSector;
+	  POKE(0x900F, 8 + 5); // green border, and black screen
+  return sectorToReturn;
 }
 
 
 
-boolean P_TryMove(fixed_t tryx, fixed_t tryy)
+boolean P_TryMove(fixed_t trydx, fixed_t trydy)
 {
    // check the move is valid
-   char nextSector = try_move(tryx, tryy);
+   char nextSector = try_move(trydx, trydy);
    if (nextSector != -1)
    {
      char o = objForMobj[actor->mobjIndex];
-     actor->x = tryx;
-     actor->y = tryy;
+     actor->x += trydx;
+     actor->y += trydy;
      actor->sector = nextSector;
 
      // also, copy the position to the object
      // and, update the sector!
-     setObjectX(o, tryx);
-     setObjectY(o, tryy);
+     setObjectX(o, actor->x);
+     setObjectY(o, actor->y);
      setObjectSector(o, nextSector);
      
      return true;
@@ -549,8 +575,8 @@ signed char yspeed[8] = {0,FU_45,MIN_SPEED,FU_45,0,-FU_45,-MIN_SPEED,-FU_45};
 
 boolean P_Move(void)
 {
-    fixed_t	tryx;
-    fixed_t	tryy;
+    fixed_t	trydx;
+    fixed_t	trydy;
     
     // warning: 'catch', 'throw', and 'try'
     // are all C++ reserved words
@@ -558,10 +584,10 @@ boolean P_Move(void)
     if (actor->movedir == DI_NODIR)
 	return false;
 
-    tryx = actor->x + info->speed*xspeed[actor->movedir];
-    tryy = actor->y + info->speed*yspeed[actor->movedir];
+    trydx = info->speed*xspeed[actor->movedir];
+    trydy = info->speed*yspeed[actor->movedir];
 
-    return P_TryMove(tryx, tryy);
+    return P_TryMove(trydx, trydy);
 }
 
 
@@ -589,6 +615,7 @@ boolean P_TryWalk(void)
 
 
 
+#define CHASEDIST 256
 
 void P_NewChaseDir(void)
 {
@@ -608,16 +635,16 @@ void P_NewChaseDir(void)
     deltax = playerx - actor->x;
     deltay = playery - actor->y;
 
-    if (deltax>FRACUNIT)
+    if (deltax>CHASEDIST)
 	d1= DI_EAST;
-    else if (deltax<-FRACUNIT)
+    else if (deltax<-CHASEDIST)
 	d1= DI_WEST;
     else
 	d1=DI_NODIR;
 
-    if (deltay<-FRACUNIT)
+    if (deltay<-CHASEDIST)
 	d2= DI_SOUTH;
-    else if (deltay>FRACUNIT)
+    else if (deltay>CHASEDIST)
 	d2= DI_NORTH;
     else
 	d2=DI_NODIR;
@@ -889,8 +916,6 @@ char R_PointToAngle(int x, int y)
 //
 void A_FaceTarget(void)
 {
-    actor->flags &= ~MF_AMBUSH;
-	
     actor->movedir = R_PointToAngle (actor->x - playerx,
 				    actor->y - playery);
 }
@@ -914,6 +939,7 @@ void A_Shoot(void)
 	    damage = ((P_Random()&3)+2)*3; // this was ((r%5)+1)*3
 	    //damagePlayer(damage);
 	}
+	actor->reactiontime = P_Random()&7;
 	P_SetMobjState(info->chasestate);
 }
 

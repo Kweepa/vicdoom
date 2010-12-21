@@ -1,6 +1,6 @@
 // doom for the vic-20
 // written for cc65
-// to compile, cl65 -t vic20 -C vic20-32k-udg.cfg -O vicdoom.c padding.s drawColumnInternalAsm.s -o vicdoom.prg
+// see make.bat for how to compile
 
 // todo
 // X 1. move angle to sin/cos to logsin/logcos to a separate function and just use those values
@@ -15,19 +15,18 @@
 // X 9. menus
 // 10. more optimization?
 // X 11. use a double buffer scheme that draws to two different sets of characters and just copies the characters over
-// 12. optimize push_out code
+// 12. optimize push_out code and more importantly the ai try_move code
 
 // memory map:
 // see the .cfg file for how to do this
 // startup code is $82 bytes long - fix with fill = yes
 // 1000-11FF screen
 // 1200-13FF startup + random data
-// 1400-15FF character font, copied from rom
+// 1400-15FF character font
 // 1600-17FF 8x8 bitmapped display character ram
-// 1800-19FF back buffer
-// 1A00-1DFF texture data
-// 1E00-2DFF level data, loaded from disk (not done yet)
-// 2E00-7FFF code/data
+// 1800-7FFF code/data
+// A000-BDFF texture data, level data, music
+// BE00-BFFF back buffer
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,27 +65,9 @@ void __fastcall__ setFilled(signed char col, unsigned int y);
 signed char __fastcall__ get_sin(void);
 signed char __fastcall__ get_cos(void);
 
-// use this to line up raster timing lines
-void waitforraster(void)
-{
-    while (PEEK(0x9004) > 16) ;
-    while (PEEK(0x9004) < 16) ;
-}
-
 char spanStackSec[10];
 signed char spanStackL[10];
 signed char spanStackR[10];
-
-typedef struct xfvertexT
-{
-  short x;
-  short y;
-  short screenx;
-  short dummy;
-} xfvertex;
-
-// transformed sector verts
-xfvertex xfverts[8];
 
 typedef struct
 {
@@ -191,41 +172,50 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
         {
            // numer = x4 * ((long)y1) / 256 - x1;
            numer = muladd88(x4, y1, -x1);
-           // t = 256 * numer / denom;
-           t = div88(numer, denom);
-           if (t > 256) t = 256;
-           // curY = y1 + t * dy / 256;
-           curY = muladd88(t, dy, y1);
-           // perspective transform
-           // Ys = Yw * (Ds/Dw) ; Ys = screenY, Yw = worldY, Ds = dist to screen, Dw = dist to point
-           // h = (SCREENHEIGHT/16)*512/(curY/16);
-
-           h = div88(128, curY);
-           
-           if (textureIndex == 2 || textureIndex == 4)
+           if (numer > 0)
            {
-	           // door or techwall, so fit to wall
-				texI = t >> 4;
+			   // t = 256 * numer / denom;
+			   t = div88(numer, denom);
 		   }
 		   else
 		   {
-	           texI = t * edgeLen / 64; // 256/PIXELSPERMETER
-	       }
-           texI &= 15; // 16 texel wide texture
-           
+		      t = 0;
+		   }
+           if (t > 256) t = 256;
+           // curY = y1 + t * dy / 256;
+           curY = muladd88(t, dy, y1);
            setFilled(curX, curY);
-
-           if (curX == 0 && textureIndex == 4)
+           if (curY > 0)
            {
-			 char edgeGlobalIndex = getEdgeIndex(sectorIndex, curEdgeIndex);
-             typeAtCenterOfView = TYPE_DOOR;
-             itemAtCenterOfView = edgeGlobalIndex;
-           }
+			   // perspective transform
+			   // Ys = Yw * (Ds/Dw) ; Ys = screenY, Yw = worldY, Ds = dist to screen, Dw = dist to point
+			   // h = (SCREENHEIGHT/16)*512/(curY/16);
 
-           // can look up the yStep (and starting texY) too
-           // each is a 512 byte table - hooray for wasting memory
-           // on the other hand, since I've already decided to waste 2k on a multiply table, I might as well use another 2k for lookups where appropriate
-           drawColumn(textureIndex, texI, curX, curY, h);
+			   h = div88(128, curY);
+	           
+			   if (textureIndex == 2 || textureIndex == 4)
+			   {
+				   // door or techwall, so fit to wall
+					texI = t >> 4;
+			   }
+			   else
+			   {
+				   texI = t * edgeLen / 64; // 256/PIXELSPERMETER
+			   }
+			   texI &= 15; // 16 texel wide texture
+	           
+			   if (curX == 0 && textureIndex == 4)
+			   {
+				 char edgeGlobalIndex = getEdgeIndex(sectorIndex, curEdgeIndex);
+				 typeAtCenterOfView = TYPE_DOOR;
+				 itemAtCenterOfView = edgeGlobalIndex;
+			   }
+
+			   // can look up the yStep (and starting texY) too
+			   // each is a 512 byte table - hooray for wasting memory
+			   // on the other hand, since I've already decided to waste 2k on a multiply table, I might as well use another 2k for lookups where appropriate
+			   drawColumn(textureIndex, texI, curX, curY, h);
+			}
         }
      }
   }
@@ -272,6 +262,10 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
      if (endX > x_R) endX = x_R;
      if (startX < x_R && endX > x_L)
      {
+        if (startX < endX)
+        {
+          p_enemy_wasseenthisframe(o);
+        }
         for (curX = startX; curX < endX; ++curX)
         {
            if (testFilled(curX) == 0)
@@ -945,6 +939,7 @@ int main()
       setCameraX(playerx);
       setCameraY(playery);
 
+      p_enemy_startframe();
       clearSecondBuffer();
 	  // draw to second buffer
 	  drawSpans();
@@ -958,16 +953,17 @@ int main()
 	  if (changeLookTime == 0)
 	  {
 	    lookDir = 1 - lookDir;
-		textcolor(7);
 		if (lookDir == 0)
 		{
   	      changeLookTime = 12;
-  		  cputsxy(10, 21, "[\\");
+  	      POKE(0x1000 + 10 + 22*21, 27);
+  	      POKE(0x1000 + 11 + 22*21, 28);
   		}
   		else
   		{
   	      changeLookTime = 6;
-  		  cputsxy(10, 21, "()");
+  	      POKE(0x1000 + 10 + 22*21, 40);
+  	      POKE(0x1000 + 11 + 22*21, 41);
   		}
       }
 	  
