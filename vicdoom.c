@@ -437,7 +437,7 @@ void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 		 if (texFrames[type].solid)
 		 {
 		   drawObjectInSector(objInst->o, objInst->x, objInst->y, x_L, x_R);
-		   p_enemy_think(objInst->o);
+		   p_enemy_add_thinker(objInst->o);
 		 }
 	  }
 	}
@@ -970,6 +970,7 @@ int main()
 	  drawSpans();
 	  // this takes about 30 raster lines
 	  copyToPrimaryBuffer();
+	  p_enemy_think();
 	  
 	  ++frame;
 	  frame &= 7;

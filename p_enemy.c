@@ -305,6 +305,9 @@ char allocMobj(char o)
   return -1;
 }
 
+char thinkercap;
+char thinkers[MAX_MOBJ];
+
 void p_enemy_startframe(void)
 {
    char i;
@@ -312,6 +315,17 @@ void p_enemy_startframe(void)
    {
       mobjs[i].flags &= ~MF_WASSEENTHISFRAME;
    }
+   thinkercap = 0;
+}
+
+void p_enemy_add_thinker(char o)
+{
+  if (getObjectType(o) < 5)
+  {
+    char mobjIndex = mobjForObj[o];
+    thinkers[thinkercap] = mobjIndex;
+    ++thinkercap;
+  }
 }
 
 void p_enemy_wasseenthisframe(char o)
@@ -342,11 +356,13 @@ void p_enemy_damage(char o, char damage)
    }
 }
 
-void p_enemy_think(char o)
+void p_enemy_think(void)
 {
-  if (getObjectType(o) < 5)
+  char i = 0;
+  while (i < thinkercap)
   {
-    char mobjIndex = mobjForObj[o];
+    char mobjIndex = thinkers[i];
+    ++i;
     actor = &mobjs[mobjIndex];
     info = &mobjinfo[actor->infoType];
     state = &states[actor->stateIndex];
