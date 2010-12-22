@@ -39,6 +39,7 @@
 .export _setObjectX
 .export _setObjectY
 .export _setObjectSector
+.export _setObjectType
 
 .segment "MAPDATA"
 ; summary data (4 bytes)
@@ -773,6 +774,21 @@ lda objType,y
 rts
 
 .endproc
+
+_setObjectType:
+
+; A - type
+; TOS - object
+
+tax
+ldy #0
+lda (sp),y
+tay
+txa
+sta objType,y
+
+ldy #1
+jmp addysp
 
 _getGlobalEdgeTexture:
 tay

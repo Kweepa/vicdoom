@@ -61,6 +61,8 @@ char __fastcall__ testFilled(signed char col);
 signed char __fastcall__ testFilledWithY(signed char col, unsigned int y);
 void __fastcall__ setFilled(signed char col, unsigned int y);
 
+char P_Random(void);
+
 // these get the player sin/cos
 signed char __fastcall__ get_sin(void);
 signed char __fastcall__ get_cos(void);
@@ -82,7 +84,7 @@ typedef struct
 }
 texFrame;
 
-texFrame texFrames[16] =
+texFrame texFrames[] =
 {
   { 5, 1, 1, 5 }, // possessed
   { 8, 1, 1, 5 }, // imp
@@ -100,6 +102,8 @@ texFrame texFrames[16] =
   { 17, 0, 1, 5 }, // pillar
   { 20, 0, 0, 8, 16, 16, 0, 16 }, // skullpile - fix
   { 17, 0, 1, 5 }, // acid - fix
+  { 16, 0, 0, 5, 0, 8, 0, 16 }, // possessed corpse
+  { 16, 0, 0, 5, 8, 8, 0, 16 }, // imp corpse
 };
 
 int playerx = -17*256, playery = -11*256;
@@ -239,9 +243,10 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
   // perspective transform (see elsewhere for optimization)
   //int h = (SCREENHEIGHT/16) * 512 / (vy/16);
   unsigned int h = div88(128, vy);
+
   char texFrameIndex = getObjectType(o);
-  unsigned int w = h/texFrames[texFrameIndex].widthScale;
-  char textureIndex = texFrames[texFrameIndex].texture;
+  char textureIndex;
+  unsigned int w;
   int sx;
   int leftX;
   int rightX;
@@ -250,6 +255,15 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
   int endX;
   signed char curX;
   char texI;
+  if (texFrameIndex < 5)
+  {
+    textureIndex = p_enemy_get_texture(o);
+  }
+  else
+  {
+    textureIndex = texFrames[texFrameIndex].texture;
+  }
+  w = h/texFrames[texFrameIndex].widthScale;
   if (w > 0)
   {
      //sx = vx / (vy / HALFSCREENWIDTH);
@@ -893,6 +907,10 @@ int main()
 		  
 		  playSound(SOUND_PISTOL);
 		}
+		if (typeAtCenterOfView == TYPE_OBJECT)
+		{
+		  p_enemy_damage(itemAtCenterOfView, 2 + (P_Random()&7));
+		}   
 	  }
 
       for (i = 0; i < 4; ++i)

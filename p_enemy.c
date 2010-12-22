@@ -49,6 +49,19 @@
 
 #define MT_TROOPSHOT 6
 
+// states are specific to enemy types
+#define STATE_POSLOOK 0
+#define STATE_POSCHASE 1
+#define STATE_POSPAIN 2
+#define STATE_POSSHOOT 3
+#define STATE_POSFALL 4
+#define STATE_IMPLOOK 5
+#define STATE_IMPCHASE 6
+#define STATE_IMPPAIN 7
+#define STATE_IMPCLAW 8
+#define STATE_IMPMISSILE 9
+#define STATE_IMPFALL 10
+
 typedef struct
 {
    char speed;
@@ -67,17 +80,26 @@ typedef struct
    char meleestate;
    char shootstate;
    char deathstate;
+   
+   char deathObjectType;
+   char dummy;
 }
 mobjInfo_t;
 
-// states are specific to enemy types
-#define STATE_POSLOOK 0
-#define STATE_POSCHASE 1
-#define STATE_POSPAIN 2
-#define STATE_POSSHOOT 3
-#define STATE_POSFALL 4
-
 #define MOBJINFO_POSSESSED 0
+#define MOBJINFO_IMP 1
+#define MOBJINFO_DEMON 2
+#define MOBJINFO_CACODEMON 3
+#define MOBJINFO_BARON 4
+
+// TODO: fill out
+mobjInfo_t mobjinfo[] =
+{
+  { 3, -1, SOUND_GURGLE, SOUND_POPAIN, -1, SOUND_PISTOL, 30, 4,
+    STATE_POSLOOK, STATE_POSCHASE, STATE_POSPAIN, -1, STATE_POSSHOOT, STATE_POSFALL, TYPE_POSSESSED_CORPSE },
+  { 4, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, SOUND_CLAW, 30, 4,
+    STATE_IMPLOOK, STATE_IMPCHASE, STATE_IMPPAIN, STATE_IMPCLAW, STATE_IMPMISSILE, STATE_IMPFALL, TYPE_IMP_CORPSE }
+};
 
 typedef struct
 {
@@ -98,13 +120,6 @@ typedef struct
 }
 mobj_t;
 
-// TODO: fill out
-mobjInfo_t mobjinfo[1] =
-{
-  { 4, -1, SOUND_GURGLE, SOUND_POPAIN, -1, SOUND_PISTOL, 30, 50,
-    STATE_POSLOOK, STATE_POSCHASE, STATE_POSPAIN, -1, STATE_POSSHOOT, STATE_POSFALL }
-};
-
 void A_Look(void);
 void A_Chase(void);
 void A_Flinch(void);
@@ -119,7 +134,8 @@ void A_Fall(void);
 #define ACTION_FLINCH 2
 #define ACTION_MELEE 3
 #define ACTION_SHOOT 4
-#define ACTION_FALL 5
+#define ACTION_MISSILE 5
+#define ACTION_FALL 6
 
 typedef struct
 {
@@ -134,40 +150,75 @@ mobjState_t states[] =
   { 5, ACTION_CHASE },
   { 7, ACTION_FLINCH },
   { 6, ACTION_SHOOT },
-  { 7, ACTION_FALL }
+  { 7, ACTION_FALL },
+
+  { 8, ACTION_LOOK },
+  { 8, ACTION_CHASE },
+  { 10, ACTION_FLINCH },
+  { 9, ACTION_MELEE },
+  { 9, ACTION_MISSILE },
+  { 10, ACTION_FALL },
 };
 
 mobj_t *actor;
 mobjInfo_t *info;
 mobjState_t *state;
 
-void callAction(void)
+void printAction(void)
 {
    gotoxy(1,0);
    switch (state->actionIndex)
    {
    case ACTION_LOOK:
      cputs("look. ");
-     A_Look();
      break;
    case ACTION_CHASE:
      cputs("chase. ");
-     A_Chase();
      break;
    case ACTION_FLINCH:
      cputs("flinch. ");
-     A_Flinch();
      break;
    case ACTION_MELEE:
      cputs("melee. ");
-     A_Melee();
      break;
    case ACTION_SHOOT:
      cputs("shoot. ");
-     A_Shoot();
+     break;
+   case ACTION_MISSILE:
+     cputs("missile. ");
      break;
    case ACTION_FALL:
      cputs("fall. ");
+     break;
+   }
+}
+
+void callAction(void)
+{
+  #if 0
+  printAction(state->actionIndex);
+  #endif
+   switch (state->actionIndex)
+   {
+   case ACTION_LOOK:
+     A_Look();
+     break;
+   case ACTION_CHASE:
+     A_Chase();
+     break;
+   case ACTION_FLINCH:
+     A_Flinch();
+     break;
+   case ACTION_MELEE:
+     A_Melee();
+     break;
+   case ACTION_SHOOT:
+     A_Shoot();
+     break;
+   case ACTION_MISSILE:
+     A_Missile();
+     break;
+   case ACTION_FALL:
      A_Fall();
      break;
    }
@@ -226,9 +277,9 @@ char allocMobj(char o)
         mobj->stateIndex = STATE_POSCHASE;
         break;
       case 1:
-        mobj->health = 50;
-        mobj->infoType = 0;
-        mobj->stateIndex = STATE_POSCHASE;
+        mobj->health = 35;
+        mobj->infoType = 1;
+        mobj->stateIndex = STATE_IMPCHASE;
         break;
       case 2:
         mobj->health = 50;
@@ -267,6 +318,24 @@ void p_enemy_wasseenthisframe(char o)
    {
      char i = mobjForObj[o];
      mobjs[i].flags |= MF_WASSEENTHISFRAME;
+   }
+}
+
+char p_enemy_get_texture(char o)
+{
+  char i = mobjForObj[o];
+  return getTexture(&mobjs[i]);
+}
+
+void P_DamageMobj(char damage);
+
+void p_enemy_damage(char o, char damage)
+{
+   if (getObjectType(o) < 5)
+   {
+     char i = mobjForObj[o];
+     actor = &mobjs[i];
+     P_DamageMobj(damage);
    }
 }
 
@@ -362,12 +431,13 @@ void P_SetMobjState(char stateIndex)
   state = &states[stateIndex];
 }
 
-void P_DamageMobj(int damage)
+void P_DamageMobj(char damage)
 {
 	actor->health -= damage;
 	if (actor->health <= 0)
 	{
-		// kill actor - FIX!
+	    // kill actor
+		actor->movecount = 2;
 		P_SetMobjState(info->deathstate);
 	}
 	else
@@ -376,6 +446,7 @@ void P_DamageMobj(int damage)
 		// maybe flinch, depending on threshold
 		if (damage > info->painchance)
 		{
+		  actor->movecount = 1;
 		  P_SetMobjState(info->painstate);
 		}
 	}
@@ -792,6 +863,7 @@ void A_Chase(void)
     if (info->meleestate != 0xff
 		&& P_CheckMeleeRange())
     {
+        actor->movecount = 0;
 		P_SetMobjState(info->meleestate);
 		return;
     }
@@ -959,12 +1031,21 @@ void A_Missile(void)
 //
 void A_Melee(void)
 {
-    int damage = ((P_Random()&7)+1)*3;
-	
-    A_FaceTarget();
-    if (info->meleesound != 0xff)
-		S_StartSound(info->meleesound);
-	//damagePlayer(damage);
+    if (actor->movecount == 0)
+    {
+		int damage = ((P_Random()&7)+1)*3;
+		
+		A_FaceTarget();
+		if (info->meleesound != 0xff)
+			S_StartSound(info->meleesound);
+		//damagePlayer(damage);
+		
+		++actor->movecount;
+    }
+    else
+    {
+       P_SetMobjState(info->chasestate);
+    }
 }
 
 
@@ -973,6 +1054,8 @@ void A_Fall(void)
    if (--actor->movecount == 0)
    {
      // make the object into a static corpse
+     char o = objForMobj[actor->mobjIndex];
+     setObjectType(o, info->deathObjectType);
      actor->allocated = false;
    }
 }
