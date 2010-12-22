@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <conio.h>
 
+#include "p_enemy.h"
+
 #include "playSound.h"
 #include "p_enemy.h"
 #include "player.h"
@@ -147,13 +149,13 @@ mobjState_t;
 mobjState_t states[] =
 {
   { 5, ACTION_LOOK },
-  { 5, ACTION_CHASE },
+  { TEX_ANIMATE + 5, ACTION_CHASE },
   { 7, ACTION_FLINCH },
   { 6, ACTION_SHOOT },
   { 7, ACTION_FALL },
 
   { 8, ACTION_LOOK },
-  { 8, ACTION_CHASE },
+  { TEX_ANIMATE + 8, ACTION_CHASE },
   { 10, ACTION_FLINCH },
   { 9, ACTION_MELEE },
   { 9, ACTION_MISSILE },
@@ -335,6 +337,7 @@ void p_enemy_damage(char o, char damage)
    {
      char i = mobjForObj[o];
      actor = &mobjs[i];
+     info = &mobjinfo[actor->infoType];
      P_DamageMobj(damage);
    }
 }

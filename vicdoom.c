@@ -74,7 +74,7 @@ signed char spanStackR[10];
 typedef struct
 {
   char texture;
-  char animate;
+  char dummy;
   char solid;
   char widthScale;
   char startY; // from the bottom of the texture
@@ -245,19 +245,25 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
   unsigned int h = div88(128, vy);
 
   char texFrameIndex = getObjectType(o);
+  char animate = 0;
   char textureIndex;
   unsigned int w;
   int sx;
   int leftX;
   int rightX;
-
   int startX;
   int endX;
   signed char curX;
   char texI;
+
   if (texFrameIndex < 5)
   {
     textureIndex = p_enemy_get_texture(o);
+    if (textureIndex & TEX_ANIMATE)
+    {
+      animate = 1;
+      textureIndex &= ~TEX_ANIMATE;
+    }
   }
   else
   {
@@ -293,9 +299,10 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
               // compensate for pixel samples being mid column
               //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
               texI = getObjectTexIndex(w, curX - leftX);
-              if (texFrames[texFrameIndex].animate)
+              if (animate)
               {
-                if ((frame & 4) != 0) texI = (TEXWIDTH - 1) - texI;
+                // change the animation speed?
+                if ((frame & 2) != 0) texI = (TEXWIDTH - 1) - texI;
               }
               drawColumn(textureIndex, texI, curX, vy, h);
            }

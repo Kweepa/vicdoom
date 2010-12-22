@@ -1,4 +1,4 @@
-//extern mobj_t mobjs[];
+#define TEX_ANIMATE 64
 
 void p_enemy_startframe(void);
 
