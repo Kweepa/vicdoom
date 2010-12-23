@@ -84,6 +84,31 @@ typedef struct
 }
 texFrame;
 
+enum EObjType
+{
+   kOT_Possessed,
+   kOT_Imp,
+   kOT_Demon,
+   kOT_Cacodemon,
+   kOT_Baron,
+   kOT_GreenArmor,
+   kOT_BlueArmor,
+   kOT_Bullets,
+   kOT_Medkit,
+   kOT_RedKeycard,
+   kOT_GreenKeycard,
+   kOT_BlueKeycard,
+   kOT_Barrel,
+   kOT_Pillar,
+   kOT_Skullpile,
+   kOT_Acid,
+   kOT_PossessedCorpse,
+   kOT_ImpCorpse,
+   kOT_DemonCorpse,
+   kOT_CacodemonCorpse,
+   kOT_BaronCorpse
+};
+
 texFrame texFrames[] =
 {
   { 5, 1, 1, 5 }, // possessed
@@ -109,6 +134,11 @@ texFrame texFrames[] =
 int playerx = -17*256, playery = -11*256;
 char playera = 8;
 char playerSector = 0;
+
+char keyCards = 0;
+char shells = 40;
+char armor = 0;
+char health = 100;
 
 #define TYPE_DOOR 1
 #define TYPE_OBJECT 2
@@ -311,6 +341,39 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
   }
 }
 
+void printIntAtXY(char i, char x, char y, char prec)
+{
+  int screenloc = 0x1000 + 22*y + x;
+  char digit = 0;
+  if (prec == 3)
+  {
+	  while (i >= 100) { ++digit; i -= 100; }
+	  POKE(screenloc, '0' + digit);
+      ++screenloc;
+	  digit = 0;
+  }
+  while (i >= 10) { ++digit; i -= 10; }
+  POKE(screenloc, '0' + digit);
+  ++screenloc;
+  POKE(screenloc, '0' + i);
+}
+
+char flashRedTime = 0;
+
+void damagePlayer(char damage)
+{
+  health -= damage;
+  if (health > 200)
+  {
+     health = 0;
+  }
+  printIntAtXY(health, 14, 21, 3);
+  
+  // flash border red
+  flashRedTime = 1;
+  POKE(0x900F, 8+2);
+}
+
 void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char x_R)
 {
   // perspective transform (see elsewhere for optimization)
@@ -344,10 +407,69 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
            char height = texFrames[texFrameIndex].height;
            if (testFilledWithY(curX, vy) > 0)
            {
-              if (curX == 0)
+              if (curX == 0 && (vy/256) < 3)
               {
-                typeAtCenterOfView = TYPE_OBJECT;
-                itemAtCenterOfView = o;
+                 if (texFrameIndex >= kOT_GreenArmor && texFrameIndex < kOT_BlueKeycard)
+                 {
+                   char pickedUp = 0;
+                   switch (texFrameIndex)
+                   {
+                   case kOT_GreenArmor:
+                      if (armor < 100)
+                      {
+                         armor = 100;
+ 						 printIntAtXY(100, 6, 21, 3);
+                         pickedUp = 1;
+					  }
+                      break;
+                   case kOT_BlueArmor:
+                      if (armor < 200)
+                      {
+                         armor = 200;
+ 						 printIntAtXY(200, 6, 21, 3);
+                         pickedUp = 1;
+					  }
+                      break;
+                   case kOT_Bullets:
+                      if (shells < 80)
+                      {
+                         shells += 10;
+                         if (shells > 80) shells = 80;
+                         printIntAtXY(shells, 2, 21, 2);
+                         pickedUp = 1;
+                      }
+                      break;
+                   case kOT_Medkit:
+                      if (health < 100)
+                      {
+                        health += 25;
+                        if (health > 100) health = 100;
+                        printIntAtXY(health, 13, 21, 3);
+                        pickedUp = 1;
+                      }  
+                      break;
+                   case kOT_RedKeycard:
+                      POKE(0x9400 + 22*21 + 17, 2);
+                      keyCards |= 1;
+                      pickedUp = 1;
+                      break;
+                   case kOT_GreenKeycard:
+                      POKE(0x9400 + 22*21 + 18, 5);
+                      keyCards |= 2;
+                      pickedUp = 1;
+                      break;
+                   case kOT_BlueKeycard:
+                      POKE(0x9400 + 22*21 + 19, 3);
+                      keyCards |= 4;
+                      pickedUp = 1;
+                      break;
+                   }
+					 if (pickedUp)
+					 {
+						playSound(SOUND_ITEMUP);
+						setObjectSector(o, -1);
+					 }
+                 }
               }
               // compensate for pixel samples being mid column
               //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
@@ -426,7 +548,7 @@ void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 			   sorted[i] = o;
 			}
 		 }
-	  }	  
+	  }
 
 	  // draw
 	  for (i = 0; i < numSorted; ++i)
@@ -683,12 +805,8 @@ int push_out()
   return 0;
 }
 
-char keyCards;
 char counter = 0;
 char turnSpeed = 0;
-char shells = 40;
-char armor = 0;
-char health = 100;
 char shotgunStage = 0;
 char changeLookTime = 7;
 char lookDir = 0;
@@ -729,18 +847,14 @@ void setUpScreenForMenu(void)
 
 void setUpScreenForGameplay(void)
 {
-  int i;
+  char i;
+  char x;
   for (i = 0; i < 110; ++i)
   {
      POKE(0x1000 + 11*22 + i, 32);
   }
   clearSecondBuffer();
   copyToPrimaryBuffer();
-  for (i = 0; i < (17*22); ++i)
-  {
-	  // set the color memory
-	  POKE(0x9400 + i, 8 + 2); // main colour red, multicolour
-  }
   textcolor(6);
   cputsxy(0, 17, "######################");
   cputsxy(0, 19, "######################");
@@ -750,6 +864,11 @@ void setUpScreenForGameplay(void)
   {
     cputsxy(6, i, "#");
     cputsxy(15, i, "#");
+    for (x = 0; x < 8; ++x)
+    {
+      // multicolor red
+      POKE(0x9400 + 22*i + 7 + x, 8 + 2);
+    }
   }
   POKE(0x900F, 8 + 5); // green border, and black screen
 }
@@ -764,6 +883,13 @@ void read_data_file(char *name, int addr, int maxSize)
     fread((void *)addr, maxSize, 1, fp);
     fclose(fp);
   }
+}
+
+// use this to line up raster timing lines
+void waitforraster(void)
+{
+    while (PEEK(0x9004) > 16) ;
+    while (PEEK(0x9004) < 16) ;
 }
 
 int main()
@@ -781,19 +907,21 @@ int main()
 
   read_data_file("sluts", 0x400, 0x400);
   read_data_file("textures", 0xA000, 0xC00);
-  read_data_file("e1m1", 0xAC00, 0x600);
 
   POKE(0x900E, (6<<4) + (PEEK(0x900E)&0x0f)); // blue aux color
   POKE(0x900F, 8 + 5); // green border, and black screen
   
   // set the character set to $1400
   POKE(0x9005, 13 + (PEEK(0x9005)&0xf0));
-  
+
+again:  
   setUpScreenForBitmap();
 
   setUpScreenForMenu();
   runMenu(0);
   setUpScreenForGameplay();
+
+  read_data_file("e1m1", 0xAC00, 0x600);
 
   for (i = 0; i < 128; ++i)
   {
@@ -810,27 +938,48 @@ int main()
       allocMobj(i);
     }  
   }
+  
+  health = 100;
+  armor = 0;
+  shells = 40;
+  keyCards = 0;
+  playerx = getPlayerSpawnX();
+  playery = getPlayerSpawnY();
+  playera = getPlayerSpawnAngle();
+  playerSector = getPlayerSpawnSector();
 
+  // name of level
   textcolor(2);
   cputsxy(0, 18, "        hangar        ");
+  // shells
   textcolor(3);
   cputsxy(0, 21, " &40");
+  // armor
   textcolor(5);
   cputsxy(4, 21, " :000 ");
+  // health
   textcolor(2);
   cputsxy(12, 21, " /100");
+  // cards
   textcolor(6);
   cputsxy(17, 21, " ;;;");
+  // face
   textcolor(7);
   cputsxy(10, 20, "$%");
   cputsxy(10, 21, "()");
   cputsxy(10, 22, "*+");
   
-  while (1)
+  while (health > 0)
   {
-	  // note: XXXXYZZZ (X = screen, Y = reverse mode, Z = border)
-	  POKE(0x900F, 8 + 5); // green border, and black screen
-	  
+	  if (!flashRedTime)
+	  {
+ 	    // note: XXXXYZZZ (X = screen, Y = reverse mode, Z = border)
+  	    POKE(0x900F, 8 + 5); // green border, and black screen
+  	  }
+	  if (flashRedTime > 0)
+	  {
+	    --flashRedTime;
+	  }
 
 	  keys = readInput();
 	  ctrlKeys = getControlKeys();
@@ -906,18 +1055,16 @@ int main()
 		if (shells > 0 && shotgunStage == 0)
 		{
 		  shells--;
-		  gotoxy(2,21);
-		  textcolor(3);
-		  //cprintf("%02d", shells);
+		  printIntAtXY(shells, 2, 21, 2);
 		  POKE(0x900F, 8+1);
 		  shotgunStage = 7;
 		  
 		  playSound(SOUND_PISTOL);
+		  if (typeAtCenterOfView == TYPE_OBJECT)
+		  {
+		    p_enemy_damage(itemAtCenterOfView, 2 + (P_Random()&7));
+		  }   
 		}
-		if (typeAtCenterOfView == TYPE_OBJECT)
-		{
-		  p_enemy_damage(itemAtCenterOfView, 2 + (P_Random()&7));
-		}   
 	  }
 
       for (i = 0; i < 4; ++i)
@@ -995,7 +1142,32 @@ int main()
 	  
 	  counter++;
 	  POKE(0x1000, counter);
-	}  
-  
-  return EXIT_SUCCESS;
+	}
+	
+	// screen melt
+	do
+	{
+	  char x = 7 + (P_Random() & 7);
+	  char y;
+
+      textcolor(2);
+	  cputsxy(5, 13, "you are dead");
+	  cputsxy(5, 15, "press return");
+	  
+	  waitforraster();
+	  
+	  for (y = 9; y > 2; --y)
+	  {
+	     POKE(0x1000 + 22*y + x, PEEK(0x1000 + 22*(y-1) + x));
+	  }
+	  POKE(0x1000 + 44 + x, 32);
+	  
+	  keys = readInput();
+	  ctrlKeys = getControlKeys();
+	}
+	while (!(ctrlKeys & KEY_RETURN));
+	
+	goto again;
+	
+	return EXIT_SUCCESS;
 }

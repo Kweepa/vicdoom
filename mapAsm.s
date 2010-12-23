@@ -41,6 +41,11 @@
 .export _setObjectSector
 .export _setObjectType
 
+.export _getPlayerSpawnX
+.export _getPlayerSpawnY
+.export _getPlayerSpawnAngle
+.export _getPlayerSpawnSector
+
 .segment "MAPDATA"
 ; summary data (4 bytes)
 numVerts:
@@ -52,13 +57,15 @@ numSectors:
 numObj:
 .byte 30
 playerSpawnX:
-.byte 126
+.byte -17
 playerSpawnY:
-.byte 142
+.byte -11
 playerSpawnAngle:
+.byte 8
+playerSpawnSector:
 .byte 0
 pad:
-.res 89, 0
+.res 88, 0
 ; sector info
 secNumVerts:
 .byte 4, 4, 7, 4, 8, 4, 5, 4, 8, 4, 4, 5, 4, 6, 4, 7
@@ -798,4 +805,22 @@ rts
 _getNumSectors:
 lda numSectors
 ldx #0
+rts
+
+_getPlayerSpawnX:
+ldx playerSpawnX
+lda #0
+rts
+
+_getPlayerSpawnY:
+ldx playerSpawnY
+lda #0
+rts
+
+_getPlayerSpawnAngle:
+lda playerSpawnAngle
+rts
+
+_getPlayerSpawnSector:
+lda playerSpawnSector
 rts

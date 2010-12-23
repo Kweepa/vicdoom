@@ -45,8 +45,7 @@
 
 #define MF_JUSTHIT 1
 #define MF_JUSTATTACKED 2
-#define MF_SHOOTABLE 4
-#define MF_SOLID 16
+#define MF_THOUGHTTHISFRAME 8
 #define MF_WASSEENTHISFRAME 32
 
 #define MT_TROOPSHOT 6
@@ -313,7 +312,7 @@ void p_enemy_startframe(void)
    char i;
    for (i = 0; i < MAX_MOBJ; ++i)
    {
-      mobjs[i].flags &= ~MF_WASSEENTHISFRAME;
+      mobjs[i].flags &= ~(MF_WASSEENTHISFRAME|MF_THOUGHTTHISFRAME);
    }
    thinkercap = 0;
 }
@@ -322,9 +321,13 @@ void p_enemy_add_thinker(char o)
 {
   if (getObjectType(o) < 5)
   {
-    char mobjIndex = mobjForObj[o];
-    thinkers[thinkercap] = mobjIndex;
-    ++thinkercap;
+    char i = mobjForObj[o];
+    if (!(mobjs[i].flags & MF_THOUGHTTHISFRAME))
+    {
+      mobjs[i].flags |= MF_THOUGHTTHISFRAME;
+      thinkers[thinkercap] = i;
+      ++thinkercap;
+    }
   }
 }
 
@@ -479,7 +482,7 @@ void P_RadiusAttack(int radius)
     dist = P_ApproxDistance(playerx-actor->x, playery-actor->y);
     if (dist < radius)
     {
-      //damagePlayer(20);
+      damagePlayer(20);
     }
 }
 
@@ -538,13 +541,6 @@ boolean P_CheckMissileRange(void)
 #define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
 #define PEEK(addr) (*(unsigned char *)(addr))
 
-// use this to line up raster timing lines
-void waitforraster(void)
-{
-    while (PEEK(0x9004) > 16) ;
-    while (PEEK(0x9004) < 16) ;
-}
-
 //
 // P_Move
 // Move in the current direction,
@@ -570,9 +566,6 @@ int try_move(int trydx, int trydy)
   char sectorToReturn = curSector;
   char secNumVerts = getNumVerts(curSector);
   
-  waitforraster();
-	  POKE(0x900F, 8 + 4); // green border, and black screen
-
   // see which edge the new coordinate is behind
   for (i = 0; i < secNumVerts; ++i)
   {
@@ -610,7 +603,6 @@ int try_move(int trydx, int trydy)
 					 gotoxy(0,4);
 					 cprintf("%d. ", thatSector);
 					 #endif
-		  POKE(0x900F, 8 + 5); // green border, and black screen
 					 return thatSector;
 				  }
 				  return curSector;
@@ -629,7 +621,6 @@ int try_move(int trydx, int trydy)
 		 }
 	  }
   }
-	  POKE(0x900F, 8 + 5); // green border, and black screen
   return sectorToReturn;
 }
 
@@ -1028,7 +1019,7 @@ void A_Shoot(void)
     if ((P_Random()>>2) > dist)
     {
 	    damage = ((P_Random()&3)+2)*3; // this was ((r%5)+1)*3
-	    //damagePlayer(damage);
+	    damagePlayer(damage);
 	}
 	actor->reactiontime = P_Random()&7;
 	P_SetMobjState(info->chasestate);
@@ -1057,7 +1048,7 @@ void A_Melee(void)
 		A_FaceTarget();
 		if (info->meleesound != 0xff)
 			S_StartSound(info->meleesound);
-		//damagePlayer(damage);
+		damagePlayer(damage);
 		
 		++actor->movecount;
     }

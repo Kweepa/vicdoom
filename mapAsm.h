@@ -29,3 +29,7 @@ char __fastcall__ getNumSectors(void);
 signed char __fastcall__ getSectorVertexX(char sec, char i);
 signed char __fastcall__ getSectorVertexY(char sec, char i);
 
+int __fastcall__ getPlayerSpawnX(void);
+int __fastcall__ getPlayerSpawnY(void);
+char __fastcall__ getPlayerSpawnAngle(void);
+char __fastcall__ getPlayerSpawnSector(void);
