@@ -10,7 +10,7 @@
 // X 4. finish map and use that instead of the test map
 // X 5. enemy AI (update only visible enemies, plus enemies in the current sector)
 // X 5.5. per sector objects (link list)
-// 6. add keys and doors
+// X 6. add keys and doors
 // X 7. add health
 // 7.5. and weapons
 // 8. advance levels
@@ -139,7 +139,7 @@ int playerx = -17*256, playery = -11*256;
 char playera = 8;
 char playerSector = 0;
 
-char keyCards = 0;
+char keyCards[3];
 char shells = 40;
 char armor = 0;
 signed char health = 100;
@@ -197,7 +197,8 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
   automap_sawEdge(getEdgeIndex(sectorIndex, curEdgeIndex));
 
   // add 128 to correct for sampling in the center of the column
-  x4 = (256*x_L + 128)/HALFSCREENWIDTH;
+  //x4 = (256*x_L + 128)/HALFSCREENWIDTH;
+  x4 = 16*x_L + 8;
   for (curX = x_L; curX < x_R; ++curX)
   {
      //x4 = (256*curX + 128)/HALFSCREENWIDTH;
@@ -231,14 +232,26 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
 
 			   h = div88(128, curY);
 	           
-			   if (textureIndex == 2 || textureIndex == 4)
-			   {
-				   // door or techwall, so fit to wall
-					texI = t >> 4;
+	           if (textureIndex < 4 && textureIndex != 2)
+	           {
+				   texI = (t * edgeLen) >> 6; // 256/PIXELSPERMETER
 			   }
 			   else
 			   {
-				   texI = t * edgeLen / 64; // 256/PIXELSPERMETER
+			       if (textureIndex > 7)
+			       {
+			         textureIndex = 4;
+			       }
+				   if (textureIndex > 4)
+				   {
+					 texI = textureIndex-5;
+					 textureIndex = 21;
+				   }
+				   else
+				   {
+					   // door or techwall, so fit to wall
+					   texI = t >> 4;
+				   }
 			   }
 			   texI &= 15; // 16 texel wide texture
 	           
@@ -456,17 +469,17 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
                       break;
                    case kOT_RedKeycard:
                       POKE(0x9400 + 22*21 + 17, 2);
-                      keyCards |= 1;
+                      keyCards[0] = 1;
                       pickedUp = 1;
                       break;
                    case kOT_GreenKeycard:
                       POKE(0x9400 + 22*21 + 18, 5);
-                      keyCards |= 2;
+                      keyCards[1] = 1;
                       pickedUp = 1;
                       break;
                    case kOT_BlueKeycard:
                       POKE(0x9400 + 22*21 + 19, 3);
-                      keyCards |= 4;
+                      keyCards[2] = 1;
                       pickedUp = 1;
                       break;
                    }
@@ -657,7 +670,8 @@ void drawSpans()
         thatSector = getOtherSector(sectorIndex, curEdge);
         if (thatSector != -1)
         {
-           if (getEdgeTexture(sectorIndex, curEdge) == 4)
+           char tex = getEdgeTexture(sectorIndex, curEdge);
+           if (tex == 4 || tex > 7)
            {
               curX = drawDoor(sectorIndex, curEdge, nextEdge, curX, nextX);
            }
@@ -994,7 +1008,8 @@ again:
 
   for (i = 0; i < 128; ++i)
   {
-    if (getGlobalEdgeTexture(i) == 4)
+    char tex = getGlobalEdgeTexture(i);
+    if (tex == 4 || tex > 7)
     {
       doorClosedAmount[i] = 255;
     }
@@ -1013,7 +1028,9 @@ again:
   health = 100;
   armor = 0;
   shells = 40;
-  keyCards = 0;
+  keyCards[0] = 0;
+  keyCards[1] = 0;
+  keyCards[2] = 0;
   playerx = getPlayerSpawnX();
   playery = getPlayerSpawnY();
   playera = getPlayerSpawnAngle();
@@ -1158,17 +1175,26 @@ again:
 	    // tried to open a door (pressed K)
 	    if (typeAtCenterOfView == TYPE_DOOR && testFilled(0) < 4)
 	    {
-	      for (i = 0; i < 4; ++i)
+	      char tex = getGlobalEdgeTexture(itemAtCenterOfView);
+	      if (tex == 4 || keyCards[tex-8] != 0)
 	      {
-	        if (doorOpenTime[i] == 0)
+  	        for (i = 0; i < 4; ++i)
 	        {
-				openDoors[i] = itemAtCenterOfView;
-				doorOpenTime[i] = 20;
-				break;
+	          if (doorOpenTime[i] == 0)
+	          {
+				  openDoors[i] = itemAtCenterOfView;
+				  doorOpenTime[i] = 20;
+				  break;
+			  }
 			}
+            doorClosedAmount[itemAtCenterOfView] = 0;
+    		playSound(SOUND_DOROPN);
 	      }
-          doorClosedAmount[itemAtCenterOfView] = 0;
-		  playSound(SOUND_DOROPN);
+	      else
+	      {
+	        cputsxy(4, 14, "you need a key");
+	        cputsxy(3, 15, "to open the door");
+	      }
         }
       }
 
