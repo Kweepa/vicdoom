@@ -120,8 +120,8 @@ texFrame texFrames[] =
   { 11, 1, 1, 3 }, // demon
   { 13, 1, 1, 3 }, // caco
   { 8, 1, 1, 5 }, // baron
-  { 18, 0, 0, 3, 16, 16, 0, 16 }, // green armor
-  { 18, 0, 0, 3, 0, 16, 0, 16 }, // blue armor
+  { 18, 0, 0, 5, 8, 8, 0, 16 }, // green armor
+  { 18, 0, 0, 5, 0, 8, 0, 16 }, // blue armor
   { 19, 0, 0, 5, 8, 8, 0, 16 }, // bullets
   { 19, 0, 0, 8, 24, 8, 0, 8 }, // medikit
   { 19, 0, 0, 8, 24, 8, 8, 8 }, // red keycard
@@ -129,8 +129,8 @@ texFrame texFrames[] =
   { 19, 0, 0, 8, 16, 8, 8, 8 }, // blue keycard
   { 20, 0, 0, 8, 16, 16, 0, 16 }, // barrel
   { 17, 0, 1, 5 }, // pillar
-  { 20, 0, 0, 8, 16, 16, 0, 16 }, // skullpile - fix
-  { 17, 0, 1, 5 }, // acid - fix
+  { 20, 0, 0, 8, 16, 16, 0, 16 }, // skullpile
+  { 18, 0, 0, 2, 16, 4, 0, 16 }, // acid
   { 16, 0, 0, 5, 0, 8, 0, 16 }, // possessed corpse
   { 16, 0, 0, 5, 8, 8, 0, 16 }, // imp corpse
 };
@@ -731,12 +731,7 @@ typedef enum
 }
 EPushOutResult;
 
-// get the intersection of two edges, please and thank you
-// I'd much rather just cache this, but it's a lot of space
-// well, can probably get away with using 8 bits?
-// so it'd be x,y,s, ie just 384 bytes - probably less than the code would be to calculate it :)
-
-// also, could cache ex/edgelen and ey/edgelen
+// could cache ex/edgelen and ey/edgelen
 // would be 512 bytes - could be worse!
 
 EPushOutResult push_out_from_edge(char i)
@@ -775,7 +770,6 @@ EPushOutResult push_out_from_edge(char i)
            }
            else
            {
-    		  cputsxy(0,1,"wall");
               // try just pushing out
               distanceToPush = OUTERCOLLISIONRADIUS*edgeLen - height;
               playerx += distanceToPush * ey / (edgeLen*edgeLen);
@@ -794,8 +788,8 @@ EPushOutResult push_out_from_edge(char i)
 		   height = px * px + py * py;
 		   if (height < INNERCOLLISIONRADIUS*INNERCOLLISIONRADIUS)
 		   {
-    		  cputsxy(0,2,"corner");
-   		      distanceToPush = OUTERCOLLISIONRADIUS - sqrt(height);
+		      height = sqrt(height);
+   		      distanceToPush = OUTERCOLLISIONRADIUS - height;
 			  playerx += distanceToPush * px / height;
 			  playery += distanceToPush * py / height;
 			  return kPOR_Wall;
@@ -804,8 +798,6 @@ EPushOutResult push_out_from_edge(char i)
      }
      return kPOR_Nada;
 }
-
-// push_out returns the edge that pushed
 
 char touchedSector;
 
@@ -820,8 +812,7 @@ void push_out(void)
   // so, consider at most two edges to push out from
   // whether or not we get pushed in this sector, check any
   // portal edges we touch and try pushing out from edges in the neighbouring sectors
-  // hopefully should only touch the one portal edge
-  
+  // hopefully should only touch the one portal edge  
 
   char i, secNumVerts;
   EPushOutResult r;
@@ -833,9 +824,6 @@ void push_out(void)
   secNumVerts = getNumVerts(curSector);
   
   numPossibleWallsToTouch = 0;
-  
-  cputsxy(0,1,"       ");
-  cputsxy(0,2,"       ");
   
   // see which edge the new coordinate is behind
   for (i = 0; i < secNumVerts; ++i)
