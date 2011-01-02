@@ -93,7 +93,7 @@ nop
 
 .proc _clearFilled: near
 
-lda #0
+lda #$7f
 ldx #31
 keepclearing:
 sta filled_hi, x
@@ -257,6 +257,14 @@ clc
 adc #16
 sta curX
 
+; modify screen mask code
+
+and #$03
+tax
+lda tmasktab,x
+eor #$ff
+sta smask+1
+
 iny
 lda (sp),y
 sta texI
@@ -340,15 +348,16 @@ sec
 sbc curX
 asl
 asl
-adc #3
-tay
-ldx #3
-keepcopying:
-lda shiftcode,y
-sta shiftcodegoeshere,x
-dey
-dex
-bpl keepcopying
+tax
+
+lda shiftcode,x
+sta shiftcodegoeshere
+lda shiftcode+1,x
+sta shiftcodegoeshere+1
+lda shiftcode+2,x
+sta shiftcodegoeshere+2
+lda shiftcode+3,x
+sta shiftcodegoeshere+3
 
 ; number of pixels to draw in x
 lda height
@@ -389,8 +398,12 @@ lsr
 lsr
 lsr
 lsr
+sta tmp
 scrbuf:
-ora buffer,x ; self modified screen addr
+lda buffer,x ; self modified screen addr
+smask:
+and #0
+ora tmp
 scrbuf2:
 sta buffer,x ; self modified screen addr
 dex
@@ -614,15 +627,16 @@ sec
 sbc curX
 asl
 asl
-adc #3
-tay
-ldx #3
-keepcopying:
-lda shiftcode,y
-sta shiftcodegoeshere,x
-dey
-dex
-bpl keepcopying
+tax
+
+lda shiftcode,x
+sta shiftcodegoeshere
+lda shiftcode+1,x
+sta shiftcodegoeshere+1
+lda shiftcode+2,x
+sta shiftcodegoeshere+2
+lda shiftcode+3,x
+sta shiftcodegoeshere+3
 
 ; number of pixels to draw in x
 lda height
@@ -668,10 +682,10 @@ lsr
 lsr
 lsr
 sta tmp
-smask:
-lda #0 ; self modified immediate operand
 scrbuf:
-and $1800,x
+lda $1800,x
+smask:
+and #0 ; self modified immediate operand
 ora tmp
 scrbuf2:
 sta $1800,x ; self modified screen addr

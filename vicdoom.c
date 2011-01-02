@@ -3,14 +3,16 @@
 // see make.bat for how to compile
 
 // todo
-// X 1. move angle to sin/cos to logsin/logcos to a separate function and just use those values
+// X 1. move angle to sin/cos and logsin/logcos to a separate function and just use those values
 // X 2. fix push_out code
+// 2.5. fix push_out code some more
 // X 3. add transparent objects
 // X 4. finish map and use that instead of the test map
-// 5. enemy AI (update only visible enemies, plus enemies in the current sector)
-// 5.5. per sector objects (link list)
+// X 5. enemy AI (update only visible enemies, plus enemies in the current sector)
+// X 5.5. per sector objects (link list)
 // 6. add keys and doors
-// 7. add health and weapons
+// X 7. add health
+// 7.5. and weapons
 // 8. advance levels
 // X 9. menus
 // 10. more optimization?
@@ -27,6 +29,8 @@
 // 1800-7FFF code/data
 // A000-BDFF texture data, level data, music
 // BE00-BFFF back buffer
+
+#define IDDQD 1
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -138,7 +142,7 @@ char playerSector = 0;
 char keyCards = 0;
 char shells = 40;
 char armor = 0;
-char health = 100;
+signed char health = 100;
 
 #define TYPE_DOOR 1
 #define TYPE_OBJECT 2
@@ -198,7 +202,7 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
   {
      //x4 = (256*curX + 128)/HALFSCREENWIDTH;
      x4 += 16;
-     if (testFilled(curX) == 0)
+     if (testFilled(curX) == 0x7f)
      {
         // denom = dx - x4 * dy / 256;
         denom = muladd88(-x4, dy, dx);
@@ -245,9 +249,6 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
 				 itemAtCenterOfView = edgeGlobalIndex;
 			   }
 
-			   // can look up the yStep (and starting texY) too
-			   // each is a 512 byte table - hooray for wasting memory
-			   // on the other hand, since I've already decided to waste 2k on a multiply table, I might as well use another 2k for lookups where appropriate
 			   drawColumn(textureIndex, texI, curX, curY, h);
 			}
         }
@@ -308,8 +309,8 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
      rightX = sx + w;
      startX = leftX;
      endX = rightX;
-     if (startX < x_L) startX = x_L;
-     if (endX > x_R) endX = x_R;
+     if (startX < -16) startX = -16;
+     if (endX > 16) endX = 16;
      if (startX < x_R && endX > x_L)
      {
         if (startX < endX)
@@ -318,7 +319,7 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
         }
         for (curX = startX; curX < endX; ++curX)
         {
-           if (testFilled(curX) == 0)
+           if (testFilledWithY(curX, vy) >= 0)
            {
               setFilled(curX, vy);
               if (curX == 0)
@@ -362,8 +363,10 @@ char flashRedTime = 0;
 
 void damagePlayer(char damage)
 {
+#if IDDQD == 0
   health -= damage;
-  if (health > 200)
+#endif
+  if (health < 0)
   {
      health = 0;
   }
@@ -381,7 +384,7 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
   unsigned int h = div88(128, vy);
   char texFrameIndex = getObjectType(o);
   unsigned int w = h/texFrames[texFrameIndex].widthScale;
-  char textureIndex = texFrames[texFrameIndex].texture;
+  char textureIndex;
   int sx;
   int leftX;
   int rightX;
@@ -389,6 +392,8 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
   int endX;
   signed char curX;
   char texI;
+  char startY, height;
+
   if (w > 0)
   {
      //sx = vx / (vy / HALFSCREENWIDTH);
@@ -397,14 +402,15 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
      rightX = sx + w;
      startX = leftX;
      endX = rightX;
-     if (startX < x_L) startX = x_L;
-     if (endX > x_R) endX = x_R;
+     if (startX < -16) startX = -16;
+     if (endX > 16) endX = 16;
      if (startX < x_R && endX > x_L)
      {
+        textureIndex = texFrames[texFrameIndex].texture;
+        startY = texFrames[texFrameIndex].startY;
+        height = texFrames[texFrameIndex].height;
         for (curX = startX; curX < endX; ++curX)
         {
-           char startY = texFrames[texFrameIndex].startY;
-           char height = texFrames[texFrameIndex].height;
            if (testFilledWithY(curX, vy) > 0)
            {
               if (curX == 0 && (vy/256) < 3)
@@ -504,34 +510,29 @@ objxy transparent[12];
 
 void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 {
-  char numObj = getNumObjects();
   int vx, vy;
   objxy *objInst;
   char o, i, j;
   numSorted = 0;
   
   // loop through the objects
-  for (o = 0; o < numObj; ++o)
+  for (o = getFirstObjectInSector(sectorIndex); o != 0xff; o = getNextObjectInSector(o))
   {
-	 char thisObjSec = getObjectSector(o);
-     if (thisObjSec == sectorIndex)
-     {
-        // inverse transform
-        vx = transformxy_withParams(getObjectX(o), getObjectY(o));
-        vy = transformy();
-        
-        if (vy > 256)
-        {
-           sorted[numSorted] = numSorted;
+    // inverse transform
+    vx = transformxy_withParams(getObjectX(o), getObjectY(o));
+    vy = transformy();
+    
+    if (vy > 256)
+    {
+       sorted[numSorted] = numSorted;
 
-           objInst = &unsorted[numSorted];
-           objInst->x = vx;
-           objInst->y = vy;
-           objInst->o = o;
+       objInst = &unsorted[numSorted];
+       objInst->x = vx;
+       objInst->y = vy;
+       objInst->o = o;
 
-           ++numSorted;
-        }
-     }
+       ++numSorted;
+    }
   }
 
   if (numSorted > 0)
@@ -702,52 +703,63 @@ unsigned int sqrt(unsigned long x)
   return ((unsigned int)y);
 }
 
-// THIS IS THE NEXT TARGET OF OPTIMIZATION!
+// THIS IS THE NEXT TARGET OF FIXING & OPTIMIZATION!
 
 char __fastcall__ getNumVerts(char sectorIndex);
 signed char __fastcall__ getSectorVertexX(char sectorIndex, char vertexIndex);
 signed char __fastcall__ getSectorVertexY(char sectorIndex, char vertexIndex);
 
-int push_out()
-{
-  // probably a good idea to check the edges we can cross first
-  // if any of them teleport us, move, then push_out in the new sector
+char curSector;
+char thatSector;
+char nextSector;
 
-  char thatSector;
-  char i, ni;
-  int v1x, v1y, v2x, v2y;
-  long ex;
-  long ey;
-  long px, py;
-  long height;
-  long edgeLen;
-  long dist;
-  long distanceToPush;
-  long dx, dy;
-  char edgeGlobalIndex;
-  char curSector = playerSector;
-  char secNumVerts = getNumVerts(curSector);
-  
-  // see which edge the new coordinate is behind
-  for (i = 0; i < secNumVerts; ++i)
-  {
+char ni;
+signed char v1x, v1y, v2x, v2y, ex, ey;
+long px, py;
+long height;
+long edgeLen;
+long dist;
+long distanceToPush;
+char edgeGlobalIndex;
+char dgz, dle;
+
+typedef enum
+{
+  kPOR_Nada,
+  kPOR_Wall,
+  kPOR_Sector
+}
+EPushOutResult;
+
+// get the intersection of two edges, please and thank you
+// I'd much rather just cache this, but it's a lot of space
+// well, can probably get away with using 8 bits?
+// so it'd be x,y,s, ie just 384 bytes - probably less than the code would be to calculate it :)
+
+// also, could cache ex/edgelen and ey/edgelen
+// would be 512 bytes - could be worse!
+
+EPushOutResult push_out_from_edge(char i)
+{
 	 ni = getNextEdge(curSector, i);
      v1x = getSectorVertexX(curSector, i);
      v1y = getSectorVertexY(curSector, i);
      v2x = getSectorVertexX(curSector, ni);
      v2y = getSectorVertexY(curSector, ni);
-     ex = ((long)v2x) - v1x;
-     ey = ((long)v2y) - v1y;
+     ex = v2x - v1x;
+     ey = v2y - v1y;
      px = playerx - 256*v1x;
      py = playery - 256*v1y;
      // need to precalc 65536/edge.len
      edgeLen = getEdgeLen(curSector, i);
-     height = (px * ey - py * ex) / edgeLen;
-     if (height < INNERCOLLISIONRADIUS)
+     height = px * ey - py * ex;
+     if (height < INNERCOLLISIONRADIUS*edgeLen)
      {
         // check we're within the extents of the edge
-        dist = (px * ex + py * ey)/edgeLen;
-        if (dist > 0 && dist < 256*edgeLen)
+        dist = px * ex + py * ey;
+        dgz = (dist >= 0);
+        dle = (dist < 256*edgeLen*edgeLen);
+        if (dgz & dle)
         {
            thatSector = getOtherSector(curSector, i);
            edgeGlobalIndex = getEdgeIndex(curSector, i);
@@ -755,54 +767,123 @@ int push_out()
            {
               if (height < 0)
               {
-                 playerSector = thatSector;
+                 nextSector = thatSector;
                  //gotoxy(1,0);
                  //cprintf("sec%d ed%d ned%d ex%d ey%d. ", thatSector, i, ni, (int)ex, (int)ey);
-                 return 1;
               }
+              return kPOR_Sector;
            }
            else
            {
+    		  cputsxy(0,1,"wall");
               // try just pushing out
-              distanceToPush = OUTERCOLLISIONRADIUS - height;
-              playerx += distanceToPush * ey / edgeLen;
-              playery -= distanceToPush * ex / edgeLen;
-              return 1;
+              distanceToPush = OUTERCOLLISIONRADIUS*edgeLen - height;
+              playerx += distanceToPush * ey / (edgeLen*edgeLen);
+              playery -= distanceToPush * ex / (edgeLen*edgeLen);
+              return kPOR_Wall;
            }
         }
-        else if (dist > -INNERCOLLISIONRADIUS
-          && dist < 256*edgeLen + INNERCOLLISIONRADIUS)
+        else if (!dgz && (dist > -INNERCOLLISIONRADIUS*edgeLen)
+          || (!dle && dist < (256*edgeLen + INNERCOLLISIONRADIUS)*edgeLen))
         {
-          if (dist <= 0)
-			{
-			   height = sqrt(px * px + py * py);
-			   distanceToPush = INNERCOLLISIONRADIUS - height;
-			   if (distanceToPush > 0)
-			   {
-				  distanceToPush += COLLISIONDELTA;
-				  playerx += distanceToPush * px / height;
-				  playery += distanceToPush * py / height;
-				  return 1;
-			   }
-			}
-			else
-			{
-			   dx = playerx - 256*v2x;
-			   dy = playery - 256*v2y;
-			   height = sqrt(dx * dx + dy * dy);
-			   distanceToPush = INNERCOLLISIONRADIUS - height;
-			   if (distanceToPush > 0)
-			   {
-				  distanceToPush += COLLISIONDELTA;
-				  playerx += distanceToPush * dx / height;
-				  playery += distanceToPush * dy / height;
-				  return 1;
-			   }
-			}
+          if (dgz)
+          {
+		    px = playerx - 256*v2x;
+		    py = playery - 256*v2y;
+		  }
+		   height = px * px + py * py;
+		   if (height < INNERCOLLISIONRADIUS*INNERCOLLISIONRADIUS)
+		   {
+    		  cputsxy(0,2,"corner");
+   		      distanceToPush = OUTERCOLLISIONRADIUS - sqrt(height);
+			  playerx += distanceToPush * px / height;
+			  playery += distanceToPush * py / height;
+			  return kPOR_Wall;
+		   }
 		}
      }
+     return kPOR_Nada;
+}
+
+// push_out returns the edge that pushed
+
+char touchedSector;
+
+char possibleWallsToTouch[2];
+char numPossibleWallsToTouch;
+
+void push_out(void)
+{
+  // probably a good idea to check the edges we can cross first
+  // if any of them teleport us, move, then push_out in the new sector
+  
+  // so, consider at most two edges to push out from
+  // whether or not we get pushed in this sector, check any
+  // portal edges we touch and try pushing out from edges in the neighbouring sectors
+  // hopefully should only touch the one portal edge
+  
+
+  char i, secNumVerts;
+  EPushOutResult r;
+  
+  touchedSector = 0xff;
+  nextSector = 0xff;
+
+  curSector = playerSector;
+  secNumVerts = getNumVerts(curSector);
+  
+  numPossibleWallsToTouch = 0;
+  
+  cputsxy(0,1,"       ");
+  cputsxy(0,2,"       ");
+  
+  // see which edge the new coordinate is behind
+  for (i = 0; i < secNumVerts; ++i)
+  {
+     r = push_out_from_edge(i);
+     if (r == kPOR_Sector)
+     {
+       touchedSector = thatSector;
+     }
+     else if (r == kPOR_Wall)
+     {
+       // add the neighbouring edges
+       if (i > 0)
+       {
+         possibleWallsToTouch[numPossibleWallsToTouch++] = i-1;
+       }
+       if (i == secNumVerts-1)
+       {
+         possibleWallsToTouch[numPossibleWallsToTouch++] = 0;
+       }
+     }
   }
-  return 0;
+  
+  if (touchedSector != 0xff)
+  {
+    curSector = touchedSector;
+    secNumVerts = getNumVerts(curSector);
+    for (i = 0; i < secNumVerts; ++i)
+    {
+      r = push_out_from_edge(i);
+      if (r == kPOR_Wall)
+      {
+         break;
+      }
+    }
+  }
+  if (numPossibleWallsToTouch > 0)
+  {
+    curSector = playerSector;
+    for (i = 0; i < numPossibleWallsToTouch; ++i)
+    {
+      push_out_from_edge(possibleWallsToTouch[i]);
+    }
+  }
+  if (nextSector != 0xff)
+  {
+    playerSector = nextSector;
+  }
 }
 
 char counter = 0;
@@ -938,6 +1019,8 @@ again:
       allocMobj(i);
     }  
   }
+  
+  addObjectsToSectors();
   
   health = 100;
   armor = 0;
@@ -1101,12 +1184,11 @@ again:
         }
       }
 
-      //POKE(0x900f, 11);
-	  if (push_out())
-	  {
-		push_out();
+      POKE(0x900f, 11);
+      {
+	    push_out();
 	  }
-      //POKE(0x900f, 13);
+      POKE(0x900f, 13);
 
       setCameraX(playerx);
       setCameraY(playery);

@@ -33,3 +33,9 @@ int __fastcall__ getPlayerSpawnX(void);
 int __fastcall__ getPlayerSpawnY(void);
 char __fastcall__ getPlayerSpawnAngle(void);
 char __fastcall__ getPlayerSpawnSector(void);
+
+void __fastcall__ addObjectsToSectors(void);
+void __fastcall__ addObjectToSector(char sec, char i);
+void __fastcall__ removeObjectFromSector(char i);
+char __fastcall__ getFirstObjectInSector(char sec);
+char __fastcall__ getNextObjectInSector(char i);

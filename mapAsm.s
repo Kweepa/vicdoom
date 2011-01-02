@@ -46,8 +46,14 @@
 .export _getPlayerSpawnAngle
 .export _getPlayerSpawnSector
 
+.export _addObjectsToSectors
+.export _addObjectToSector
+.export _removeObjectFromSector
+.export _getFirstObjectInSector
+.export _getNextObjectInSector
+
 .segment "MAPDATA"
-; summary data (4 bytes)
+; summary data (7 bytes)
 numVerts:
 .byte 94
 numEdges:
@@ -61,7 +67,7 @@ playerSpawnX:
 playerSpawnY:
 .byte -11
 playerSpawnAngle:
-.byte 8
+.byte 0
 playerSpawnSector:
 .byte 0
 pad:
@@ -115,8 +121,8 @@ vertY:
 ; edge data
 edgeTex:
 .byte 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-.byte 4, 3, 3, 0, 2, 0, 2, 2, 0, 2, 0, 2, 3, 3, 0, 2
+.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0
+.byte 0, 3, 3, 0, 2, 0, 2, 2, 0, 2, 0, 2, 3, 3, 0, 2
 .byte 2, 3, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1
 .byte 0, 1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0
 .byte 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0
@@ -147,14 +153,14 @@ edgeSec2:
 .res 2, 0
 
 edgeLen:
-.byte 6, 3, 6, 3, 9, 22, 9, 5, 9, 5, 16, 6, 19, 9, 5, 9
-.byte 4, 9, 8, 7, 8, 9, 4, 8, 7, 8, 12, 9, 5, 5, 5, 11
-.byte 5, 9, 22, 8, 6, 11, 2, 4, 7, 4, 7, 11, 15, 7, 11, 6
-.byte 2, 22, 6, 8, 4, 4, 7, 5, 4, 14, 6, 4, 7, 7, 6, 11
-.byte 6, 12, 4, 4, 4, 7, 8, 7, 5, 14, 9, 7, 5, 14, 9, 7
+.byte 6, 3, 6, 3, 9, 22, 9, 5, 9, 5, 16, 6, 19, 10, 5, 10
+.byte 5, 9, 8, 7, 8, 9, 5, 8, 7, 8, 13, 9, 5, 5, 5, 12
+.byte 5, 9, 22, 8, 6, 12, 2, 4, 7, 4, 7, 11, 15, 7, 12, 6
+.byte 2, 22, 6, 8, 5, 4, 7, 5, 4, 14, 6, 4, 8, 7, 7, 11
+.byte 6, 12, 4, 5, 5, 7, 8, 7, 5, 14, 9, 7, 5, 14, 9, 7
 .byte 3, 3, 10, 5, 9, 4, 6, 9, 6, 4, 3, 4, 18, 5, 5, 18
-.byte 20, 26, 10, 13, 10, 17, 7, 4, 8, 4, 11, 7, 5, 8, 5, 6
-.byte 5, 6, 8, 7, 20, 6, 19, 9, 5, 6, 5, 10, 23, 7
+.byte 20, 26, 10, 13, 10, 17, 8, 4, 9, 4, 11, 8, 5, 8, 5, 6
+.byte 5, 6, 9, 7, 21, 6, 20, 9, 6, 6, 5, 10, 23, 8
 .res 2, 0
 
 ; sector data
@@ -228,7 +234,6 @@ outsideSector = $67
 ; see logMathAsm (keep in sync)
 xToTransform = $68
 yToTransform = $6A
-
 
 .proc _getScreenX: near
 tay
@@ -708,19 +713,8 @@ rts
 
 .endproc
 
-_setObjectSector:
-
-; TOS - object
-; A - sector
-
-tax
-ldy #0
-lda (sp),y
-tay
-txa
-sta objSec,y
-ldy #1
-jmp addysp
+objectIndex:
+.byte 0
 
 .proc _getObjectSector : near
 
@@ -824,3 +818,140 @@ rts
 _getPlayerSpawnSector:
 lda playerSpawnSector
 rts
+
+sectorFirstObj:
+; one for each sector
+.res 32, $ff
+
+sectorNextObj:
+; one for each object
+.res 32, $ff
+
+sectorPrevObj:
+; one for each object
+.res 32, $ff
+
+addObjectToSector:
+; x contains object index
+; a contains sector index
+
+; o->next = first->next
+; o->prev = 0xff
+; first->next->prev = o
+; first = o
+
+tay ; AY = sec, X = o
+lda sectorFirstObj,y ; A = next, Y = sec, X = o
+
+sta sectorNextObj,x ; o->next = next
+lda #$ff ; A = ff, Y = sec, X = o
+sta sectorPrevObj,x ; o->prev = ff
+stx objectIndex ; A = ff, Y = sec, X = o, tmp = o
+lda sectorFirstObj,y ; A = next, Y = sec, X = tmp = o
+tax ; A = next, Y = sec, X = next, tmp = o
+bmi @skip
+lda objectIndex ; A = o, Y = sec, X = next, tmp = o
+sta sectorPrevObj,x ; next->prev = o
+@skip:
+lda objectIndex ; A = o, Y = sec, X = next, tmp = o
+sta sectorFirstObj,y ; first = o
+tax ; A = o, X = o
+rts
+
+_addObjectsToSectors:
+
+; clear first objects
+ldx #31
+lda #$ff
+@clearLoop:
+sta sectorFirstObj,x
+dex
+bpl @clearLoop
+
+; add obj
+ldx numObj
+dex
+@loop:
+lda objSec,x
+jsr addObjectToSector
+dex
+bpl @loop
+rts
+
+_getFirstObjectInSector:
+tay
+lda sectorFirstObj,y
+rts
+
+_getNextObjectInSector:
+tay
+lda sectorNextObj,y
+rts
+
+_removeObjectFromSector:
+
+; A contains object index
+;
+; if (first == o) first = o->next
+; o->next->prev = o->prev
+; o->prev->next = o->next
+; note that after the operation, the prev and next pointers are still valid for the sector
+
+tay
+lda objSec,y
+tax
+tya
+cmp sectorFirstObj,x
+bne @notfirst
+lda sectorNextObj,y
+sta sectorFirstObj,x
+
+@notfirst:
+lda sectorPrevObj,y
+bmi @skip
+tax
+lda sectorNextObj,y
+sta sectorNextObj,x
+@skip:
+lda sectorNextObj,y
+bmi @skip2
+tax
+lda sectorPrevObj,y
+sta sectorPrevObj,x
+@skip2:
+rts
+
+_addObjectToSector:
+
+; A contains object index
+; TOS contains sector index
+
+tax
+ldy #0
+lda (sp),y
+jsr addObjectToSector
+ldy #1
+jmp addysp
+
+_setObjectSector:
+
+; TOS - object
+; A - sector
+
+sta sectorIndex
+ldy #0
+lda (sp),y
+sta objectIndex
+jsr _removeObjectFromSector
+
+lda sectorIndex
+ldx objectIndex
+jsr addObjectToSector
+; x is unchanged
+
+lda sectorIndex
+sta objSec,x
+
+ldy #1
+jmp addysp
+

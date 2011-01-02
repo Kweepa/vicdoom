@@ -165,6 +165,8 @@ mobj_t *actor;
 mobjInfo_t *info;
 mobjState_t *state;
 
+char newChaseDirThisFrame = 0;
+
 void printAction(void)
 {
    gotoxy(1,0);
@@ -315,6 +317,8 @@ void p_enemy_startframe(void)
       mobjs[i].flags &= ~(MF_WASSEENTHISFRAME|MF_THOUGHTTHISFRAME);
    }
    thinkercap = 0;
+   
+   newChaseDirThisFrame = 0;
 }
 
 void p_enemy_add_thinker(char o)
@@ -635,13 +639,17 @@ boolean P_TryMove(fixed_t trydx, fixed_t trydy)
      char o = objForMobj[actor->mobjIndex];
      actor->x += trydx;
      actor->y += trydy;
-     actor->sector = nextSector;
 
      // also, copy the position to the object
-     // and, update the sector!
      setObjectX(o, actor->x);
      setObjectY(o, actor->y);
-     setObjectSector(o, nextSector);
+     
+     // and, update the sector!
+     if (actor->sector != nextSector)
+     {
+         actor->sector = nextSector;
+		 setObjectSector(o, nextSector);
+     }
      
      return true;
    }
@@ -709,6 +717,9 @@ void P_NewChaseDir(void)
     dirtype_t	olddir;
     
     dirtype_t	turnaround;
+    
+    if (newChaseDirThisFrame != 0) return;
+    newChaseDirThisFrame = 1;
 
     olddir = actor->movedir;
     turnaround=opposite[olddir];
