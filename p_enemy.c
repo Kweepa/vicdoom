@@ -147,18 +147,18 @@ mobjState_t;
 
 mobjState_t states[] =
 {
-  { 5, ACTION_LOOK },
-  { TEX_ANIMATE + 5, ACTION_CHASE },
-  { 7, ACTION_FLINCH },
-  { 6, ACTION_SHOOT },
-  { 7, ACTION_FALL },
-
   { 8, ACTION_LOOK },
   { TEX_ANIMATE + 8, ACTION_CHASE },
   { 10, ACTION_FLINCH },
-  { 9, ACTION_MELEE },
-  { 9, ACTION_MISSILE },
+  { 9, ACTION_SHOOT },
   { 10, ACTION_FALL },
+
+  { 11, ACTION_LOOK },
+  { TEX_ANIMATE + 11, ACTION_CHASE },
+  { 13, ACTION_FLINCH },
+  { 12, ACTION_MELEE },
+  { 12, ACTION_MISSILE },
+  { 13, ACTION_FALL },
 };
 
 mobj_t *actor;

@@ -19,7 +19,6 @@
 
 ; sometime soon I'm going to have to make a zero page map!
 ;  put this on the zero page to speed up the interrupt
-; although, really I should only read the keys every third or so interrupt for speed
 keys = $34
 ctrlKeys = $35
 framesToNextUpdate:
@@ -33,6 +32,7 @@ somethingToRead:
 
 .proc updateInput : near
 
+; although, really I should only read the keys every third or so interrupt for speed
 dec framesToNextUpdate
 bne read
 rts

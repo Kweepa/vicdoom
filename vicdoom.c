@@ -45,6 +45,7 @@
 #include "drawColumn.h"
 #include "automap.h"
 #include "p_enemy.h"
+#include "util.h"
 
 #define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
 #define PEEK(addr) (*(unsigned char *)(addr))
@@ -115,24 +116,24 @@ enum EObjType
 
 texFrame texFrames[] =
 {
-  { 5, 1, 1, 5 }, // possessed
-  { 8, 1, 1, 5 }, // imp
-  { 11, 1, 1, 3 }, // demon
-  { 13, 1, 1, 3 }, // caco
-  { 8, 1, 1, 5 }, // baron
-  { 18, 0, 0, 5, 8, 8, 0, 16 }, // green armor
-  { 18, 0, 0, 5, 0, 8, 0, 16 }, // blue armor
-  { 19, 0, 0, 5, 8, 8, 0, 16 }, // bullets
-  { 19, 0, 0, 8, 24, 8, 0, 8 }, // medikit
-  { 19, 0, 0, 8, 24, 8, 8, 8 }, // red keycard
-  { 19, 0, 0, 8, 16, 24, 0, 8 }, // green keycard
-  { 19, 0, 0, 8, 16, 8, 8, 8 }, // blue keycard
-  { 20, 0, 0, 8, 16, 16, 0, 16 }, // barrel
-  { 17, 0, 1, 5 }, // pillar
-  { 20, 0, 0, 8, 16, 16, 0, 16 }, // skullpile
-  { 18, 0, 0, 2, 16, 4, 0, 16 }, // acid
-  { 16, 0, 0, 5, 0, 8, 0, 16 }, // possessed corpse
-  { 16, 0, 0, 5, 8, 8, 0, 16 }, // imp corpse
+  { 8, 1, 1, 5 }, // possessed
+  { 11, 1, 1, 5 }, // imp
+  { 14, 1, 1, 3 }, // demon
+  { 16, 1, 1, 3 }, // caco
+  { 11, 1, 1, 5 }, // baron
+  { 21, 0, 0, 5, 8, 8, 0, 16 }, // green armor
+  { 21, 0, 0, 5, 0, 8, 0, 16 }, // blue armor
+  { 22, 0, 0, 5, 8, 8, 0, 16 }, // bullets
+  { 22, 0, 0, 8, 24, 8, 0, 8 }, // medikit
+  { 22, 0, 0, 8, 24, 8, 8, 8 }, // red keycard
+  { 22, 0, 0, 8, 16, 24, 0, 8 }, // green keycard
+  { 22, 0, 0, 8, 16, 8, 8, 8 }, // blue keycard
+  { 23, 0, 0, 8, 16, 16, 0, 16 }, // barrel
+  { 20, 0, 1, 5 }, // pillar
+  { 23, 0, 0, 8, 16, 16, 0, 16 }, // skullpile
+  { 21, 0, 0, 2, 16, 4, 0, 16 }, // acid
+  { 19, 0, 0, 5, 0, 8, 0, 16 }, // possessed corpse
+  { 19, 0, 0, 5, 8, 8, 0, 16 }, // imp corpse
 };
 
 int playerx = -17*256, playery = -11*256;
@@ -146,12 +147,15 @@ signed char health = 100;
 
 #define TYPE_DOOR 1
 #define TYPE_OBJECT 2
+#define TYPE_SWITCH 3
 char typeAtCenterOfView;
 char itemAtCenterOfView;
 char doorClosedAmount[128];
 char openDoors[4];
 char doorOpenTime[4];
 char numOpenDoors = 0;
+
+char eraseMessageAfter = 0;
 
 #define SCREENWIDTH 32
 #define HALFSCREENWIDTH (SCREENWIDTH/2)
@@ -164,6 +168,11 @@ char numOpenDoors = 0;
 #define OUTERCOLLISIONRADIUS 515
 #define COLLISIONDELTA (OUTERCOLLISIONRADIUS - INNERCOLLISIONRADIUS)
 
+#define JAMB_MASK 0x18
+#define JAMB_SHIFT 3
+#define LOCK_MASK 0x60
+#define LOCK_SHIFT 5
+
 unsigned char frame = 0;
 
 void __fastcall__ drawColumn(char textureIndex, char texI, signed char curX, short curY, unsigned short h);
@@ -172,7 +181,10 @@ void __fastcall__ drawColumnTransparent(char textureIndex, char texYStart, char 
 void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
 {
   char textureIndex = getEdgeTexture(sectorIndex, curEdgeIndex);
+  char jamb = (textureIndex & JAMB_MASK) >> JAMB_SHIFT;
   char edgeLen = getEdgeLen(sectorIndex, curEdgeIndex);
+  char fit;
+  char transp;
 
   // intersect the view direction and the edge
   // http://local.wasp.uwa.edu.au/~pbourke/geometry/lineline2d/
@@ -193,6 +205,11 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
   unsigned int texI;
   unsigned int curY;
   unsigned int h;
+  
+  textureIndex &= 7;
+  // techwall, switch, door
+  fit = (textureIndex == 2 || textureIndex == 5 || textureIndex == 6);
+  transp = (textureIndex == 4);
   
   automap_sawEdge(getEdgeIndex(sectorIndex, curEdgeIndex));
 
@@ -232,34 +249,35 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
 
 			   h = div88(128, curY);
 	           
-	           if (textureIndex < 4 && textureIndex != 2)
+		       if (jamb)
+			   {
+				 texI = jamb-1;
+				 textureIndex = 7;
+			   }
+	           else if (!fit)
 	           {
 				   texI = (t * edgeLen) >> 6; // 256/PIXELSPERMETER
 			   }
 			   else
 			   {
-			       if (textureIndex > 7)
-			       {
-			         textureIndex = 4;
-			       }
-				   if (textureIndex > 4)
-				   {
-					 texI = textureIndex-5;
-					 textureIndex = 21;
-				   }
-				   else
-				   {
-					   // door or techwall, so fit to wall
-					   texI = t >> 4;
-				   }
+				   // switch, door or techwall, so fit to wall
+				   texI = t >> 4;
 			   }
 			   texI &= 15; // 16 texel wide texture
 	           
-			   if (curX == 0 && textureIndex == 4)
+			   if (curX == 0)
 			   {
 				 char edgeGlobalIndex = getEdgeIndex(sectorIndex, curEdgeIndex);
-				 typeAtCenterOfView = TYPE_DOOR;
-				 itemAtCenterOfView = edgeGlobalIndex;
+			     if (textureIndex == 6)
+			     {
+					 typeAtCenterOfView = TYPE_DOOR;
+					 itemAtCenterOfView = edgeGlobalIndex;
+				 }
+				 else if (textureIndex == 5)
+				 {
+				    typeAtCenterOfView = TYPE_SWITCH;
+				    itemAtCenterOfView = edgeGlobalIndex;
+				 }
 			   }
 
 			   drawColumn(textureIndex, texI, curX, curY, h);
@@ -671,7 +689,7 @@ void drawSpans()
         if (thatSector != -1)
         {
            char tex = getEdgeTexture(sectorIndex, curEdge);
-           if (tex == 4 || tex > 7)
+           if ((tex & 7) == 6)
            {
               curX = drawDoor(sectorIndex, curEdge, nextEdge, curX, nextX);
            }
@@ -888,7 +906,6 @@ void push_out(void)
   }
 }
 
-char counter = 0;
 char turnSpeed = 0;
 char shotgunStage = 0;
 char changeLookTime = 7;
@@ -1009,7 +1026,7 @@ again:
   for (i = 0; i < 128; ++i)
   {
     char tex = getGlobalEdgeTexture(i);
-    if (tex == 4 || tex > 7)
+    if ((tex & 7) == 6)
     {
       doorClosedAmount[i] = 255;
     }
@@ -1176,7 +1193,8 @@ again:
 	    if (typeAtCenterOfView == TYPE_DOOR && testFilled(0) < 4)
 	    {
 	      char tex = getGlobalEdgeTexture(itemAtCenterOfView);
-	      if (tex == 4 || keyCards[tex-8] != 0)
+	      char lock = (tex & LOCK_MASK) >> LOCK_SHIFT;
+	      if (lock == 0 || keyCards[lock-1] != 0)
 	      {
   	        for (i = 0; i < 4; ++i)
 	        {
@@ -1192,8 +1210,13 @@ again:
 	      }
 	      else
 	      {
-	        cputsxy(4, 14, "you need a key");
-	        cputsxy(3, 15, "to open the door");
+	        eraseMessage();
+	        textcolor(7);
+	        cputsxy(1, 14, "you need a       key");
+	        cputsxy(2, 15, "to open this door!");
+	        textcolor(2);
+	        cputsxy(14,14,"red");
+			eraseMessageAfter = 8;
 	      }
         }
       }
@@ -1236,8 +1259,20 @@ again:
   		}
       }
 	  
-	  counter++;
-	  POKE(0x1000, counter);
+	  {
+	    char tick = getTickCount();
+	    printIntAtXY(tick, 0, 0, 3);
+	    setTickCount(); 
+	  }
+	  
+	  if (eraseMessageAfter != 0)
+	  {
+	    --eraseMessageAfter;
+	    if (!eraseMessageAfter)
+	    {
+	      eraseMessage();
+	    }
+	  }
 	}
 	
 	// screen melt

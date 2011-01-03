@@ -24,3 +24,6 @@ char __fastcall__ getEffectsVolume(void);
 
 void __fastcall__ setMusicVolume(char vol);
 char __fastcall__ getMusicVolume(void);
+
+char __fastcall__ getTickCount(void);
+void __fastcall__ setTickCount(void);

@@ -6,6 +6,8 @@
 .export _setEffectsVolume
 .export _getMusicVolume
 .export _setMusicVolume
+.export _getTickCount
+.export _setTickCount
 .import soundTable
 .import updateInput
 
@@ -14,7 +16,7 @@ irqContinue = $eabf
 
 
 ; format of a song is
-; statusByte [note] [statusByte [note]]* $ff
+; [statusByte [note]]+ $ff
 ; status byte is [on/off:1][voice:2][timeToNextEvent:5]
 
 .segment "MUSIC"
@@ -47,6 +49,8 @@ effectsVolume:
 .byte $a
 musicVolume:
 .byte $1
+tickCount:
+.byte 0
 
 .proc playSoundIrq : near
 
@@ -55,6 +59,7 @@ bit $912d
 bpl end
 
 jsr updateInput
+inc tickCount
 
 ; check we're playing a sound
 lda soundIndex
@@ -297,4 +302,13 @@ rts
 
 _setMusicVolume:
 sta musicVolume
+rts
+
+_getTickCount:
+lda tickCount
+rts
+
+_setTickCount:
+lda #0
+sta tickCount
 rts
