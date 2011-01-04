@@ -1097,6 +1097,7 @@ int main()
   char i;
   signed char ca, sa;
   char numObj;
+  char *mapName;
   
   read_data_file("e1m1mus", 0xB200, 0x900);
   read_data_file("sounds", 0xBB00, 0xC00);
@@ -1119,10 +1120,14 @@ again:
 
   setUpScreenForMenu();
   runMenu(0);
+  
+nextLevel:
+
   setUpScreenForGameplay();
 
   caLevel[3] = '0' + level;
   read_data_file(caLevel, 0xAC00, 0x600);
+  mapName = getMapName();
 
   for (i = 0; i < 128; ++i)
   {
@@ -1165,7 +1170,8 @@ again:
 
   // name of level
   textcolor(2);
-  cputsxy(0, 18, "        hangar        ");
+//  cputsxy(0, 18, "                      ");
+  cputsxy(11-strlen(mapName)/2, 18, mapName);
   // shells
   textcolor(3);
   cputsxy(0, 21, " &40");
@@ -1391,14 +1397,15 @@ again:
 	  }
 	}
 	
+    textcolor(2);
+	cputsxy(5, 15, "press return");
 	if (health <= 0)
 	{
-      textcolor(2);
 	  cputsxy(5, 13, "you are dead");
-	  cputsxy(5, 15, "press return");
 	}
 	else
 	{
+	  cputsxy(5, 13, "map complete");
 	  ++level;
 	}
 	  
@@ -1421,7 +1428,11 @@ again:
 	}
 	while (!(ctrlKeys & KEY_RETURN));
 	
-	goto again;
+	if (health <= 0)
+	{
+    	goto again;
+    }
+    goto nextLevel;
 	
 	return EXIT_SUCCESS;
 }

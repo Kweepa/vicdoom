@@ -20,7 +20,7 @@ irqContinue = $eabf
 ; status byte is [on/off:1][voice:2][timeToNextEvent:5]
 
 .segment "MUSIC"
-.include "e1m1.s"
+.include "e1m1mus.s"
 
 .segment "CODE"
 

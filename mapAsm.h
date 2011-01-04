@@ -39,3 +39,5 @@ void __fastcall__ addObjectToSector(char sec, char i);
 void __fastcall__ removeObjectFromSector(char i);
 char __fastcall__ getFirstObjectInSector(char sec);
 char __fastcall__ getNextObjectInSector(char i);
+
+char * __fastcall__ getMapName(void);
