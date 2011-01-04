@@ -136,14 +136,16 @@ texFrame texFrames[] =
   { 19, 0, 0, 5, 8, 8, 0, 16 }, // imp corpse
 };
 
-int playerx = -17*256, playery = -11*256;
-char playera = 8;
-char playerSector = 0;
+int playerx, playery;
+char playera, playerSector;
 
-char keyCards[3];
+char keyCards[8];
 char shells = 40;
 char armor = 0;
 signed char health = 100;
+
+char endLevel;
+char level = 1;
 
 #define TYPE_DOOR 1
 #define TYPE_OBJECT 2
@@ -168,10 +170,22 @@ char eraseMessageAfter = 0;
 #define OUTERCOLLISIONRADIUS 515
 #define COLLISIONDELTA (OUTERCOLLISIONRADIUS - INNERCOLLISIONRADIUS)
 
-#define JAMB_MASK 0x18
-#define JAMB_SHIFT 3
-#define LOCK_MASK 0x60
-#define LOCK_SHIFT 5
+#define EDGE_TYPE_MASK 0xC0
+#define EDGE_PROP_MASK 0x38
+#define EDGE_TEX_MASK  0x07
+#define EDGE_TYPE_SHIFT 6
+#define EDGE_PROP_SHIFT 3
+
+#define EDGE_TYPE_NORMAL 0
+#define EDGE_TYPE_DOOR (1<<6)
+#define EDGE_TYPE_JAMB (2<<6)
+#define EDGE_TYPE_SWITCH (3<<6)
+
+#define SWITCH_TYPE_ENDLEVEL 0
+#define SWITCH_TYPE_OPENDOOR 1
+#define SWITCH_TYPE_REMOVEDOOR 2
+
+#define DOOR_TYPE_SHOT 4
 
 unsigned char frame = 0;
 
@@ -181,10 +195,10 @@ void __fastcall__ drawColumnTransparent(char textureIndex, char texYStart, char 
 void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
 {
   char textureIndex = getEdgeTexture(sectorIndex, curEdgeIndex);
-  char jamb = (textureIndex & JAMB_MASK) >> JAMB_SHIFT;
+  char type = textureIndex & EDGE_TYPE_MASK;
+  char prop = textureIndex & EDGE_PROP_MASK;
   char edgeLen = getEdgeLen(sectorIndex, curEdgeIndex);
-  char fit;
-  char transp;
+  char edgeGlobalIndex = getEdgeIndex(sectorIndex, curEdgeIndex);
 
   // intersect the view direction and the edge
   // http://local.wasp.uwa.edu.au/~pbourke/geometry/lineline2d/
@@ -205,13 +219,15 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
   unsigned int texI;
   unsigned int curY;
   unsigned int h;
+  char fit;
+  char transp;
   
-  textureIndex &= 7;
+  textureIndex &= EDGE_TEX_MASK;
   // techwall, switch, door
   fit = (textureIndex == 2 || textureIndex == 5 || textureIndex == 6);
   transp = (textureIndex == 4);
   
-  automap_sawEdge(getEdgeIndex(sectorIndex, curEdgeIndex));
+  automap_sawEdge(edgeGlobalIndex);
 
   // add 128 to correct for sampling in the center of the column
   //x4 = (256*x_L + 128)/HALFSCREENWIDTH;
@@ -249,9 +265,9 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
 
 			   h = div88(128, curY);
 	           
-		       if (jamb)
+		       if (type == EDGE_TYPE_JAMB)
 			   {
-				 texI = jamb-1;
+				 texI = prop >> EDGE_PROP_SHIFT;
 				 textureIndex = 7;
 			   }
 	           else if (!fit)
@@ -267,13 +283,12 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
 	           
 			   if (curX == 0)
 			   {
-				 char edgeGlobalIndex = getEdgeIndex(sectorIndex, curEdgeIndex);
-			     if (textureIndex == 6)
+			     if (type == EDGE_TYPE_DOOR)
 			     {
 					 typeAtCenterOfView = TYPE_DOOR;
 					 itemAtCenterOfView = edgeGlobalIndex;
 				 }
-				 else if (textureIndex == 5)
+				 else if (type == EDGE_TYPE_SWITCH)
 				 {
 				    typeAtCenterOfView = TYPE_SWITCH;
 				    itemAtCenterOfView = edgeGlobalIndex;
@@ -487,17 +502,17 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
                       break;
                    case kOT_RedKeycard:
                       POKE(0x9400 + 22*21 + 17, 2);
-                      keyCards[0] = 1;
+                      keyCards[1] = 1;
                       pickedUp = 1;
                       break;
                    case kOT_GreenKeycard:
                       POKE(0x9400 + 22*21 + 18, 5);
-                      keyCards[1] = 1;
+                      keyCards[2] = 1;
                       pickedUp = 1;
                       break;
                    case kOT_BlueKeycard:
                       POKE(0x9400 + 22*21 + 19, 3);
-                      keyCards[2] = 1;
+                      keyCards[3] = 1;
                       pickedUp = 1;
                       break;
                    }
@@ -689,7 +704,7 @@ void drawSpans()
         if (thatSector != -1)
         {
            char tex = getEdgeTexture(sectorIndex, curEdge);
-           if ((tex & 7) == 6)
+           if ((tex & EDGE_TYPE_MASK) == EDGE_TYPE_DOOR)
            {
               curX = drawDoor(sectorIndex, curEdge, nextEdge, curX, nextX);
            }
@@ -714,6 +729,44 @@ void drawSpans()
   }
 
   drawTransparentObjects();
+}
+
+void openDoor(char edgeGlobalIndex)
+{
+    char i;
+    if (doorClosedAmount[edgeGlobalIndex] != 0)
+    {
+		for (i = 0; i < 4; ++i)
+		{
+		  if (doorOpenTime[i] == 0)
+		  {
+			  openDoors[i] = edgeGlobalIndex;
+			  doorOpenTime[i] = 30;
+			  break;
+		  }
+		}
+		doorClosedAmount[edgeGlobalIndex] = 0;
+		playSound(SOUND_DOROPN);
+	}
+}
+
+void doEdgeSpecial(char edgeGlobalIndex)
+{
+	char textureIndex = getGlobalEdgeTexture(edgeGlobalIndex);
+	char type = textureIndex & EDGE_TYPE_MASK;
+	if (type == EDGE_TYPE_SWITCH)
+	{
+	  char prop = (textureIndex & EDGE_PROP_MASK) >> EDGE_PROP_SHIFT;
+	  if (prop == SWITCH_TYPE_ENDLEVEL)
+	  {
+	    endLevel = 1;
+	  }
+	  else if (prop == SWITCH_TYPE_OPENDOOR)
+	  {
+	    // arranged so that the door to open is the next edge in the global list
+	    openDoor(edgeGlobalIndex + 1);
+	  }
+	}
 }
 
 unsigned int sqrt(unsigned long x)
@@ -797,6 +850,9 @@ EPushOutResult push_out_from_edge(char i)
                  nextSector = thatSector;
                  //gotoxy(1,0);
                  //cprintf("sec%d ed%d ned%d ex%d ey%d. ", thatSector, i, ni, (int)ex, (int)ey);
+                 
+                 // crossed a line, so check for special
+                 doEdgeSpecial(edgeGlobalIndex);
               }
               return kPOR_Sector;
            }
@@ -992,6 +1048,8 @@ void waitforraster(void)
     while (PEEK(0x9004) < 16) ;
 }
 
+char caLevel[5] = "e1m1";
+
 int main()
 {
   char keys;
@@ -1021,12 +1079,13 @@ again:
   runMenu(0);
   setUpScreenForGameplay();
 
-  read_data_file("e1m1", 0xAC00, 0x600);
+  caLevel[3] = '0' + level;
+  read_data_file(caLevel, 0xAC00, 0x600);
 
   for (i = 0; i < 128; ++i)
   {
     char tex = getGlobalEdgeTexture(i);
-    if ((tex & 7) == 6)
+    if ((tex & EDGE_TYPE_MASK) == EDGE_TYPE_DOOR)
     {
       doorClosedAmount[i] = 255;
     }
@@ -1042,16 +1101,25 @@ again:
   
   addObjectsToSectors();
   
-  health = 100;
-  armor = 0;
-  shells = 40;
-  keyCards[0] = 0;
+  if (health <= 0)
+  {
+    health = 100;
+    armor = 0;
+    shells = 40;
+  }
+  keyCards[0] = 1;
   keyCards[1] = 0;
   keyCards[2] = 0;
+  keyCards[3] = 0;
+  keyCards[4] = 0;
+  keyCards[5] = 0;
+  keyCards[6] = 0;
+  keyCards[7] = 0;
   playerx = getPlayerSpawnX();
   playery = getPlayerSpawnY();
   playera = getPlayerSpawnAngle();
   playerSector = getPlayerSpawnSector();
+  endLevel = 0;
 
   // name of level
   textcolor(2);
@@ -1074,7 +1142,7 @@ again:
   cputsxy(10, 21, "()");
   cputsxy(10, 22, "*+");
   
-  while (health > 0)
+  while (health > 0 && !endLevel)
   {
 	  if (!flashRedTime)
 	  {
@@ -1168,7 +1236,16 @@ again:
 		  if (typeAtCenterOfView == TYPE_OBJECT)
 		  {
 		    p_enemy_damage(itemAtCenterOfView, 2 + (P_Random()&7));
-		  }   
+		  }
+		  else if (typeAtCenterOfView == TYPE_DOOR)
+		  {
+			  char tex = getGlobalEdgeTexture(itemAtCenterOfView);
+			  char prop = (tex & EDGE_PROP_MASK) >> EDGE_PROP_SHIFT;
+			  if (prop == DOOR_TYPE_SHOT)
+			  {
+			    openDoor(itemAtCenterOfView);
+			  }
+		  }
 		}
 	  }
 
@@ -1190,35 +1267,32 @@ again:
 	      //gotoxy(0,16);
 	      //cprintf("hi %d. ", typeAtCenterOfView);
 	    // tried to open a door (pressed K)
-	    if (typeAtCenterOfView == TYPE_DOOR && testFilled(0) < 4)
+	    if (testFilled(0) < 4)
 	    {
-	      char tex = getGlobalEdgeTexture(itemAtCenterOfView);
-	      char lock = (tex & LOCK_MASK) >> LOCK_SHIFT;
-	      if (lock == 0 || keyCards[lock-1] != 0)
-	      {
-  	        for (i = 0; i < 4; ++i)
-	        {
-	          if (doorOpenTime[i] == 0)
-	          {
-				  openDoors[i] = itemAtCenterOfView;
-				  doorOpenTime[i] = 20;
-				  break;
+			if (typeAtCenterOfView == TYPE_DOOR)
+			{
+			  char tex = getGlobalEdgeTexture(itemAtCenterOfView);
+			  char prop = (tex & EDGE_PROP_MASK) >> EDGE_PROP_SHIFT;
+			  if (keyCards[prop] == 1)
+			  {
+				openDoor(itemAtCenterOfView);
+			  }
+			  else if (prop < 4)
+			  {
+				eraseMessage();
+				textcolor(7);
+				cputsxy(1, 14, "you need a       key");
+				cputsxy(2, 15, "to open this door!");
+				textcolor(2);
+				cputsxy(14,14,"red");
+				eraseMessageAfter = 8;
 			  }
 			}
-            doorClosedAmount[itemAtCenterOfView] = 0;
-    		playSound(SOUND_DOROPN);
-	      }
-	      else
-	      {
-	        eraseMessage();
-	        textcolor(7);
-	        cputsxy(1, 14, "you need a       key");
-	        cputsxy(2, 15, "to open this door!");
-	        textcolor(2);
-	        cputsxy(14,14,"red");
-			eraseMessageAfter = 8;
-	      }
-        }
+			else if (typeAtCenterOfView == TYPE_SWITCH)
+			{
+			  doEdgeSpecial(itemAtCenterOfView);
+			}
+		}
       }
 
       POKE(0x900f, 11);
@@ -1275,16 +1349,23 @@ again:
 	  }
 	}
 	
+	if (health <= 0)
+	{
+      textcolor(2);
+	  cputsxy(5, 13, "you are dead");
+	  cputsxy(5, 15, "press return");
+	}
+	else
+	{
+	  ++level;
+	}
+	  
 	// screen melt
 	do
 	{
 	  char x = 7 + (P_Random() & 7);
 	  char y;
 
-      textcolor(2);
-	  cputsxy(5, 13, "you are dead");
-	  cputsxy(5, 15, "press return");
-	  
 	  waitforraster();
 	  
 	  for (y = 9; y > 2; --y)
