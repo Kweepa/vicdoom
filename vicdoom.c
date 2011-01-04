@@ -30,7 +30,7 @@
 // A000-BDFF texture data, level data, music
 // BE00-BFFF back buffer
 
-#define IDDQD 1
+#define IDDQD 0
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -142,6 +142,7 @@ char playera, playerSector;
 char keyCards[8];
 char shells = 40;
 char armor = 0;
+char combatArmor = 0;
 signed char health = 100;
 
 char endLevel;
@@ -388,28 +389,65 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
   }
 }
 
+char textColor = 1;
+
 void printIntAtXY(char i, char x, char y, char prec)
 {
-  int screenloc = 0x1000 + 22*y + x;
+  unsigned int screenloc = 0x1000 + 22*y + x;
+  unsigned int colorloc = 0x9400 + 22*y + x;
   char digit = 0;
   if (prec == 3)
   {
 	  while (i >= 100) { ++digit; i -= 100; }
 	  POKE(screenloc, '0' + digit);
+	  POKE(colorloc, textColor);
       ++screenloc;
+      ++colorloc;
 	  digit = 0;
   }
   while (i >= 10) { ++digit; i -= 10; }
   POKE(screenloc, '0' + digit);
+  POKE(colorloc, textColor);
   ++screenloc;
+  ++colorloc;
   POKE(screenloc, '0' + i);
+  POKE(colorloc, textColor);
 }
 
 char flashRedTime = 0;
 
+void drawHudArmor(void)
+{
+    char armorColor = 5;
+    if (combatArmor == 1) armorColor = 6;
+	textcolor(armorColor);
+	POKE(0x9400 + 22*21 + 5, armorColor);
+	printIntAtXY(armor, 6, 21, 3);
+}
+
 void damagePlayer(char damage)
 {
 #if IDDQD == 0
+  if (armor > 0)
+  {
+    char armorDamage = 0;
+    if (combatArmor == 1)
+    {
+      armorDamage = damage/2;
+    }
+    else
+    {
+      armorDamage = damage/3;
+    }
+    damage = damage - armorDamage;
+    armor -= armorDamage;
+    if (armor > 200)
+    {
+      armor = 0;
+      combatArmor = 0;
+    }
+    drawHudArmor();
+  }
   health -= damage;
 #endif
   if (health < 0)
@@ -470,7 +508,8 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
                       if (armor < 100)
                       {
                          armor = 100;
- 						 printIntAtXY(100, 6, 21, 3);
+                         combatArmor = 0;
+                         drawHudArmor();
                          pickedUp = 1;
 					  }
                       break;
@@ -478,7 +517,8 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
                       if (armor < 200)
                       {
                          armor = 200;
- 						 printIntAtXY(200, 6, 21, 3);
+                         combatArmor = 1;
+                         drawHudArmor();
                          pickedUp = 1;
 					  }
                       break;
@@ -1063,6 +1103,8 @@ int main()
 
   playSoundInitialize();
 
+  read_data_file("lowcode", 0x800, 0x800);
+  
   read_data_file("sluts", 0x400, 0x400);
   read_data_file("textures", 0xA000, 0xC00);
 

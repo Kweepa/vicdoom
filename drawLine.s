@@ -9,6 +9,8 @@
 
 buffer = $BE00
 
+.segment "LOWCODE"
+
 minx:
 .word 0
 maxx:

@@ -89,7 +89,7 @@ ror
 ror
 nop
 
-.segment	"CODE"
+.segment "LOWCODE"
 
 .proc _clearFilled: near
 
