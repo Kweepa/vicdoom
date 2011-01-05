@@ -46,9 +46,7 @@
 #include "automap.h"
 #include "p_enemy.h"
 #include "util.h"
-
-#define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
-#define PEEK(addr) (*(unsigned char *)(addr))
+#include "summary.h"
 
 int __fastcall__ muladd88(int x, int y, int z);
 unsigned int __fastcall__ div88(unsigned int x, unsigned int y);
@@ -389,31 +387,6 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
   }
 }
 
-char textColor = 1;
-
-void printIntAtXY(char i, char x, char y, char prec)
-{
-  unsigned int screenloc = 0x1000 + 22*y + x;
-  unsigned int colorloc = 0x9400 + 22*y + x;
-  char digit = 0;
-  if (prec == 3)
-  {
-	  while (i >= 100) { ++digit; i -= 100; }
-	  POKE(screenloc, '0' + digit);
-	  POKE(colorloc, textColor);
-      ++screenloc;
-      ++colorloc;
-	  digit = 0;
-  }
-  while (i >= 10) { ++digit; i -= 10; }
-  POKE(screenloc, '0' + digit);
-  POKE(colorloc, textColor);
-  ++screenloc;
-  ++colorloc;
-  POKE(screenloc, '0' + i);
-  POKE(colorloc, textColor);
-}
-
 char flashRedTime = 0;
 
 void drawHudArmor(void)
@@ -421,8 +394,47 @@ void drawHudArmor(void)
     char armorColor = 5;
     if (combatArmor == 1) armorColor = 6;
 	textcolor(armorColor);
-	POKE(0x9400 + 22*21 + 5, armorColor);
+    cputsxy(5, 21, "^");
+    setTextColor(armorColor);
 	printIntAtXY(armor, 6, 21, 3);
+}
+
+void drawHudAmmo(void)
+{
+  // shells
+  textcolor(3);
+  cputsxy(1, 21, "&");
+  setTextColor(3);
+  printIntAtXY(shells, 2, 21, 2);
+}
+
+void drawHudHealth(void)
+{
+  // health
+  textcolor(2);
+  cputsxy(13, 21, "/");
+  setTextColor(2);
+  printIntAtXY(health, 14, 21, 3);
+}
+
+char keyCardColors[3] = { 2, 5, 6 };
+
+void drawHudKeys(void)
+{
+  char k;
+  // cards
+  for (k = 1; k < 4; ++k)
+  {
+    if (keyCards[k] == 1)
+    {
+      textcolor(keyCardColors[k-1]);
+    }
+    else
+    {
+      textcolor(6);
+    }
+    cputsxy(17+k, 21, ";");
+  }
 }
 
 void damagePlayer(char damage)
@@ -527,7 +539,7 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
                       {
                          shells += 10;
                          if (shells > 80) shells = 80;
-                         printIntAtXY(shells, 2, 21, 2);
+                         drawHudAmmo();
                          pickedUp = 1;
                       }
                       break;
@@ -536,23 +548,23 @@ void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char 
                       {
                         health += 25;
                         if (health > 100) health = 100;
-                        printIntAtXY(health, 13, 21, 3);
+                        drawHudHealth();
                         pickedUp = 1;
                       }  
                       break;
                    case kOT_RedKeycard:
-                      POKE(0x9400 + 22*21 + 17, 2);
                       keyCards[1] = 1;
+                      drawHudKeys();
                       pickedUp = 1;
                       break;
                    case kOT_GreenKeycard:
-                      POKE(0x9400 + 22*21 + 18, 5);
                       keyCards[2] = 1;
+                      drawHudKeys();
                       pickedUp = 1;
                       break;
                    case kOT_BlueKeycard:
-                      POKE(0x9400 + 22*21 + 19, 3);
                       keyCards[3] = 1;
+                      drawHudKeys();
                       pickedUp = 1;
                       break;
                    }
@@ -1052,14 +1064,14 @@ void setUpScreenForGameplay(void)
   clearSecondBuffer();
   copyToPrimaryBuffer();
   textcolor(6);
-  cputsxy(0, 17, "######################");
-  cputsxy(0, 19, "######################");
-  cputsxy(6, 1, "##########");
-  cputsxy(6, 10, "##########");
+  cputsxy(0, 17, "]]]]]]]]]]]]]]]]]]]]]]");
+  cputsxy(0, 19, "]]]]]]]]]]]]]]]]]]]]]]");
+  cputsxy(6, 1, "]]]]]]]]]]");
+  cputsxy(6, 10, "]]]]]]]]]]");
   for (i = 2; i < 10; ++i)
   {
-    cputsxy(6, i, "#");
-    cputsxy(15, i, "#");
+    cputsxy(6, i, "]");
+    cputsxy(15, i, "]");
     for (x = 0; x < 8; ++x)
     {
       // multicolor red
@@ -1079,13 +1091,6 @@ void read_data_file(char *name, int addr, int maxSize)
     fread((void *)addr, maxSize, 1, fp);
     fclose(fp);
   }
-}
-
-// use this to line up raster timing lines
-void waitforraster(void)
-{
-    while (PEEK(0x9004) > 16) ;
-    while (PEEK(0x9004) < 16) ;
 }
 
 char caLevel[5] = "e1m1";
@@ -1117,12 +1122,12 @@ int main()
 
 again:  
   setUpScreenForBitmap();
-
   setUpScreenForMenu();
   runMenu(0);
   
 nextLevel:
 
+  setUpScreenForBitmap();
   setUpScreenForGameplay();
 
   caLevel[3] = '0' + level;
@@ -1170,24 +1175,16 @@ nextLevel:
 
   // name of level
   textcolor(2);
-//  cputsxy(0, 18, "                      ");
   cputsxy(11-strlen(mapName)/2, 18, mapName);
-  // shells
-  textcolor(3);
-  cputsxy(0, 21, " &40");
-  // armor
-  textcolor(5);
-  cputsxy(4, 21, " :000 ");
-  // health
-  textcolor(2);
-  cputsxy(12, 21, " /100");
-  // cards
-  textcolor(6);
-  cputsxy(17, 21, " ;;;");
+  drawHudAmmo();
+  drawHudArmor();
+  drawHudHealth();
+  drawHudKeys();
   // face
   textcolor(7);
-  cputsxy(10, 20, "$%");
-  cputsxy(10, 21, "()");
+  cputsxy(10, 20, "[£");
+  POKE(0x1000 + 22*20 + 11, 28);
+  cputsxy(10, 21, "#$");
   cputsxy(10, 22, "*+");
   
   while (health > 0 && !endLevel)
@@ -1276,7 +1273,7 @@ nextLevel:
 		if (shells > 0 && shotgunStage == 0)
 		{
 		  shells--;
-		  printIntAtXY(shells, 2, 21, 2);
+		  drawHudAmmo();
 		  POKE(0x900F, 8+1);
 		  shotgunStage = 7;
 		  
@@ -1370,8 +1367,8 @@ nextLevel:
 		if (lookDir == 0)
 		{
   	      changeLookTime = 12;
-  	      POKE(0x1000 + 10 + 22*21, 27);
-  	      POKE(0x1000 + 11 + 22*21, 28);
+  	      POKE(0x1000 + 10 + 22*21, 35);
+  	      POKE(0x1000 + 11 + 22*21, 36);
   		}
   		else
   		{
@@ -1432,6 +1429,7 @@ nextLevel:
 	{
     	goto again;
     }
+    summaryScreen();
     goto nextLevel;
 	
 	return EXIT_SUCCESS;
