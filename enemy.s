@@ -23,6 +23,8 @@ clc
 adc #1
 :
 sta dy
+
+
 ldy #1
 lda (sp),y
 bpl :+
@@ -32,23 +34,17 @@ adc #1
 :
 sta dx
 
-cmp dy
-bmi :+
-; dx > dy, so dx+dy - dy/2
-clc
-adc dy
-asl dy
-sec
-sbc dy
-ldy #2
-jmp addysp
+; dx > dy, dx+dy/2
+; dx < dy, dx/2+dy
 
+cmp dy
+bpl shiftY
+lsr
+jmp :+
+shiftY:
+lsr dy
 :
-; dx < dy, so dx+dy - dx/2
 clc
 adc dy
-asl dx
-sec
-sbc dx
 ldy #2
 jmp addysp

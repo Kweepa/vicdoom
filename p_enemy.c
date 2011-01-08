@@ -33,6 +33,7 @@
 #include "p_enemy.h"
 #include "player.h"
 #include "mapAsm.h"
+#include "util.h"
 
 #define fixed_t int
 #define boolean char
@@ -62,6 +63,7 @@
 #define STATE_IMPCLAW 8
 #define STATE_IMPMISSILE 9
 #define STATE_IMPFALL 10
+#define STATE_IMPSHOTFLY 11
 
 typedef struct
 {
@@ -92,14 +94,19 @@ mobjInfo_t;
 #define MOBJINFO_DEMON 2
 #define MOBJINFO_CACODEMON 3
 #define MOBJINFO_BARON 4
+#define MOBJINFO_IMPSHOT 5
 
 // TODO: fill out
 mobjInfo_t mobjinfo[] =
 {
   { 3, -1, SOUND_GURGLE, SOUND_POPAIN, -1, SOUND_PISTOL, 30, 4,
-    STATE_POSLOOK, STATE_POSCHASE, STATE_POSPAIN, -1, STATE_POSSHOOT, STATE_POSFALL, TYPE_POSSESSED_CORPSE },
+    STATE_POSLOOK, STATE_POSCHASE, STATE_POSPAIN, -1, STATE_POSSHOOT, STATE_POSFALL, kOT_PossessedCorpse },
   { 4, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, SOUND_CLAW, 30, 4,
-    STATE_IMPLOOK, STATE_IMPCHASE, STATE_IMPPAIN, STATE_IMPCLAW, STATE_IMPMISSILE, STATE_IMPFALL, TYPE_IMP_CORPSE }
+    STATE_IMPLOOK, STATE_IMPCHASE, STATE_IMPPAIN, STATE_IMPCLAW, STATE_IMPMISSILE, STATE_IMPFALL, kOT_ImpCorpse },
+    {},
+    {},
+    {},
+    {}
 };
 
 typedef struct
@@ -128,6 +135,7 @@ void A_Melee(void);
 void A_Missile(void);
 void A_Shoot(void);
 void A_Fall(void);
+void A_Fly(void);
 
 // actions are global
 #define ACTION_LOOK 0
@@ -137,6 +145,7 @@ void A_Fall(void);
 #define ACTION_SHOOT 4
 #define ACTION_MISSILE 5
 #define ACTION_FALL 6
+#define ACTION_FLY 7
 
 typedef struct
 {
@@ -159,6 +168,8 @@ mobjState_t states[] =
   { 12, ACTION_MELEE },
   { 12, ACTION_MISSILE },
   { 13, ACTION_FALL },
+  
+  { 0, ACTION_FLY }
 };
 
 mobj_t *actor;
@@ -169,7 +180,7 @@ char newChaseDirThisFrame = 0;
 
 void printAction(void)
 {
-   gotoxy(1,0);
+   gotoxy(5,0);
    switch (state->actionIndex)
    {
    case ACTION_LOOK:
@@ -193,13 +204,16 @@ void printAction(void)
    case ACTION_FALL:
      cputs("fall. ");
      break;
+ case ACTION_FLY:
+     cputs("fly. ");
+     break;
    }
 }
 
 void callAction(void)
 {
-  #if 0
-  printAction(state->actionIndex);
+  #if 1
+  printAction();
   #endif
    switch (state->actionIndex)
    {
@@ -224,6 +238,9 @@ void callAction(void)
    case ACTION_FALL:
      A_Fall();
      break;
+ case ACTION_FLY:
+     A_Fly();
+     break;
    }
    #if 0
    gotoxy(0,1);
@@ -246,7 +263,18 @@ mobj_t mobjs[MAX_MOBJ];
 char objForMobj[MAX_MOBJ];
 char mobjForObj[MAX_OBJ];
 
+void p_enemy_resetMap(void)
+{
+  char i;
+  for (i = 0; i < MAX_MOBJ; ++i)
+  {
+    mobjs[i].allocated = false;
+  }
+}
+
 int allocated = 0;
+char firstTime = 1;
+
 char allocMobj(char o)
 {
   char i;
@@ -256,7 +284,7 @@ char allocMobj(char o)
   for (i = 0; i < MAX_MOBJ; ++i)
   {
 	mobj = &mobjs[i];
-    if (!mobj->allocated)
+    if (mobj->allocated == false)
     {
       objForMobj[i] = o;
       mobjForObj[o] = i;
@@ -323,7 +351,8 @@ void p_enemy_startframe(void)
 
 void p_enemy_add_thinker(char o)
 {
-  if (getObjectType(o) < 5)
+  char t = getObjectType(o);
+  if (t < 5 || t == kOT_ImpShot)
   {
     char i = mobjForObj[o];
     if (!(mobjs[i].flags & MF_THOUGHTTHISFRAME))
@@ -337,7 +366,8 @@ void p_enemy_add_thinker(char o)
 
 void p_enemy_wasseenthisframe(char o)
 {
-   if (getObjectType(o) < 5)
+   char t = getObjectType(o);
+   if (t < 5 || t == kOT_ImpShot)
    {
      char i = mobjForObj[o];
      mobjs[i].flags |= MF_WASSEENTHISFRAME;
@@ -496,7 +526,7 @@ void P_RadiusAttack(int radius)
 boolean P_CheckMeleeRange(void)
 {
     char dist = P_ApproxDistance(playerx - actor->x, playery - actor->y);
-
+    
     if (dist >= MELEERANGE)
 	return false;
 	
@@ -627,8 +657,6 @@ int try_move(int trydx, int trydy)
   }
   return sectorToReturn;
 }
-
-
 
 boolean P_TryMove(fixed_t trydx, fixed_t trydy)
 {
@@ -923,6 +951,7 @@ void A_Chase(void)
     }
 }
 
+#if 0
 
 char R_PointToAngle(int x, int y)
 {
@@ -1013,6 +1042,11 @@ void A_FaceTarget(void)
 				    actor->y - playery);
 }
 
+#else
+
+#define A_FaceTarget()
+
+#endif
 
 //
 // A_Shoot
@@ -1044,6 +1078,38 @@ void A_Missile(void)
     A_FaceTarget();
 	// launch a missile
 	//P_SpawnMissile(MT_TROOPSHOT);
+	{
+	  mobj_t *miss = &mobjs[MAX_MOBJ-1];
+	  if (miss->allocated == false)
+	  {
+	    long dx = playerx - actor->x;
+	    long dy = playery - actor->y;
+	    int dist = sqrt(dx*dx + dy*dy)/128;
+	    dx /= dist;
+	    dy /= dist;
+
+	    miss->allocated = true;
+	    miss->x = actor->x;
+	    miss->y = actor->y;
+	    miss->momx = dx;
+	    miss->momy = dy;
+	    miss->sector = actor->sector;
+	    miss->infoType = MOBJINFO_IMPSHOT;
+	    miss->stateIndex = STATE_IMPSHOTFLY;
+	    miss->mobjIndex = MAX_MOBJ-1;
+
+	    gotoxy(1,1);
+	    cprintf("%ld %ld %d %d. \n", dx, dy, miss->momx, miss->momy);
+
+	    objForMobj[MAX_MOBJ-1] = 31;
+	    mobjForObj[31] = MAX_MOBJ-1;
+	    setObjectSector(31, miss->sector);
+	    setObjectX(31, miss->x);
+	    setObjectY(31, miss->y);
+	    setObjectType(31, kOT_ImpShot);
+	  }
+	}
+	actor->reactiontime = P_Random()&7;
 	P_SetMobjState(info->chasestate);
 }
 
@@ -1095,4 +1161,28 @@ void A_Flinch(void)
 void A_Explode(void)
 {
     P_RadiusAttack( 5 );
+}
+
+void A_Fly(void)
+{
+   int trydx = 4*actor->momx;
+   int trydy = 4*actor->momy;
+   gotoxy(0,13);
+   cprintf("dx %d dy %d. ", trydx, trydy);
+   if (!P_TryMove(trydx, trydy))
+   {
+      char o = objForMobj[actor->mobjIndex];
+      setObjectSector(o, -1);
+      // explode
+      A_Explode();
+      actor->allocated = false;
+      
+      // also remove at the game level
+      
+      cputsxy(0,20,"expl");
+   }
+   else
+   {
+      cputsxy(0,20,"move");
+   }    
 }

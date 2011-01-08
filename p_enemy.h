@@ -1,5 +1,7 @@
 #define TEX_ANIMATE 64
 
+void p_enemy_resetMap(void);
+
 void p_enemy_startframe(void);
 void p_enemy_think(void);
 

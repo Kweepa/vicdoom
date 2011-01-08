@@ -47,3 +47,22 @@ void waitforraster(void)
     while (PEEK(0x9004) > 16) ;
     while (PEEK(0x9004) < 16) ;
 }
+
+unsigned int sqrt(unsigned long x)
+{
+  unsigned long m = 0x40000000;
+  unsigned long y = 0;
+  unsigned long b;
+  while (m != 0)
+  {
+     b = y | m;
+     y = y >> 1;
+     if (x >= b)
+     {
+        x -= b;
+        y = y | m;
+     }
+     m = m >> 2;
+  }
+  return ((unsigned int)y);
+}

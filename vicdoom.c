@@ -13,11 +13,12 @@
 // X 6. add keys and doors
 // X 7. add health
 // 7.5. and weapons
-// 8. advance levels
+// X 8. advance levels
 // X 9. menus
 // 10. more optimization?
 // X 11. use a double buffer scheme that draws to two different sets of characters and just copies the characters over
 // 12. optimize push_out code and more importantly the ai try_move code
+// 13. projectiles!
 
 // memory map:
 // see the .cfg file for how to do this
@@ -87,31 +88,6 @@ typedef struct
 }
 texFrame;
 
-enum EObjType
-{
-   kOT_Possessed,
-   kOT_Imp,
-   kOT_Demon,
-   kOT_Cacodemon,
-   kOT_Baron,
-   kOT_GreenArmor,
-   kOT_BlueArmor,
-   kOT_Bullets,
-   kOT_Medkit,
-   kOT_RedKeycard,
-   kOT_GreenKeycard,
-   kOT_BlueKeycard,
-   kOT_Barrel,
-   kOT_Pillar,
-   kOT_Skullpile,
-   kOT_Acid,
-   kOT_PossessedCorpse,
-   kOT_ImpCorpse,
-   kOT_DemonCorpse,
-   kOT_CacodemonCorpse,
-   kOT_BaronCorpse
-};
-
 texFrame texFrames[] =
 {
   { 8, 1, 1, 5 }, // possessed
@@ -132,6 +108,10 @@ texFrame texFrames[] =
   { 21, 0, 0, 2, 16, 4, 0, 16 }, // acid
   { 19, 0, 0, 5, 0, 8, 0, 16 }, // possessed corpse
   { 19, 0, 0, 5, 8, 8, 0, 16 }, // imp corpse
+  { 19, 0, 0, 5, 8, 8, 0, 16 }, // demon corpse
+  { 18, 0, 0, 3, 0, 16, 0, 16 }, // caco corpse
+  { 19, 0, 0, 5, 8, 8, 0, 16 }, // baron corpse
+  { 18, 0, 0, 4, 16, 16, 0, 16 }, // imp shot
 };
 
 int playerx, playery;
@@ -144,7 +124,7 @@ char combatArmor = 0;
 signed char health = 100;
 
 char endLevel;
-char level = 1;
+char level = 2;
 
 #define TYPE_DOOR 1
 #define TYPE_OBJECT 2
@@ -658,8 +638,8 @@ void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 		 if (texFrames[type].solid)
 		 {
 		   drawObjectInSector(objInst->o, objInst->x, objInst->y, x_L, x_R);
-		   p_enemy_add_thinker(objInst->o);
 		 }
+		 p_enemy_add_thinker(objInst->o);
 	  }
 	}
 }
@@ -819,25 +799,6 @@ void doEdgeSpecial(char edgeGlobalIndex)
 	    openDoor(edgeGlobalIndex + 1);
 	  }
 	}
-}
-
-unsigned int sqrt(unsigned long x)
-{
-  unsigned long m = 0x40000000;
-  unsigned long y = 0;
-  unsigned long b;
-  while (m != 0)
-  {
-     b = y | m;
-     y = y >> 1;
-     if (x >= b)
-     {
-        x -= b;
-        y = y | m;
-     }
-     m = m >> 2;
-  }
-  return ((unsigned int)y);
 }
 
 // THIS IS THE NEXT TARGET OF FIXING & OPTIMIZATION!
@@ -1133,6 +1094,7 @@ nextLevel:
   caLevel[3] = '0' + level;
   read_data_file(caLevel, 0xAC00, 0x600);
   mapName = getMapName();
+  numObj = getNumObjects();
 
   for (i = 0; i < 128; ++i)
   {
@@ -1143,6 +1105,7 @@ nextLevel:
     }
   }
   
+  p_enemy_resetMap();
   for (i = 0; i < numObj; ++i)
   {
     if (getObjectType(i) < 5)
@@ -1340,11 +1303,11 @@ nextLevel:
 		}
       }
 
-      POKE(0x900f, 11);
+//      POKE(0x900f, 11);
       {
 	    push_out();
 	  }
-      POKE(0x900f, 13);
+//      POKE(0x900f, 13);
 
       setCameraX(playerx);
       setCameraY(playery);

@@ -1,5 +1,28 @@
-#define TYPE_POSSESSED_CORPSE 16
-#define TYPE_IMP_CORPSE 17
+enum EObjType
+{
+   kOT_Possessed,
+   kOT_Imp,
+   kOT_Demon,
+   kOT_Cacodemon,
+   kOT_Baron,
+   kOT_GreenArmor,
+   kOT_BlueArmor,
+   kOT_Bullets,
+   kOT_Medkit,
+   kOT_RedKeycard,
+   kOT_GreenKeycard,
+   kOT_BlueKeycard,
+   kOT_Barrel,
+   kOT_Pillar,
+   kOT_Skullpile,
+   kOT_Acid,
+   kOT_PossessedCorpse,
+   kOT_ImpCorpse,
+   kOT_DemonCorpse,
+   kOT_CacodemonCorpse,
+   kOT_BaronCorpse,
+   kOT_ImpShot
+};
 
 int __fastcall__ getScreenX(char i);
 int __fastcall__ getTransformedX(char i);

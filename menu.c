@@ -159,6 +159,9 @@ void addToMusicVolume(char add)
 // returns 1 if should restart
 char runMenu(char canReturn)
 {
+#if 1
+   return 0;
+#else
    if (canReturn)
    {
      playSound(SOUND_STNMOV);
@@ -273,4 +276,6 @@ char runMenu(char canReturn)
 	    }
 	  }
 	}
+
+#endif
 }
