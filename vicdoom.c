@@ -49,6 +49,8 @@
 #include "util.h"
 #include "summary.h"
 
+#pragma staticlocals(on)
+
 int __fastcall__ muladd88(int x, int y, int z);
 unsigned int __fastcall__ div88(unsigned int x, unsigned int y);
 void __fastcall__ setCameraAngle(unsigned char a);
@@ -171,7 +173,7 @@ unsigned char frame = 0;
 void __fastcall__ drawColumn(char textureIndex, char texI, signed char curX, short curY, unsigned short h);
 void __fastcall__ drawColumnTransparent(char textureIndex, char texYStart, char texYEnd, char texI, signed char curX, short curY, unsigned short h);
 
-void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
+void __fastcall__ drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
 {
   char textureIndex = getEdgeTexture(sectorIndex, curEdgeIndex);
   char type = textureIndex & EDGE_TYPE_MASK;
@@ -281,7 +283,7 @@ void drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed ch
   }
 }
 
-signed char drawDoor(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
+signed char __fastcall__ drawDoor(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
 {
   char edgeGlobalIndex = getEdgeIndex(sectorIndex, curEdgeIndex);
   char doorClosedAmount = doorClosedAmount[edgeGlobalIndex];
@@ -294,7 +296,7 @@ signed char drawDoor(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, si
   return x_R;
 }
 
-void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R)
+void __fastcall__ drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R)
 {
   // perspective transform (see elsewhere for optimization)
   //int h = (SCREENHEIGHT/16) * 512 / (vy/16);
@@ -369,7 +371,7 @@ void drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R
 
 char flashRedTime = 0;
 
-void drawHudArmor(void)
+void __fastcall__ drawHudArmor(void)
 {
     char armorColor = 5;
     if (combatArmor == 1) armorColor = 6;
@@ -379,7 +381,7 @@ void drawHudArmor(void)
 	printIntAtXY(armor, 6, 21, 3);
 }
 
-void drawHudAmmo(void)
+void __fastcall__ drawHudAmmo(void)
 {
   // shells
   textcolor(3);
@@ -388,7 +390,7 @@ void drawHudAmmo(void)
   printIntAtXY(shells, 2, 21, 2);
 }
 
-void drawHudHealth(void)
+void __fastcall__ drawHudHealth(void)
 {
   // health
   textcolor(2);
@@ -417,7 +419,7 @@ void drawHudKeys(void)
   }
 }
 
-void damagePlayer(char damage)
+void __fastcall__ damagePlayer(char damage)
 {
 #if IDDQD == 0
   if (armor > 0)
@@ -453,7 +455,7 @@ void damagePlayer(char damage)
   POKE(0x900F, 8+2);
 }
 
-void drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char x_R)
+void __fastcall__ drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char x_R)
 {
   // perspective transform (see elsewhere for optimization)
   //int h = (SCREENHEIGHT/16) * 512 / (vy/16);
@@ -586,7 +588,7 @@ char numSorted;
 char numTransparent;
 objxy transparent[12];
 
-void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
+void __fastcall__ drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 {
   int vx, vy;
   objxy *objInst;
@@ -638,13 +640,13 @@ void drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 		 if (texFrames[type].solid)
 		 {
 		   drawObjectInSector(objInst->o, objInst->x, objInst->y, x_L, x_R);
+  		   p_enemy_add_thinker(objInst->o);
 		 }
-		 p_enemy_add_thinker(objInst->o);
 	  }
 	}
 }
 
-void queueTransparentObjects(signed char x_L, signed char x_R)
+void __fastcall__ queueTransparentObjects(signed char x_L, signed char x_R)
 {
    char i, type;
    objxy *objInst, *transp;
@@ -665,7 +667,7 @@ void queueTransparentObjects(signed char x_L, signed char x_R)
     }
 }
 
-void drawTransparentObjects()
+void __fastcall__ drawTransparentObjects(void)
 {
    int i;
    objxy *objInst;
@@ -676,7 +678,7 @@ void drawTransparentObjects()
    }
 }
 
-void drawSpans()
+void __fastcall__ drawSpans(void)
 {
   signed char stackTop = 0;
   char cameraOutsideSector = 0;
@@ -763,7 +765,7 @@ void drawSpans()
   drawTransparentObjects();
 }
 
-void openDoor(char edgeGlobalIndex)
+void __fastcall__ openDoor(char edgeGlobalIndex)
 {
     char i;
     if (doorClosedAmount[edgeGlobalIndex] != 0)
@@ -782,7 +784,7 @@ void openDoor(char edgeGlobalIndex)
 	}
 }
 
-void doEdgeSpecial(char edgeGlobalIndex)
+void __fastcall__ doEdgeSpecial(char edgeGlobalIndex)
 {
 	char textureIndex = getGlobalEdgeTexture(edgeGlobalIndex);
 	char type = textureIndex & EDGE_TYPE_MASK;
@@ -832,7 +834,7 @@ EPushOutResult;
 // could cache ex/edgelen and ey/edgelen
 // would be 512 bytes - could be worse!
 
-EPushOutResult push_out_from_edge(char i)
+EPushOutResult __fastcall__ push_out_from_edge(char i)
 {
 	 ni = getNextEdge(curSector, i);
      v1x = getSectorVertexX(curSector, i);
@@ -905,7 +907,7 @@ char touchedSector;
 char possibleWallsToTouch[2];
 char numPossibleWallsToTouch;
 
-void push_out(void)
+void __fastcall__ push_out(void)
 {
   // probably a good idea to check the edges we can cross first
   // if any of them teleport us, move, then push_out in the new sector
@@ -982,7 +984,7 @@ char lookDir = 0;
 
 char soundToPlay = 0;
 
-void setUpScreenForBitmap(void)
+void __fastcall__ setUpScreenForBitmap(void)
 {
   int i, x, y;
   // clear the screen
@@ -1002,7 +1004,7 @@ void setUpScreenForBitmap(void)
   }
 }
 
-void setUpScreenForMenu(void)
+void __fastcall__ setUpScreenForMenu(void)
 {
   int i;
   cputsxy(6, 1, "          ");
@@ -1014,7 +1016,7 @@ void setUpScreenForMenu(void)
   }
 }
 
-void setUpScreenForGameplay(void)
+void __fastcall__ setUpScreenForGameplay(void)
 {
   char i;
   char x;
@@ -1042,17 +1044,7 @@ void setUpScreenForGameplay(void)
   POKE(0x900F, 8 + 5); // green border, and black screen
 }
 
-void runMenu(char canReturn);
-
-void read_data_file(char *name, int addr, int maxSize)
-{
-  FILE *fp = fopen(name, "r");
-  if (fp != NULL)
-  {
-    fread((void *)addr, maxSize, 1, fp);
-    fclose(fp);
-  }
-}
+void __fastcall__ runMenu(char canReturn);
 
 char caLevel[5] = "e1m1";
 
@@ -1138,7 +1130,7 @@ nextLevel:
 
   // name of level
   textcolor(2);
-  cputsxy(11-strlen(mapName)/2, 18, mapName);
+  printCentered(mapName, 18);
   drawHudAmmo();
   drawHudArmor();
   drawHudHealth();

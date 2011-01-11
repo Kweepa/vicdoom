@@ -2,6 +2,11 @@
 .autoimport	on
 .importzp sp
 
+;
+; P_ApproxDistance
+; Gives an estimation of distance (not exact)
+;
+
 .export _P_ApproxDistance
 
 dy:

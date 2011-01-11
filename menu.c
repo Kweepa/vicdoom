@@ -5,13 +5,16 @@
 
 #include "updateInput.h"
 #include "playSound.h"
+#include "util.h"
+
+#pragma staticlocals(on)
 
 void __fastcall__ drawLogo(void);
 
 #define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
 #define PEEK(addr) (*(unsigned char *)(addr))
 
-char *caMenus[6][3] =
+char *caMenus[][3] =
 {
   {
 	"new game",
@@ -32,20 +35,17 @@ char *caMenus[6][3] =
     "can i play daddy?",
 	"hurt me plenty",
 	"ultra-violence"
-  },
-  {
-	"wasd for movement",
-	"j and l to turn",
-	"i fire k use ctrl map"
-  },
-  {
-    "code by steve mccrea",
-    "cc65 by u. bassewitz",
-    "doom by # software"
   }
 };
 
-char nextMenu[6][3] = { { 1, 2, 5 }, { 3, 3, 3 }, { -1, -1, 4 }, { -1, -1, -1 }, { -1, -1, -1 }, { -1, -1, -1 } };
+char *caInfos[] =
+{
+  "keys",
+  "cred",
+  "buy"
+};
+
+char nextMenu[3][3] = { { 1, 2, -1 }, { 3, -3, -3 }, { -10, -10, -2 } };
 
 char menu = 0;
 char item = 0;
@@ -62,17 +62,17 @@ char oldCtrlKeys = 0;
 char moveKeys = 0;
 char ctrlKeys = 0;
 
-char keyPressed(char keyMask)
+char __fastcall__ keyPressed(char keyMask)
 {
   return ((moveKeys & keyMask) && !(oldKeys & keyMask));
 }
 
-char ctrlKeyPressed(char keyMask)
+char __fastcall__ ctrlKeyPressed(char keyMask)
 {
   return ((ctrlKeys & keyMask) && !(oldCtrlKeys & keyMask));
 }
 
-void waitForEscReleased(void)
+void __fastcall__ waitForEscReleased(void)
 {
 	do
 	{
@@ -88,38 +88,39 @@ void waitForEscReleased(void)
 #define HILITE_COLOR 7
 #define MENU_Y 11
 
-void drawMenuItem(int i)
+void __fastcall__ drawMenuItem(int i)
 {
   char y = MENU_Y + (i<<1);
   char *itemStr = caMenus[menu][i];
-  char len = strlen(itemStr);
-  char x = 11 - len/2;
-  cputsxy(x, y, itemStr);
+  if (i != item)
+  {
+    textcolor(TEXT_COLOR);
+    cputsxy(0, y, "                      ");
+  }
+  else
+  {
+    textcolor(HILITE_COLOR);
+    cputsxy(0, y, "@                     ");
+  }
+  printCentered(itemStr, y);
 }
 
-void drawMenu(void)
+void __fastcall__ drawMenu(void)
 {
-  char i, y;
+  char i;
+  for (i = 0; i < 255; ++i)
+  {
+    POKE(0x1100 + i, 32);
+  }
   // draw the menu
   for (i = 0; i < 3; ++i)
   {
-    y = MENU_Y + (i<<1);
-	cputsxy(0, y, "                      ");
-    if (i != item)
-    {
-      textcolor(TEXT_COLOR);
-    }
-    else
-    {
-      textcolor(HILITE_COLOR);
-      cputsxy(0, y, "@");
-    }
     drawMenuItem(i);
   }
   textcolor(HILITE_COLOR);
 }
 
-void enterNumberInMenuItem(char *place, char num)
+void __fastcall__ enterNumberInMenuItem(char *place, char num)
 {
   if (num > 9)
   {
@@ -133,7 +134,7 @@ void enterNumberInMenuItem(char *place, char num)
   }
 }
 
-void addToEffectsVolume(char add)
+void __fastcall__ addToEffectsVolume(char add)
 {
   char effectsVolume = getEffectsVolume() + add;
   if (effectsVolume < 16)
@@ -145,7 +146,7 @@ void addToEffectsVolume(char add)
   }
 }
 
-void addToMusicVolume(char add)
+void __fastcall__ addToMusicVolume(char add)
 {
   char musicVolume = getMusicVolume() + add;
   if (musicVolume < 16)
@@ -157,9 +158,9 @@ void addToMusicVolume(char add)
 }
 
 // returns 1 if should restart
-char runMenu(char canReturn)
+char __fastcall__ runMenu(char canReturn)
 {
-#if 1
+#if 0
    return 0;
 #else
    if (canReturn)
@@ -188,25 +189,19 @@ char runMenu(char canReturn)
 	 
 	 if (keyPressed(KEY_FORWARD))
 	 {
-	   textcolor(TEXT_COLOR);
-	   cputsxy(0, MENU_Y+(item<<1), " ");
-	   drawMenuItem(item);
+	   char oldItem = item;
 	   --item;
+	   drawMenuItem(oldItem);
 	   if (item == 255) item = 2;
-	   textcolor(HILITE_COLOR);
-	   cputsxy(0, MENU_Y+(item<<1), "@");
 	   drawMenuItem(item);
 	   playSound(SOUND_STNMOV);
 	 }
 	 if (keyPressed(KEY_BACK))
 	 {
-	   textcolor(TEXT_COLOR);
-	   cputsxy(0, MENU_Y+(item<<1), " ");
-	   drawMenuItem(item);
+	   char oldItem = item;
 	   ++item;
+	   drawMenuItem(oldItem);
 	   if (item == 3) item = 0;
-	   textcolor(HILITE_COLOR);
-	   cputsxy(0, MENU_Y+(item<<1), "@");
 	   drawMenuItem(item);
 	   playSound(SOUND_STNMOV);
 	 }
@@ -257,23 +252,36 @@ char runMenu(char canReturn)
 	  }
 	  if (ctrlKeyPressed(KEY_RETURN))
 	  {
+	    signed char next;
 	    if (menu == 1) episode = item;
-	    if (menu == 3)
+	    else if (menu == 3)
 	    {
 	      difficulty = item;
 	      return 1;
 	    }
 
-	    if (nextMenu[menu][item] != -1)
-	    {
-          playSound(SOUND_PISTOL);
-	      menuStack[stackDepth] = menu;
-	      itemStack[stackDepth] = item;
-	      ++stackDepth;
-	      menu = nextMenu[menu][item];
-	      item = 0;
-	      drawMenu();
-	    }
+        next = nextMenu[menu][item];
+        if (next != -10)
+        {
+            playSound(SOUND_PISTOL);
+			if (next >= 0)
+			{
+			  menuStack[stackDepth] = menu;
+			  itemStack[stackDepth] = item;
+			  ++stackDepth;
+			  menu = next;
+			  item = 0;
+			  drawMenu();
+			}
+			else
+			{
+			  next = (-next)-1;
+			  POKE(198,0);
+			  read_data_file(caInfos[next], 0x1100, 0x100);
+			  while (PEEK(198) == 0) ;
+			  drawMenu();
+			}
+		}
 	  }
 	}
 

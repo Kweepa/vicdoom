@@ -7,12 +7,12 @@
 
 char textColor = 1;
 
-void setTextColor(char c)
+void __fastcall__ setTextColor(char c)
 {
   textColor = c;
 }
 
-void printIntAtXY(char i, char x, char y, char prec)
+void __fastcall__ printIntAtXY(char i, char x, char y, char prec)
 {
   unsigned int screenloc = 0x1000 + 22*y + x;
   unsigned int colorloc = 0x9400 + 22*y + x;
@@ -35,20 +35,20 @@ void printIntAtXY(char i, char x, char y, char prec)
   POKE(colorloc, textColor);
 }
 
-void printCentered(char *str, char y)
+void __fastcall__ printCentered(char *str, char y)
 {
   char len = strlen(str);
   cputsxy(11 - len/2, y, str);
 }
 
 // use this to line up raster timing lines
-void waitforraster(void)
+void __fastcall__ waitforraster(void)
 {
     while (PEEK(0x9004) > 16) ;
     while (PEEK(0x9004) < 16) ;
 }
 
-unsigned int sqrt(unsigned long x)
+unsigned int __fastcall__ sqrt(unsigned long x)
 {
   unsigned long m = 0x40000000;
   unsigned long y = 0;
@@ -65,4 +65,14 @@ unsigned int sqrt(unsigned long x)
      m = m >> 2;
   }
   return ((unsigned int)y);
+}
+
+void __fastcall__ read_data_file(char *name, int addr, int maxSize)
+{
+  FILE *fp = fopen(name, "r");
+  if (fp != NULL)
+  {
+    fread((void *)addr, maxSize, 1, fp);
+    fclose(fp);
+  }
 }

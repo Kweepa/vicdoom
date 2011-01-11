@@ -6,6 +6,8 @@
 
 #include "automap.h"
 
+#pragma staticlocals(on)
+
 #define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
 #define PEEK(addr) (*(unsigned char *)(addr))
 
@@ -18,12 +20,12 @@ int zoom = 2;
 void __fastcall__ automap_draw(int offsetX, int offsetY, char zoom);
 void __fastcall__ automap_resetEdges(void);
 
-void automap_reset(void)
+void __fastcall__ automap_reset(void)
 {
   automap_resetEdges();
 }
 
-void automap_enter(void)
+void __fastcall__ automap_enter(void)
 {
   // write white/mono to the colour memory
   char x, y;
@@ -39,7 +41,7 @@ void automap_enter(void)
   offsetY = 0;
 }
 
-char automap_update(void)
+char __fastcall__ automap_update(void)
 {
   // check for scrolling
   char keys = readInput();
@@ -87,7 +89,7 @@ char automap_update(void)
   return 1;
 }
 
-void automap(void)
+void __fastcall__ automap(void)
 {
   char ctrlKeys;
   automap_enter();

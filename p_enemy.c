@@ -35,6 +35,10 @@
 #include "mapAsm.h"
 #include "util.h"
 
+#pragma staticlocals(on)
+
+char __fastcall__ P_ApproxDistance( int dx, int dy );
+
 #define fixed_t int
 #define boolean char
 #define false 0
@@ -42,28 +46,21 @@
 
 #define MELEERANGE 2
 
-#define INNERCOLLISIONRADIUS 512
-
-#define MF_JUSTHIT 1
-#define MF_JUSTATTACKED 2
-#define MF_THOUGHTTHISFRAME 8
-#define MF_WASSEENTHISFRAME 32
-
-#define MT_TROOPSHOT 6
+#define MF_JUSTATTACKED 1
+#define MF_THOUGHTTHISFRAME 2
+#define MF_WASSEENTHISFRAME 4
 
 // states are specific to enemy types
-#define STATE_POSLOOK 0
-#define STATE_POSCHASE 1
-#define STATE_POSPAIN 2
-#define STATE_POSSHOOT 3
-#define STATE_POSFALL 4
-#define STATE_IMPLOOK 5
-#define STATE_IMPCHASE 6
-#define STATE_IMPPAIN 7
-#define STATE_IMPCLAW 8
-#define STATE_IMPMISSILE 9
-#define STATE_IMPFALL 10
-#define STATE_IMPSHOTFLY 11
+#define STATE_POSCHASE 0
+#define STATE_POSPAIN 1
+#define STATE_POSSHOOT 2
+#define STATE_POSFALL 3
+#define STATE_IMPCHASE 4
+#define STATE_IMPPAIN 5
+#define STATE_IMPCLAW 6
+#define STATE_IMPMISSILE 7
+#define STATE_IMPFALL 8
+#define STATE_IMPSHOTFLY 9
 
 typedef struct
 {
@@ -77,7 +74,6 @@ typedef struct
    char spawnhealth;
    char painchance;
 
-   char spawnstate;
    char chasestate;
    char painstate;
    char meleestate;
@@ -91,22 +87,19 @@ mobjInfo_t;
 
 #define MOBJINFO_POSSESSED 0
 #define MOBJINFO_IMP 1
+#define MOBJINFO_IMPSHOT 2 // 5
 #define MOBJINFO_DEMON 2
 #define MOBJINFO_CACODEMON 3
 #define MOBJINFO_BARON 4
-#define MOBJINFO_IMPSHOT 5
 
 // TODO: fill out
 mobjInfo_t mobjinfo[] =
 {
   { 3, -1, SOUND_GURGLE, SOUND_POPAIN, -1, SOUND_PISTOL, 30, 4,
-    STATE_POSLOOK, STATE_POSCHASE, STATE_POSPAIN, -1, STATE_POSSHOOT, STATE_POSFALL, kOT_PossessedCorpse },
+    STATE_POSCHASE, STATE_POSPAIN, -1, STATE_POSSHOOT, STATE_POSFALL, kOT_PossessedCorpse },
   { 4, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, SOUND_CLAW, 30, 4,
-    STATE_IMPLOOK, STATE_IMPCHASE, STATE_IMPPAIN, STATE_IMPCLAW, STATE_IMPMISSILE, STATE_IMPFALL, kOT_ImpCorpse },
-    {},
-    {},
-    {},
-    {}
+    STATE_IMPCHASE, STATE_IMPPAIN, STATE_IMPCLAW, STATE_IMPMISSILE, STATE_IMPFALL, kOT_ImpCorpse },
+  { }
 };
 
 typedef struct
@@ -128,24 +121,22 @@ typedef struct
 }
 mobj_t;
 
-void A_Look(void);
-void A_Chase(void);
-void A_Flinch(void);
-void A_Melee(void);
-void A_Missile(void);
-void A_Shoot(void);
-void A_Fall(void);
-void A_Fly(void);
+void __fastcall__ A_Chase(void);
+void __fastcall__ A_Flinch(void);
+void __fastcall__ A_Melee(void);
+void __fastcall__ A_Missile(void);
+void __fastcall__ A_Shoot(void);
+void __fastcall__ A_Fall(void);
+void __fastcall__ A_Fly(void);
 
 // actions are global
-#define ACTION_LOOK 0
-#define ACTION_CHASE 1
-#define ACTION_FLINCH 2
-#define ACTION_MELEE 3
-#define ACTION_SHOOT 4
-#define ACTION_MISSILE 5
-#define ACTION_FALL 6
-#define ACTION_FLY 7
+#define ACTION_CHASE 0
+#define ACTION_FLINCH 1
+#define ACTION_MELEE 2
+#define ACTION_SHOOT 3
+#define ACTION_MISSILE 4
+#define ACTION_FALL 5
+#define ACTION_FLY 6
 
 typedef struct
 {
@@ -156,13 +147,11 @@ mobjState_t;
 
 mobjState_t states[] =
 {
-  { 8, ACTION_LOOK },
   { TEX_ANIMATE + 8, ACTION_CHASE },
   { 10, ACTION_FLINCH },
   { 9, ACTION_SHOOT },
   { 10, ACTION_FALL },
 
-  { 11, ACTION_LOOK },
   { TEX_ANIMATE + 11, ACTION_CHASE },
   { 13, ACTION_FLINCH },
   { 12, ACTION_MELEE },
@@ -175,17 +164,15 @@ mobjState_t states[] =
 mobj_t *actor;
 mobjInfo_t *info;
 mobjState_t *state;
+char distanceFromPlayer;
 
 char newChaseDirThisFrame = 0;
 
-void printAction(void)
+void __fastcall__ printAction(void)
 {
    gotoxy(5,0);
    switch (state->actionIndex)
    {
-   case ACTION_LOOK:
-     cputs("look. ");
-     break;
    case ACTION_CHASE:
      cputs("chase. ");
      break;
@@ -210,16 +197,13 @@ void printAction(void)
    }
 }
 
-void callAction(void)
+void __fastcall__ callAction(void)
 {
-  #if 1
+  #if 0
   printAction();
   #endif
    switch (state->actionIndex)
    {
-   case ACTION_LOOK:
-     A_Look();
-     break;
    case ACTION_CHASE:
      A_Chase();
      break;
@@ -238,19 +222,19 @@ void callAction(void)
    case ACTION_FALL:
      A_Fall();
      break;
- case ACTION_FLY:
+   case ACTION_FLY:
      A_Fly();
      break;
    }
    #if 0
    gotoxy(0,1);
-   cprintf("x %d y %d s %d. ", actor->x, actor->y, actor->sector);
+   cprintf("s %d x %d y %d. ", actor->sector, actor->x, actor->y);
    gotoxy(0,2);
    cprintf("dir %d rt %d mc %d. ", actor->movedir, actor->reactiontime, actor->movecount);
    #endif
 }
 
-char getTexture(mobj_t *obj)
+char __fastcall__ getTexture(mobj_t *obj)
 {
    return states[obj->stateIndex].texture;
 }
@@ -263,7 +247,7 @@ mobj_t mobjs[MAX_MOBJ];
 char objForMobj[MAX_MOBJ];
 char mobjForObj[MAX_OBJ];
 
-void p_enemy_resetMap(void)
+void __fastcall__ p_enemy_resetMap(void)
 {
   char i;
   for (i = 0; i < MAX_MOBJ; ++i)
@@ -275,11 +259,11 @@ void p_enemy_resetMap(void)
 int allocated = 0;
 char firstTime = 1;
 
-char allocMobj(char o)
+char __fastcall__ allocMobj(char o)
 {
   char i;
   mobj_t *mobj;
-  if (allocated) return -1;
+//  if (allocated) return -1;
 //  allocated = 1;
   for (i = 0; i < MAX_MOBJ; ++i)
   {
@@ -337,7 +321,7 @@ char allocMobj(char o)
 char thinkercap;
 char thinkers[MAX_MOBJ];
 
-void p_enemy_startframe(void)
+void __fastcall__ p_enemy_startframe(void)
 {
    char i;
    for (i = 0; i < MAX_MOBJ; ++i)
@@ -349,10 +333,10 @@ void p_enemy_startframe(void)
    newChaseDirThisFrame = 0;
 }
 
-void p_enemy_add_thinker(char o)
+void __fastcall__ p_enemy_add_thinker(char o)
 {
   char t = getObjectType(o);
-  if (t < 5 || t == kOT_ImpShot)
+  if (t < 5)
   {
     char i = mobjForObj[o];
     if (!(mobjs[i].flags & MF_THOUGHTTHISFRAME))
@@ -364,25 +348,25 @@ void p_enemy_add_thinker(char o)
   }
 }
 
-void p_enemy_wasseenthisframe(char o)
+void __fastcall__ p_enemy_wasseenthisframe(char o)
 {
    char t = getObjectType(o);
-   if (t < 5 || t == kOT_ImpShot)
+   if (t < 5)
    {
      char i = mobjForObj[o];
      mobjs[i].flags |= MF_WASSEENTHISFRAME;
    }
 }
 
-char p_enemy_get_texture(char o)
+char __fastcall__ p_enemy_get_texture(char o)
 {
   char i = mobjForObj[o];
   return getTexture(&mobjs[i]);
 }
 
-void P_DamageMobj(char damage);
+void __fastcall__ P_DamageMobj(char damage);
 
-void p_enemy_damage(char o, char damage)
+void __fastcall__ p_enemy_damage(char o, char damage)
 {
    if (getObjectType(o) < 5)
    {
@@ -393,29 +377,31 @@ void p_enemy_damage(char o, char damage)
    }
 }
 
-void p_enemy_think(void)
+void __fastcall__ p_enemy_single_think(char mobjIndex)
+{
+    actor = &mobjs[mobjIndex];
+    info = &mobjinfo[actor->infoType];
+    state = &states[actor->stateIndex];
+    distanceFromPlayer = P_ApproxDistance(playerx - actor->x, playery - actor->y);
+    callAction();
+}  
+
+void __fastcall__ p_enemy_think(void)
 {
   char i = 0;
   while (i < thinkercap)
   {
     char mobjIndex = thinkers[i];
+    p_enemy_single_think(mobjIndex);
     ++i;
-    actor = &mobjs[mobjIndex];
-    info = &mobjinfo[actor->infoType];
-    state = &states[actor->stateIndex];
-    callAction();
+  }
+  if (mobjs[MAX_MOBJ-1].allocated)
+  {
+    p_enemy_single_think(MAX_MOBJ-1);
   }
 }
 
 char P_Random(void);
-
-//
-// P_ApproxDistance
-// Gives an estimation of distance (not exact)
-//
-
-char __fastcall__ P_ApproxDistance( fixed_t dx, fixed_t dy );
-
 
 typedef enum
 {
@@ -451,20 +437,16 @@ dirtype_t diags[] =
 
 //
 // ENEMY THINKING
-// Enemies are allways spawned
-// with targetplayer = -1
-// Most monsters are spawned unaware of all players,
-// but some can be made preaware
 //
 
 
 //
-// P_CheckSight & P_LookForPlayers
+// P_CheckSight
 //
 // hacked version of this for D20M
 //
 
-boolean P_CheckSight(void)
+boolean __fastcall__ P_CheckSight(void)
 {
   if (actor->sector == playerSector) return true;
   // this table will be cleared at the start of render
@@ -473,7 +455,7 @@ boolean P_CheckSight(void)
   return false;
 }
 
-void S_StartSound(char sound)
+void __fastcall__ S_StartSound(char sound)
 {
    // just try to play it
    // will succeed or fail based on priorities
@@ -481,13 +463,13 @@ void S_StartSound(char sound)
    playSound(sound);
 }
 
-void P_SetMobjState(char stateIndex)
+void __fastcall__ P_SetMobjState(char stateIndex)
 {
   actor->stateIndex = stateIndex;
   state = &states[stateIndex];
 }
 
-void P_DamageMobj(char damage)
+void __fastcall__ P_DamageMobj(char damage)
 {
 	actor->health -= damage;
 	if (actor->health <= 0)
@@ -508,13 +490,10 @@ void P_DamageMobj(char damage)
 	}
 }
 
-void P_RadiusAttack(int radius)
+void __fastcall__ P_RadiusAttack(char radius)
 {
    // attempt to damage the player
-    fixed_t	dist;
-	
-    dist = P_ApproxDistance(playerx-actor->x, playery-actor->y);
-    if (dist < radius)
+    if (distanceFromPlayer < radius)
     {
       damagePlayer(20);
     }
@@ -523,11 +502,9 @@ void P_RadiusAttack(int radius)
 //
 // P_CheckMeleeRange
 //
-boolean P_CheckMeleeRange(void)
+boolean __fastcall__ P_CheckMeleeRange(void)
 {
-    char dist = P_ApproxDistance(playerx - actor->x, playery - actor->y);
-    
-    if (dist >= MELEERANGE)
+    if (distanceFromPlayer >= MELEERANGE)
 	return false;
 	
     if (! P_CheckSight() )
@@ -539,27 +516,18 @@ boolean P_CheckMeleeRange(void)
 //
 // P_CheckMissileRange
 //
-boolean P_CheckMissileRange(void)
+boolean __fastcall__ P_CheckMissileRange(void)
 {
     char dist;
-	
+
     if (! P_CheckSight() )
 		return false;
-	
-    if ( actor->flags & MF_JUSTHIT )
-    {
-		// the target just hit the enemy,
-		// so fight back!
-		actor->flags &= ~MF_JUSTHIT;
-		return true;
-    }
 	
     if (actor->reactiontime)
 		return false;	// do not attack yet
 		
-    // OPTIMIZE: get this from a global checksight
-    dist = P_ApproxDistance( actor->x - playerx, actor->y - playery);
-    
+	dist = distanceFromPlayer;
+		
     if (!info->meleestate && dist >= 20)
 		dist -= 20; // no melee attack, so fire more
 
@@ -581,24 +549,26 @@ boolean P_CheckMissileRange(void)
 // returns false if the move is blocked.
 //
 
-int try_move(int trydx, int trydy)
+signed char __fastcall__ try_move(int trydx, int trydy)
 {
-  // probably a good idea to check the edges we can cross first
-  // if any of them teleport us, move, then push_out in the new sector
+  // check the edges we can cross first
+  // if any of them teleport us, move
   
   char thatSector;
   char i, ni;
   signed char v1x, v1y, v2x, v2y;
-  signed char ex;
-  signed char ey;
-  signed char px, py;
-  int dot, height;
-  char edgeLen;
-  int dist;
+  int ex, ey;
+  int px, py;
+  int dot;
+  int height;
+  int edgeLen;
+  int distance;
   char edgeGlobalIndex;
   char curSector = actor->sector;
   char sectorToReturn = curSector;
   char secNumVerts = getNumVerts(curSector);
+  int tx = (actor->x + trydx)/256;
+  int ty = (actor->y + trydy)/256;
   
   // see which edge the new coordinate is behind
   for (i = 0; i < secNumVerts; ++i)
@@ -613,8 +583,8 @@ int try_move(int trydx, int trydy)
      dot = trydx*ey - trydy*ex;
      if (dot <= 0)
      {
-		 px = ((actor->x + trydx)/256) - v1x;
-		 py = ((actor->y + trydy)/256) - v1y;
+		 px = tx - v1x;
+		 py = ty - v1y;
 		 edgeLen = getEdgeLen(curSector, i);
 		 height = px * ey - py * ex;
 		 if (height < 2*edgeLen)
@@ -624,13 +594,13 @@ int try_move(int trydx, int trydy)
 			edgeGlobalIndex = getEdgeIndex(curSector, i);
 			if (thatSector != -1)// && doorClosedAmount[edgeGlobalIndex] == 0)
 			{
-			   dist = px * ex + py * ey;
-			   #if 0
-  			   gotoxy(0,3);
-			   cprintf("%d %d %d %d %d. ", curSector, dist, edgeLen, dot, height);
-			   #endif
-			   if (dist > edgeLen && dist < edgeLen*edgeLen - edgeLen)
+			   distance = px * ex + py * ey;
+			   if (distance > edgeLen && distance < (edgeLen*edgeLen - edgeLen))
 			   {
+			   #if 0
+  			   gotoxy(0,16);
+			   cprintf("%d %d %d %d %d. ", curSector, distance, edgeLen, dot, height);
+			   #endif
 				  if (height <= 0)
 				  {
 				     #if 0
@@ -658,7 +628,7 @@ int try_move(int trydx, int trydy)
   return sectorToReturn;
 }
 
-boolean P_TryMove(fixed_t trydx, fixed_t trydy)
+boolean __fastcall__ P_TryMove(fixed_t trydx, fixed_t trydy)
 {
    // check the move is valid
    char nextSector = try_move(trydx, trydy);
@@ -690,7 +660,7 @@ boolean P_TryMove(fixed_t trydx, fixed_t trydy)
 signed char xspeed[8] = {MIN_SPEED,FU_45,0,-FU_45,-MIN_SPEED,-FU_45,0,FU_45};
 signed char yspeed[8] = {0,FU_45,MIN_SPEED,FU_45,0,-FU_45,-MIN_SPEED,-FU_45};
 
-boolean P_Move(void)
+boolean __fastcall__ P_Move(void)
 {
     fixed_t	trydx;
     fixed_t	trydy;
@@ -719,7 +689,7 @@ boolean P_Move(void)
 // If a door is in the way,
 // an OpenDoor call is made to start it opening.
 //
-boolean P_TryWalk(void)
+boolean __fastcall__ P_TryWalk(void)
 {	
     if (!P_Move())
     {
@@ -734,7 +704,7 @@ boolean P_TryWalk(void)
 
 #define CHASEDIST 256
 
-void P_NewChaseDir(void)
+void __fastcall__ P_NewChaseDir(void)
 {
     fixed_t	deltax;
     fixed_t	deltay;
@@ -874,28 +844,13 @@ void P_NewChaseDir(void)
 // ACTION ROUTINES
 //
 
-//
-// A_Look
-// Stay in state until a player is sighted.
-//
-void A_Look(void)
-{
-    if ((actor->flags & MF_WASSEENTHISFRAME)
-		|| actor->sector == playerSector)
-	{
-	    S_StartSound(info->seesound);
-	    // go into chase state
-	    P_SetMobjState(info->chasestate);
-	}
-}
-
 
 //
 // A_Chase
 // Actor has a melee attack,
 // so it tries to close as fast as possible
 //
-void A_Chase(void)
+void __fastcall__ A_Chase(void)
 {
     if (actor->reactiontime)
 	actor->reactiontime--;
@@ -951,115 +906,15 @@ void A_Chase(void)
     }
 }
 
-#if 0
-
-char R_PointToAngle(int x, int y)
-{
-    if (x>= 0)
-    {
-		if (y>= 0)
-		{
-			if (x>2*y)
-			{
-				return DI_EAST;
-			}
-			else if (y > 2*x)
-			{
-				return DI_NORTH;
-			}
-			else
-			{
-				return DI_NORTHEAST;
-			}
-		}
-		else
-		{
-			// y<0
-			y = -y;
-
-			if (x>2*y)
-			{
-				return DI_EAST;
-			}
-			else if (y > 2*x)
-			{
-				return DI_SOUTH;
-			}
-			else
-			{
-				return DI_SOUTHEAST;
-			}
-		}
-    }
-    else
-    {
-		// x<0
-		x = -x;
-
-		if (y>= 0)
-		{
-			if (x>2*y)
-			{
-				return DI_WEST;
-			}
-			else if (y > 2*x)
-			{
-				return DI_NORTH;
-			}
-			else
-			{
-				return DI_NORTHEAST;
-			}
-		}
-		else
-		{
-			// y<0
-			y = -y;
-
-			if (x>2*y)
-			{
-				return DI_WEST;
-			}
-			else if (y > 2*x)
-			{
-				return DI_SOUTH;
-			}
-			else
-			{
-				return DI_SOUTHWEST;
-			}
-		}
-    }
-    return 0;
-}
-
-//
-// A_FaceTarget
-//
-void A_FaceTarget(void)
-{
-    actor->movedir = R_PointToAngle (actor->x - playerx,
-				    actor->y - playery);
-}
-
-#else
-
-#define A_FaceTarget()
-
-#endif
-
 //
 // A_Shoot
 //
-void A_Shoot(void)
+void __fastcall__ A_Shoot(void)
 {
     int		damage;
-    fixed_t dist;
+    char dist = distanceFromPlayer;
 	
-    A_FaceTarget();
-
     S_StartSound(info->missilesound);
-    dist = P_ApproxDistance(actor->x - playerx, actor->y - playery);
     if (dist > 55) dist = 55;
     if ((P_Random()>>2) > dist)
     {
@@ -1073,20 +928,18 @@ void A_Shoot(void)
 //
 // A_Missile
 //
-void A_Missile(void)
+void __fastcall__ A_Missile(void)
 {
-    A_FaceTarget();
 	// launch a missile
-	//P_SpawnMissile(MT_TROOPSHOT);
 	{
 	  mobj_t *miss = &mobjs[MAX_MOBJ-1];
 	  if (miss->allocated == false)
 	  {
 	    long dx = playerx - actor->x;
 	    long dy = playery - actor->y;
-	    int dist = sqrt(dx*dx + dy*dy)/128;
-	    dx /= dist;
-	    dy /= dist;
+	    int distance = sqrt(dx*dx + dy*dy)/128;
+	    dx /= distance;
+	    dy /= distance;
 
 	    miss->allocated = true;
 	    miss->x = actor->x;
@@ -1098,9 +951,10 @@ void A_Missile(void)
 	    miss->stateIndex = STATE_IMPSHOTFLY;
 	    miss->mobjIndex = MAX_MOBJ-1;
 
+#if 0
 	    gotoxy(1,1);
 	    cprintf("%ld %ld %d %d. \n", dx, dy, miss->momx, miss->momy);
-
+#endif
 	    objForMobj[MAX_MOBJ-1] = 31;
 	    mobjForObj[31] = MAX_MOBJ-1;
 	    setObjectSector(31, miss->sector);
@@ -1116,13 +970,12 @@ void A_Missile(void)
 //
 // A_Melee
 //
-void A_Melee(void)
+void __fastcall__ A_Melee(void)
 {
     if (actor->movecount == 0)
     {
 		int damage = ((P_Random()&7)+1)*3;
 		
-		A_FaceTarget();
 		if (info->meleesound != 0xff)
 			S_StartSound(info->meleesound);
 		damagePlayer(damage);
@@ -1136,7 +989,7 @@ void A_Melee(void)
 }
 
 
-void A_Fall(void)
+void __fastcall__ A_Fall(void)
 {
    if (--actor->movecount == 0)
    {
@@ -1147,7 +1000,7 @@ void A_Fall(void)
    }
 }
 
-void A_Flinch(void)
+void __fastcall__ A_Flinch(void)
 {
   if (--actor->movecount == 0)
   {
@@ -1156,33 +1009,31 @@ void A_Flinch(void)
 }
 
 //
-// A_Explode
+// A_Fly
 //
-void A_Explode(void)
-{
-    P_RadiusAttack( 5 );
-}
 
-void A_Fly(void)
+void __fastcall__ A_Fly(void)
 {
-   int trydx = 4*actor->momx;
-   int trydy = 4*actor->momy;
-   gotoxy(0,13);
-   cprintf("dx %d dy %d. ", trydx, trydy);
-   if (!P_TryMove(trydx, trydy))
+   boolean die = false;
+   if (distanceFromPlayer < 2)
    {
-      char o = objForMobj[actor->mobjIndex];
-      setObjectSector(o, -1);
-      // explode
-      A_Explode();
-      actor->allocated = false;
-      
-      // also remove at the game level
-      
-      cputsxy(0,20,"expl");
+     die = true;
    }
    else
    {
-      cputsxy(0,20,"move");
-   }    
+	   int trydx = 4*actor->momx;
+	   int trydy = 4*actor->momy;
+	   if (!P_TryMove(trydx, trydy))
+	   {
+	      die = true;
+	   }
+   }
+   if (die)
+   {
+	  char o = objForMobj[actor->mobjIndex];
+	  setObjectSector(o, -1);
+	  // explode
+	  P_RadiusAttack(4);
+	  actor->allocated = false;
+   }
 }

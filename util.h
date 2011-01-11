@@ -3,8 +3,9 @@
 
 void __fastcall__ eraseMessage(void);
 
-void setTextColor(char c);
-void printIntAtXY(char i, char x, char y, char prec);
-void printCentered(char *str, char y);
-void waitforraster(void);
-unsigned int sqrt(unsigned long x);
+void __fastcall__ setTextColor(char c);
+void __fastcall__ printIntAtXY(char i, char x, char y, char prec);
+void __fastcall__ printCentered(char *str, char y);
+void __fastcall__ waitforraster(void);
+unsigned int __fastcall__ sqrt(unsigned long x);
+void __fastcall__ read_data_file(char *name, int addr, int maxSize);

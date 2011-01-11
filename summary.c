@@ -9,7 +9,7 @@
 #include "mapAsm.h"
 #include "util.h"
 
-void waitASecond()
+void __fastcall__ waitASecond(void)
 {
   char i = 60;
   do
@@ -23,7 +23,7 @@ void waitASecond()
   while (i > 0);
 }
 
-void rollInPercentage(char pc, char y)
+void __fastcall__ rollInPercentage(char pc, char y)
 {
   char i = 0;
   cputsxy(17, y, "%");
@@ -41,7 +41,7 @@ void rollInPercentage(char pc, char y)
   while (i <= pc);
 }
 
-void rollInTime(int t, char y)
+void __fastcall__ rollInTime(int t, char y)
 {
   int i = -5;
   char ih, il;
@@ -64,7 +64,7 @@ void rollInTime(int t, char y)
   while (i < t);
 }
 
-void summaryScreen(void)
+void __fastcall__ summaryScreen(void)
 {
   // display kills, items, secrets, time
   // like this
