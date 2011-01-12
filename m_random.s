@@ -43,7 +43,6 @@ prndindex:
 .byte 0
 
 
-; Which one is deterministic?
 _P_Random:
 
 inc prndindex

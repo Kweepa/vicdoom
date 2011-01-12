@@ -415,8 +415,8 @@ typedef enum
     DI_SOUTHEAST,
     DI_NODIR,
     NUMDIRS
-    
-} dirtype_t;
+}
+dirtype_t;
 
 
 //
@@ -432,7 +432,6 @@ dirtype_t diags[] =
 {
     DI_NORTHWEST, DI_NORTHEAST, DI_SOUTHWEST, DI_SOUTHEAST
 };
-
 
 
 //
@@ -696,7 +695,7 @@ boolean __fastcall__ P_TryWalk(void)
 	   return false;
     }
 
-    actor->movecount = P_Random()&3; // was 15!
+    actor->movecount = 3 + (P_Random()&3); // was 15!
     return true;
 }
 
@@ -706,137 +705,60 @@ boolean __fastcall__ P_TryWalk(void)
 
 void __fastcall__ P_NewChaseDir(void)
 {
-    fixed_t	deltax;
-    fixed_t	deltay;
-    
-    dirtype_t	d1, d2;
-    
-    int		tdir;
-    dirtype_t	olddir;
-    
-    dirtype_t	turnaround;
+    int deltax, deltay;
+    char d1, d2, olddir, newdir, turnaround;
     
     if (newChaseDirThisFrame != 0) return;
     newChaseDirThisFrame = 1;
 
     olddir = actor->movedir;
-    turnaround=opposite[olddir];
+    newdir = DI_NODIR;
+    turnaround = opposite[olddir];
 
     deltax = playerx - actor->x;
     deltay = playery - actor->y;
 
-    if (deltax>CHASEDIST)
-	d1= DI_EAST;
-    else if (deltax<-CHASEDIST)
-	d1= DI_WEST;
-    else
-	d1=DI_NODIR;
+    if (deltax > CHASEDIST) d1 = DI_EAST;
+    else if (deltax < -CHASEDIST) d1 = DI_WEST;
+    else d1 = DI_NODIR;
 
-    if (deltay<-CHASEDIST)
-	d2= DI_SOUTH;
-    else if (deltay>CHASEDIST)
-	d2= DI_NORTH;
-    else
-	d2=DI_NODIR;
+    if (deltay < -CHASEDIST) d2 = DI_SOUTH;
+    else if (deltay > CHASEDIST) d2 = DI_NORTH;
+    else d2 = DI_NODIR;
 	
-	#if 0
-	gotoxy(0,12);
-	cprintf("dx %d dy %d. ", deltax, deltay);
-	gotoxy(0,13);
-	cprintf("d1 %d d2 %d. ", d1, d2);
-	#endif
-
-    // try direct route
-    if (d1 != DI_NODIR
-	&& d2 != DI_NODIR)
+    // try direct diagonal route
+    if (d1 != DI_NODIR && d2 != DI_NODIR)
     {
-	actor->movedir = diags[((deltay<0)<<1)+(deltax>0)];
-	if (actor->movedir != turnaround && P_TryWalk())
-	    return;
-    }
-
-    // try other directions
-    if (P_Random() > 200
-	||  abs(deltay)>abs(deltax))
-    {
-	tdir=d1;
-	d1=d2;
-	d2=tdir;
-    }
-
-    if (d1==turnaround)
-	d1=DI_NODIR;
-    if (d2==turnaround)
-	d2=DI_NODIR;
-	
-    if (d1!=DI_NODIR)
-    {
-	actor->movedir = d1;
-	if (P_TryWalk())
-	{
-	    // either moved forward or attacked
-	    return;
+		newdir = diags[((deltay < 0)<<1) + (deltax > 0)];
+		if (newdir == turnaround)
+		{
+		  newdir = DI_NODIR;
+		}
 	}
-    }
-
-    if (d2!=DI_NODIR)
+    if (newdir == DI_NODIR)
     {
-	actor->movedir =d2;
-
-	if (P_TryWalk())
-	    return;
-    }
-
-    // there is no direct path to the player,
-    // so pick another direction.
-    if (olddir!=DI_NODIR)
-    {
-	actor->movedir =olddir;
-
-	if (P_TryWalk())
-	    return;
-    }
-
-    // randomly determine direction of search
-    if (P_Random()&1) 	
-    {
-	for ( tdir=DI_EAST;
-	      tdir<=DI_SOUTHEAST;
-	      tdir++ )
-	{
-	    if (tdir!=turnaround)
-	    {
-		actor->movedir =tdir;
-		
-		if ( P_TryWalk() )
-		    return;
-	    }
+		if (d1 == turnaround) d1 = DI_NODIR;
+		if (d2 == turnaround) d2 = DI_NODIR;
+		if (d1 != DI_NODIR)
+		{
+		  newdir = d1;
+		}
+		else if (d2 != DI_NODIR)
+		{
+		  newdir = d2;
+		}
+		else
+		{
+		  newdir = P_Random() & 7;
+		}
 	}
-    }
-    else
-    {
-	for ( tdir=DI_SOUTHEAST;
-	      tdir != (DI_EAST-1);
-	      tdir-- )
+
+	actor->movedir = newdir;
+	if (!P_TryWalk())
 	{
-	    if (tdir!=turnaround)
-	    {
-		actor->movedir =tdir;
-		
-		if ( P_TryWalk() )
-		    return;
-	    }
+		actor->movedir = P_Random() & 7;
+		actor->movecount = 3;
 	}
-    }
-
-    if (turnaround !=  DI_NODIR)
-    {
-	actor->movedir =turnaround;
-	if ( P_TryWalk() )
-	    return;
-    }
-
-    actor->movedir = DI_NODIR;	// can not move
 }
 
 
@@ -852,8 +774,7 @@ void __fastcall__ P_NewChaseDir(void)
 //
 void __fastcall__ A_Chase(void)
 {
-    if (actor->reactiontime)
-	actor->reactiontime--;
+    if (actor->reactiontime) actor->reactiontime--;
 				
     // do not attack twice in a row
     if (actor->flags & MF_JUSTATTACKED)

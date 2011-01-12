@@ -67,7 +67,7 @@ unsigned int __fastcall__ sqrt(unsigned long x)
   return ((unsigned int)y);
 }
 
-void __fastcall__ read_data_file(char *name, int addr, int maxSize)
+void __fastcall__ read_data_file(char *name, unsigned int addr, int maxSize)
 {
   FILE *fp = fopen(name, "r");
   if (fp != NULL)

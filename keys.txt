@@ -1,0 +1,8 @@
+[red]   SELECT WEAPON
+[white]   1234
+[red]
+ MAP        FIRE
+ [white]CTRL  W      I
+      ASD    J L [red]TURN
+     MOVE     [white]K
+             [red]USE

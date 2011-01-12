@@ -40,9 +40,16 @@ char *caMenus[][3] =
 
 char *caInfos[] =
 {
-  "keys",
-  "cred",
-  "buy"
+  "cred.pt",
+  "keys.pt",
+  "buy.pt"
+};
+
+char *caColors[] =
+{
+  "cred.co",
+  "keys.co",
+  "buy.co"
 };
 
 char nextMenu[3][3] = { { 1, 2, -1 }, { 3, -3, -3 }, { -10, -10, -2 } };
@@ -61,6 +68,12 @@ char oldKeys = 0;
 char oldCtrlKeys = 0;
 char moveKeys = 0;
 char ctrlKeys = 0;
+
+void __fastcall__ load_text_screen(char scr, unsigned int addr)
+{
+   read_data_file(caInfos[scr], addr, 512);
+   read_data_file(caColors[scr], addr + 0x8400, 512);
+}
 
 char __fastcall__ keyPressed(char keyMask)
 {
@@ -108,9 +121,10 @@ void __fastcall__ drawMenuItem(int i)
 void __fastcall__ drawMenu(void)
 {
   char i;
-  for (i = 0; i < 255; ++i)
+  for (i = 0; i < 198; ++i)
   {
-    POKE(0x1100 + i, 32);
+    POKE(0x1000 + 242 + i, 32);
+    POKE(0x9400 + 242 + i, 7);
   }
   // draw the menu
   for (i = 0; i < 3; ++i)
@@ -277,7 +291,7 @@ char __fastcall__ runMenu(char canReturn)
 			{
 			  next = (-next)-1;
 			  POKE(198,0);
-			  read_data_file(caInfos[next], 0x1100, 0x100);
+			  load_text_screen(next, 0x1000 + 242);
 			  while (PEEK(198) == 0) ;
 			  drawMenu();
 			}
