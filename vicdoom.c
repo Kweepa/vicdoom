@@ -116,8 +116,21 @@ texFrame texFrames[] =
   { 18, 0, 0, 4, 16, 16, 0, 16 }, // imp shot
 };
 
-int playerx, playery;
-char playera, playerSector;
+int playerx;
+int playery;
+char playera;
+char playerSector;
+
+//int playerx = -5891;
+//int playery = 487;
+//char playera = 19;
+//char playerSector = 19;
+
+// a render problem (e1m2):
+//int playerx = 1779;
+//int playery = 1891;
+//char playera = 46;
+//char playerSector = 3; //?
 
 char keyCards[8];
 char shells = 40;
@@ -126,7 +139,7 @@ char combatArmor = 0;
 signed char health = 100;
 
 char endLevel;
-char level = 2;
+char level = 1;
 
 #define TYPE_DOOR 1
 #define TYPE_OBJECT 2
@@ -678,6 +691,62 @@ void __fastcall__ drawTransparentObjects(void)
    }
 }
 
+signed char __fastcall__ ffeis(char curSec, char cameraOutsideSector, signed char x_L, signed char x_R)
+{
+   char numVerts = getNumVerts(curSec);
+   // this is ugly but it avoids clipping, which is nice
+   char i;
+   char minI = 0;
+   signed char minX = x_R;
+   for (i = 0; i < numVerts; ++i)
+   {
+      char leftInFront, rightInFront;
+      int sx1, sx2, ty1, ty2;
+      char ni = (i + 1);
+      if (ni == numVerts) ni = 0;
+      sx1 = getScreenX(i);
+      sx2 = getScreenX(ni);
+      ty1 = getTransformedY(i);
+      ty2 = getTransformedY(ni);
+      leftInFront = ty1 >= 0; // Rcos45
+      rightInFront = ty2 >= 0;
+      if (leftInFront && rightInFront)
+      {
+         if (sx1 < minX && sx2 > x_L && sx2 > sx1)
+         {
+            // possible
+            if (sx1 <= x_L) return i;
+            minX = sx1;
+            minI = i;
+         }
+      }
+      else if ((rightInFront && sx2 > x_L) || (leftInFront && sx1 < x_R))
+      {
+         // possible
+         char outside = cameraOutsideSector;
+         if (outside)
+         {
+            int tx1 = getTransformedX(i);
+            long lx = (getTransformedX(ni) - tx1);
+            long ly = (ty2 - ty1);
+            long dot = lx*ty1 - ly*tx1;
+            if (dot > 0) outside = 0;
+         }
+         if (!outside)
+         {
+            if (rightInFront) return i;
+            if (sx1 <= x_L) return i;
+            if (sx1 < minX)
+            {
+              minX = sx1;
+              minI = i;
+            }
+         }
+      }
+   }
+   return minI;
+}
+
 void __fastcall__ drawSpans(void)
 {
   signed char stackTop = 0;
@@ -714,7 +783,8 @@ void __fastcall__ drawSpans(void)
      transformSectorToScreenSpace(sectorIndex);
      //POKE(0x900f, 13);
 
-     firstEdge = findFirstEdgeInSpan(cameraOutsideSector, x_L, x_R);
+     firstEdge = ffeis(sectorIndex, cameraOutsideSector, x_L, x_R);
+     //firstEdge = findFirstEdgeInSpan(cameraOutsideSector, x_L, x_R);
      // any non-zero value means the camera is outside
      cameraOutsideSector++;
      // didn't find a first edge - must be behind
@@ -863,8 +933,6 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
               if (height < 0)
               {
                  nextSector = thatSector;
-                 //gotoxy(1,0);
-                 //cprintf("sec%d ed%d ned%d ex%d ey%d. ", thatSector, i, ni, (int)ex, (int)ey);
                  
                  // crossed a line, so check for special
                  doEdgeSpecial(edgeGlobalIndex);
@@ -1115,7 +1183,7 @@ nextLevel:
     shells = 40;
   }
   keyCards[0] = 1;
-  keyCards[1] = 0;
+  keyCards[1] = 1;
   keyCards[2] = 0;
   keyCards[3] = 0;
   keyCards[4] = 0;
@@ -1214,6 +1282,8 @@ nextLevel:
 		playerx -= 2*sa;
 		playery -= 2*ca;
 	  }
+	  gotoxy(0, 14);
+//	  cprintf("%d %d %d %d. ", playerSector, playerx, playery, playera);
 	  if (shotgunStage > 0)
 	  {
 	    shotgunStage--;
@@ -1264,8 +1334,6 @@ nextLevel:
           
 	  if (keys & KEY_USE)
 	  {
-	      //gotoxy(0,16);
-	      //cprintf("hi %d. ", typeAtCenterOfView);
 	    // tried to open a door (pressed K)
 	    if (testFilled(0) < 4)
 	    {

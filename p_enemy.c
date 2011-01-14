@@ -168,6 +168,9 @@ char distanceFromPlayer;
 
 char newChaseDirThisFrame = 0;
 
+//#define PRINT_ACTION
+
+#ifdef PRINT_ACTION
 void __fastcall__ printAction(void)
 {
    gotoxy(5,0);
@@ -196,10 +199,11 @@ void __fastcall__ printAction(void)
      break;
    }
 }
+#endif
 
 void __fastcall__ callAction(void)
 {
-  #if 0
+  #ifdef PRINT_ACTION
   printAction();
   #endif
    switch (state->actionIndex)
@@ -494,7 +498,7 @@ void __fastcall__ P_RadiusAttack(char radius)
    // attempt to damage the player
     if (distanceFromPlayer < radius)
     {
-      damagePlayer(20);
+      damagePlayer(1 + (P_Random()&15));
     }
 }
 
@@ -939,6 +943,7 @@ void __fastcall__ A_Fly(void)
    if (distanceFromPlayer < 2)
    {
      die = true;
+     damagePlayer(1 + (P_Random()&15));
    }
    else
    {
@@ -947,14 +952,14 @@ void __fastcall__ A_Fly(void)
 	   if (!P_TryMove(trydx, trydy))
 	   {
 	      die = true;
+  	      // explode
+	      P_RadiusAttack(4);
 	   }
    }
    if (die)
    {
 	  char o = objForMobj[actor->mobjIndex];
 	  setObjectSector(o, -1);
-	  // explode
-	  P_RadiusAttack(4);
 	  actor->allocated = false;
    }
 }

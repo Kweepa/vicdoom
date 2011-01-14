@@ -688,6 +688,11 @@ addObjectToSector:
 ; x contains object index
 ; a contains sector index
 
+cmp #$ff
+bne :+
+rts
+:
+
 ; o->next = first->next
 ; o->prev = 0xff
 ; first->next->prev = o
