@@ -64,3 +64,12 @@ char __fastcall__ getFirstObjectInSector(char sec);
 char __fastcall__ getNextObjectInSector(char i);
 
 char * __fastcall__ getMapName(void);
+
+char __fastcall__ getNumEnemies(void);
+char __fastcall__ getNumItems(void);
+char __fastcall__ getNumSecrets(void);
+char __fastcall__ getParTime(void);
+
+void __fastcall__ resetSectorsVisited(void);
+void __fastcall__ setSectorVisited(int i);
+char __fastcall__ getNumVisitedSecrets(void);

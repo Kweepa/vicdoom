@@ -8,6 +8,8 @@
 
 #include "mapAsm.h"
 #include "util.h"
+#include "p_enemy.h"
+#include "vicdoom.h"
 
 void __fastcall__ waitASecond(void)
 {
@@ -76,11 +78,11 @@ void __fastcall__ summaryScreen(void)
   // TIME 00:00
   // PAR 00:00
   
-  char kills = 77;//getKillPercentage();
-  char items = 12; //getItemPercentage();
-  char secret = 0; //getSecretPercentage();
-  int time = 143; //getMapTime();
-  int par = 30; //getMapParTime();
+  char kills = p_enemy_getKillPercentage();
+  char items = getItemPercentage();
+  char secret = (100*getNumVisitedSecrets())/getNumSecrets();
+  int time = getMapTime();
+  int par = getParTime();
 
   // clear screen
   putchar(147);

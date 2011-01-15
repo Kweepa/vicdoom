@@ -27,3 +27,8 @@ char __fastcall__ getMusicVolume(void);
 
 char __fastcall__ getTickCount(void);
 void __fastcall__ setTickCount(void);
+
+void __fastcall__ resetMapTime(void);
+int __fastcall__ getMapTime(void);
+void __fastcall__ pauseMapTimer(void);
+void __fastcall__ playMapTimer(void);

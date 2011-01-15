@@ -251,6 +251,14 @@ mobj_t mobjs[MAX_MOBJ];
 char objForMobj[MAX_MOBJ];
 char mobjForObj[MAX_OBJ];
 
+char numEnemies;
+char numKills;
+
+char __fastcall__ p_enemy_getKillPercentage(void)
+{
+  return (100*numKills)/numEnemies;
+}
+
 void __fastcall__ p_enemy_resetMap(void)
 {
   char i;
@@ -258,6 +266,8 @@ void __fastcall__ p_enemy_resetMap(void)
   {
     mobjs[i].allocated = false;
   }
+  numEnemies = 0;
+  numKills = 0;
 }
 
 int allocated = 0;
@@ -274,6 +284,7 @@ char __fastcall__ allocMobj(char o)
 	mobj = &mobjs[i];
     if (mobj->allocated == false)
     {
+      ++numEnemies;
       objForMobj[i] = o;
       mobjForObj[o] = i;
 
@@ -480,6 +491,7 @@ void __fastcall__ P_DamageMobj(char damage)
 	    // kill actor
 		actor->movecount = 2;
 		P_SetMobjState(info->deathstate);
+		++numKills;
 	}
 	else
 	{

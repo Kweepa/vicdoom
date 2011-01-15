@@ -8,6 +8,10 @@
 .export _setMusicVolume
 .export _getTickCount
 .export _setTickCount
+.export _resetMapTime
+.export _pauseMapTimer
+.export _playMapTimer
+.export _getMapTime
 .import soundTable
 .import updateInput
 
@@ -23,6 +27,13 @@ irqContinue = $eabf
 .include "e1m1mus.s"
 
 .segment "CODE"
+
+mapTimeJiffies:
+.byte 0
+mapTimeSeconds:
+.byte 0, 0
+mapTimerOn:
+.byte 0
 
 timeToNextEvent:
 .byte 0
@@ -56,10 +67,26 @@ tickCount:
 
 ; check this came from timer 1
 bit $912d
-bpl end
+bmi :+
+jmp end
+:
 
 jsr updateInput
 inc tickCount
+
+; update the map timer
+lda mapTimerOn
+beq :+
+inc mapTimeJiffies
+lda mapTimeJiffies
+cmp #60
+bne :+
+lda #0
+sta mapTimeJiffies
+inc mapTimeSeconds
+bne :+
+inc mapTimeSeconds+1
+:
 
 ; check we're playing a sound
 lda soundIndex
@@ -311,4 +338,26 @@ rts
 _setTickCount:
 lda #0
 sta tickCount
+rts
+
+_resetMapTime:
+lda #0
+sta mapTimeJiffies
+sta mapTimeSeconds
+sta mapTimeSeconds+1
+rts
+
+_getMapTime:
+lda mapTimeSeconds
+ldx mapTimeSeconds+1
+rts
+
+_pauseMapTimer:
+lda #0
+sta mapTimerOn
+rts
+
+_playMapTimer:
+lda #1
+sta mapTimerOn
 rts

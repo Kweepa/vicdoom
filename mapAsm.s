@@ -52,6 +52,15 @@
 .export _getFirstObjectInSector
 .export _getNextObjectInSector
 
+.export _getNumEnemies
+.export _getNumItems
+.export _getNumSecrets
+.export _getParTime
+
+.export _resetSectorsVisited
+.export _setSectorVisited
+.export _getNumVisitedSecrets
+
 .export _getMapName
 
 .include "e1m1.s"
@@ -816,4 +825,63 @@ jmp addysp
 _getMapName:
 lda #<mapName
 ldx #>mapName
+rts
+
+_getNumEnemies:
+lda numEnemies
+ldx #0
+rts
+
+_getNumItems:
+lda numItems
+ldx #0
+rts
+
+_getNumSecrets:
+lda numSecrets
+ldx #0
+rts
+
+_getParTime:
+lda parTime
+ldx #0
+rts
+
+visitedSectors:
+.res 32, 0
+
+_resetSectorsVisited:
+ldx #31
+lda #0
+:
+sta visitedSectors,x
+dex
+bpl :-
+rts
+
+_setSectorVisited:
+tax
+lda #1
+sta visitedSectors,x
+rts
+
+numVisitedSecrets:
+.byte 0
+
+_getNumVisitedSecrets:
+lda #0
+sta numVisitedSecrets
+ldx numSecrets
+dex
+secretLoop:
+lda secretSectors,x
+tay
+lda visitedSectors,y
+beq :+
+inc numVisitedSecrets
+:
+dex
+bpl secretLoop
+lda numVisitedSecrets
+ldx #0
 rts

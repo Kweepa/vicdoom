@@ -19,8 +19,20 @@ playerSpawnSector:
 mapName:
 .byte "hangar"
 .res 16, 0
+numEnemies:
+.byte 14
+numItems:
+.byte 5
+numSecrets:
+.byte 2
+parTime:
+.byte 30
+secretSectors:
+.byte 17, 21
+.res 6, 0
+
 pad:
-.res 66, 0
+.res 54, 0
 ; sector info
 secNumVerts:
 .byte 4, 4, 7, 4, 8, 4, 5, 8, 4, 4, 5, 4, 4, 4, 6, 6

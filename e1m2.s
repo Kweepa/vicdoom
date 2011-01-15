@@ -19,8 +19,19 @@ playerSpawnSector:
 mapName:
 .byte "nuclear plant"
 .res 9, 0
+numEnemies:
+.byte 1
+numItems:
+.byte 1
+numSecrets:
+.byte 0
+parTime:
+.byte 30
+secretSectors:
+.res 8, 0
+
 pad:
-.res 66, 0
+.res 54, 0
 ; sector info
 secNumVerts:
 .byte 4, 7, 7, 4, 8, 4, 5, 4, 4, 4, 8, 4, 5, 4, 4, 5
@@ -37,7 +48,7 @@ objYhi:
 .res 27, 0
 
 objType:
-.byte 13, 13, 13, 9, 1
+.byte 13, 13, 13, 9, 0
 .res 27, 0
 
 objSec:

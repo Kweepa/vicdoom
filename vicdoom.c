@@ -382,7 +382,7 @@ void __fastcall__ drawObjectInSector(char o, int vx, int vy, signed char x_L, si
   }
 }
 
-char flashRedTime = 0;
+char flashBorderTime = 0;
 
 void __fastcall__ drawHudArmor(void)
 {
@@ -461,11 +461,18 @@ void __fastcall__ damagePlayer(char damage)
   {
      health = 0;
   }
-  printIntAtXY(health, 14, 21, 3);
+  drawHudHealth();
   
   // flash border red
-  flashRedTime = 1;
+  flashBorderTime = 1;
   POKE(0x900F, 8+2);
+}
+
+char numItemsGot;
+
+char __fastcall__ getItemPercentage(void)
+{
+  return (100*numItemsGot)/getNumItems();
 }
 
 void __fastcall__ drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char x_R)
@@ -567,6 +574,10 @@ void __fastcall__ drawTransparentObject(char o, int vx, int vy, signed char x_L,
 					 {
 						playSound(SOUND_ITEMUP);
 						setObjectSector(o, -1);
+						// flash border cyan
+						flashBorderTime = 1;
+						POKE(0x900F, 8 + 3);
+						++numItemsGot;
 					 }
                  }
               }
@@ -1110,6 +1121,7 @@ void __fastcall__ setUpScreenForGameplay(void)
     }
   }
   POKE(0x900F, 8 + 5); // green border, and black screen
+  playMapTimer();
 }
 
 void __fastcall__ runMenu(char canReturn);
@@ -1164,6 +1176,10 @@ nextLevel:
       doorClosedAmount[i] = 255;
     }
   }
+  doorOpenTime[0] = 0;
+  doorOpenTime[1] = 0;
+  doorOpenTime[2] = 0;
+  doorOpenTime[3] = 0;
   
   p_enemy_resetMap();
   for (i = 0; i < numObj; ++i)
@@ -1176,6 +1192,8 @@ nextLevel:
   
   addObjectsToSectors();
   
+  resetSectorsVisited();
+  
   if (health <= 0)
   {
     health = 100;
@@ -1183,13 +1201,14 @@ nextLevel:
     shells = 40;
   }
   keyCards[0] = 1;
-  keyCards[1] = 1;
+  keyCards[1] = 0;
   keyCards[2] = 0;
   keyCards[3] = 0;
   keyCards[4] = 0;
   keyCards[5] = 0;
   keyCards[6] = 0;
   keyCards[7] = 0;
+  numItemsGot = 0;
   playerx = getPlayerSpawnX();
   playery = getPlayerSpawnY();
   playera = getPlayerSpawnAngle();
@@ -1210,16 +1229,18 @@ nextLevel:
   cputsxy(10, 21, "#$");
   cputsxy(10, 22, "*+");
   
+  playMapTimer();
+  resetMapTime();
   while (health > 0 && !endLevel)
   {
-	  if (!flashRedTime)
+	  if (!flashBorderTime)
 	  {
  	    // note: XXXXYZZZ (X = screen, Y = reverse mode, Z = border)
   	    POKE(0x900F, 8 + 5); // green border, and black screen
   	  }
-	  if (flashRedTime > 0)
+	  if (flashBorderTime > 0)
 	  {
-	    --flashRedTime;
+	    --flashBorderTime;
 	  }
 
 	  keys = readInput();
@@ -1227,12 +1248,14 @@ nextLevel:
 	  
 	  if (ctrlKeys & KEY_ESC)
 	  {
+	    pauseMapTimer();
 	    setUpScreenForMenu();
 	    runMenu(1);
 	    setUpScreenForGameplay();
 	  }
 	  else if (ctrlKeys & KEY_CTRL)
 	  {
+	    pauseMapTimer();
 	    automap();
 	    setUpScreenForGameplay();
 	  }
@@ -1369,6 +1392,8 @@ nextLevel:
 	  }
 //      POKE(0x900f, 13);
 
+      setSectorVisited(playerSector);
+
       setCameraX(playerx);
       setCameraY(playery);
 
@@ -1416,6 +1441,7 @@ nextLevel:
 	    }
 	  }
 	}
+	pauseMapTimer();
 	
     textcolor(2);
 	cputsxy(5, 15, "press return");

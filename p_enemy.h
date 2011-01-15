@@ -10,3 +10,5 @@ void __fastcall__ p_enemy_add_thinker(char o);
 void __fastcall__ p_enemy_wasseenthisframe(char o);
 void __fastcall__ p_enemy_damage(char o, char damage);
 char __fastcall__ p_enemy_get_texture(char o);
+
+char __fastcall__ p_enemy_getKillPercentage(void);
