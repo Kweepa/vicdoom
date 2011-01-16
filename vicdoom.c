@@ -139,7 +139,7 @@ char combatArmor = 0;
 signed char health = 100;
 
 char endLevel;
-char level = 1;
+char level = 2;
 
 #define TYPE_DOOR 1
 #define TYPE_OBJECT 2
@@ -1137,15 +1137,14 @@ int main()
   char numObj;
   char *mapName;
   
-  read_data_file("e1m1mus", 0xB200, 0x900);
-  read_data_file("sounds", 0xBB00, 0xC00);
+  read_data_file("e1m1mus", 0xB700, 0x320);
+  read_data_file("sounds", 0xBA20, 0x3E0);
 
   playSoundInitialize();
 
-  read_data_file("lowcode", 0x800, 0x800);
-  
   read_data_file("sluts", 0x400, 0x400);
-  read_data_file("textures", 0xA000, 0xC00);
+  read_data_file("lowcode", 0x800, 0x800);
+  read_data_file("textures", 0xA000, 0xD00);
 
   POKE(0x900E, (6<<4) + (PEEK(0x900E)&0x0f)); // blue aux color
   POKE(0x900F, 8 + 5); // green border, and black screen
@@ -1164,7 +1163,7 @@ nextLevel:
   setUpScreenForGameplay();
 
   caLevel[3] = '0' + level;
-  read_data_file(caLevel, 0xAC00, 0x600);
+  read_data_file(caLevel, 0xAD00, 0xA00);
   mapName = getMapName();
   numObj = getNumObjects();
 

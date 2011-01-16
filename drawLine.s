@@ -24,7 +24,7 @@ zoom:
 shift:
 .byte 128, 64, 32, 16, 8, 4, 2, 1
 edgesSeen:
-.res 16, 0
+.res 32, 0
 
 _automap_resetEdges:
 ldx #15

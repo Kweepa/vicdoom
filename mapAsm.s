@@ -87,6 +87,8 @@ xfvertScreenXhi:
 xfvertScreenXlo:
 .res 8, 0
 
+NUMSEC = 52
+
 vertexCount = $60
 vertexCounter = $61
 vertexCounterPP = $62
@@ -128,7 +130,10 @@ tay
 asl
 asl
 asl
-sta modify+1 ; point to the correct sector verts - this only works because secVerts is page-aligned
+sta modify+1 ; point to the correct sector verts - requires page alignment
+lda #0
+adc #>secVerts
+sta modify+2
 lda secNumVerts,y
 sta vertexCount
 tax
@@ -326,20 +331,25 @@ rts
 .endproc
 
 
-getSectorVertexXY:
+.proc getSectorVertexXY : near
 
 ; A - vertexIndex
 ; X - sectorIndex
 
 sta edgeIndex
+
 txa
 asl
 asl
 asl
-clc
-adc edgeIndex
-tay
-lda secVerts,y
+sta modify+1 ; point to the correct sector verts - requires page alignment!
+lda #0
+adc #>secVerts
+sta modify+2
+
+ldy edgeIndex
+modify:
+lda secVerts, y
 tay
 lda vertX,y
 tax
@@ -347,6 +357,8 @@ lda vertY,y
 tay
 
 rts
+
+.endproc
 
 .proc _getSectorVertexX : near
 
@@ -357,12 +369,17 @@ rts
 sta edgeIndex
 ldy #0
 lda (sp),y
+
 asl
 asl
 asl
-clc
-adc edgeIndex
-tay
+sta modify+1
+lda #>secVerts
+adc #0
+sta modify+2
+
+ldy edgeIndex
+modify:
 lda secVerts,y
 tay
 lda vertX,y
@@ -381,12 +398,17 @@ jmp addysp
 sta edgeIndex
 ldy #0
 lda (sp),y
+
 asl
 asl
 asl
-clc
-adc edgeIndex
-tay
+sta modify+1 ; point to the correct sector verts - requires page alignment!
+lda #0
+adc #>secVerts
+sta modify+2
+
+ldy edgeIndex
+modify:
 lda secVerts,y
 tay
 lda vertY,y
@@ -398,21 +420,28 @@ jmp addysp
 
 
 
-getEdgeIndex:
+.proc getEdgeIndex : near
 
 ; A - edge index
 ; X = sector index
 
 sta edgeIndex
 txa
+
 asl
 asl
 asl
-clc
-adc edgeIndex
-tay
+sta modify+1
+lda #0
+adc #>secEdges
+sta modify+2
+
+ldy edgeIndex
+modify:
 lda secEdges,y
 rts
+
+.endproc
 
 .proc _getEdgeIndex : near
 
@@ -423,12 +452,17 @@ rts
 sta edgeIndex
 ldy #0
 lda (sp),y
+
 asl
 asl
 asl
-clc
-adc edgeIndex
-tay
+sta modify+1
+lda #0
+adc #>secEdges
+sta modify+2
+
+ldy edgeIndex
+modify:
 lda secEdges,y
 
 ldy #1
@@ -445,13 +479,19 @@ jmp addysp
 sta edgeIndex
 ldy #0
 lda (sp),y
+
 asl
 asl
 asl
-clc
-adc edgeIndex
-tay
+sta modify+1
+lda #0
+adc #>secEdges
+sta modify+2
+
+ldy edgeIndex
+modify:
 lda secEdges,y
+
 tay
 lda edgeTex,y
 
@@ -469,13 +509,19 @@ jmp addysp
 sta edgeIndex
 ldy #0
 lda (sp),y
+
 asl
 asl
 asl
-clc
-adc edgeIndex
-tay
+sta modify+1
+lda #0
+adc #>secEdges
+sta modify+2
+
+ldy edgeIndex
+modify:
 lda secEdges,y
+
 tay
 lda edgeLen,y
 
@@ -494,13 +540,19 @@ getOtherSector:
 sta edgeIndex
 txa
 sta sectorIndex
+
 asl
 asl
 asl
-clc
-adc edgeIndex
-tay
+sta modify+1
+lda #0
+adc #>secEdges
+sta modify+2
+
+ldy edgeIndex
+modify:
 lda secEdges,y
+
 tay
 lda edgeSec1,y
 cmp #$ff
@@ -522,13 +574,19 @@ sta edgeIndex
 ldy #0
 lda (sp),y
 sta sectorIndex
+
 asl
 asl
 asl
-clc
-adc edgeIndex
-tay
+sta modify+1
+lda #0
+adc #>secEdges
+sta modify+2
+
+ldy edgeIndex
+modify:
 lda secEdges,y
+
 tay
 lda edgeSec1,y
 cmp #$ff
@@ -848,10 +906,10 @@ ldx #0
 rts
 
 visitedSectors:
-.res 32, 0
+.res NUMSEC, 0
 
 _resetSectorsVisited:
-ldx #31
+ldx numSectors
 lda #0
 :
 sta visitedSectors,x
