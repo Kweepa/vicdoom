@@ -245,7 +245,7 @@ char __fastcall__ getTexture(mobj_t *obj)
 
 char numMobj = 0;
 #define MAX_MOBJ 16
-#define MAX_OBJ 32
+#define MAX_OBJ 48
 
 mobj_t mobjs[MAX_MOBJ];
 char objForMobj[MAX_MOBJ];
@@ -579,6 +579,7 @@ signed char __fastcall__ try_move(int trydx, int trydy)
   int edgeLen;
   int distance;
   char edgeGlobalIndex;
+  char vertGlobalIndex, vert2GlobalIndex;
   char curSector = actor->sector;
   char sectorToReturn = curSector;
   char secNumVerts = getNumVerts(curSector);
@@ -589,10 +590,12 @@ signed char __fastcall__ try_move(int trydx, int trydy)
   for (i = 0; i < secNumVerts; ++i)
   {
 	 ni = getNextEdge(curSector, i);
-     v1x = getSectorVertexX(curSector, i);
-     v1y = getSectorVertexY(curSector, i);
-     v2x = getSectorVertexX(curSector, ni);
-     v2y = getSectorVertexY(curSector, ni);
+	 vertGlobalIndex = getVertexIndex(curSector, i);
+	 vert2GlobalIndex = getVertexIndex(curSector, ni);
+     v1x = getVertexX(vertGlobalIndex);
+     v1y = getVertexY(vertGlobalIndex);
+     v2x = getVertexX(vert2GlobalIndex);
+     v2y = getVertexY(vert2GlobalIndex);
      ex = v2x - v1x;
      ey = v2y - v1y;
      dot = trydx*ey - trydy*ex;
@@ -600,13 +603,13 @@ signed char __fastcall__ try_move(int trydx, int trydy)
      {
 		 px = tx - v1x;
 		 py = ty - v1y;
-		 edgeLen = getEdgeLen(curSector, i);
+		 edgeGlobalIndex = getEdgeIndex(curSector, i);
+		 edgeLen = getEdgeLen(edgeGlobalIndex);
 		 height = px * ey - py * ex;
 		 if (height < 2*edgeLen)
 		 {
 			// check we're within the extents of the edge
-			thatSector = getOtherSector(curSector, i);
-			edgeGlobalIndex = getEdgeIndex(curSector, i);
+			thatSector = getOtherSector(edgeGlobalIndex, curSector);
 			if (thatSector != -1)// && doorClosedAmount[edgeGlobalIndex] == 0)
 			{
 			   distance = px * ex + py * ey;
@@ -886,18 +889,18 @@ void __fastcall__ A_Missile(void)
 	    miss->sector = actor->sector;
 	    miss->infoType = MOBJINFO_IMPSHOT;
 	    miss->stateIndex = STATE_IMPSHOTFLY;
-	    miss->mobjIndex = MAX_MOBJ-1;
+	    miss->mobjIndex = MAX_MOBJ - 1;
 
 #if 0
 	    gotoxy(1,1);
 	    cprintf("%ld %ld %d %d. \n", dx, dy, miss->momx, miss->momy);
 #endif
-	    objForMobj[MAX_MOBJ-1] = 31;
-	    mobjForObj[31] = MAX_MOBJ-1;
-	    setObjectSector(31, miss->sector);
-	    setObjectX(31, miss->x);
-	    setObjectY(31, miss->y);
-	    setObjectType(31, kOT_ImpShot);
+	    objForMobj[MAX_MOBJ-1] = MAX_OBJ - 1;
+	    mobjForObj[MAX_OBJ - 1] = MAX_MOBJ - 1;
+	    setObjectSector(MAX_OBJ - 1, miss->sector);
+	    setObjectX(MAX_OBJ - 1, miss->x);
+	    setObjectY(MAX_OBJ - 1, miss->y);
+	    setObjectType(MAX_OBJ - 1, kOT_ImpShot);
 	  }
 	}
 	actor->reactiontime = P_Random()&7;

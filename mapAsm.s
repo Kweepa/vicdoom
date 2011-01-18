@@ -9,19 +9,20 @@
 
 ; sector/vertex functions
 .export _getNumVerts
-.export _getSectorVertexX
-.export _getSectorVertexY
+.export _getVertexX
+.export _getVertexY
 
 ; sector/edge functions
 .export _getNumSectors
+.export _getVertexIndex
 .export _getEdgeIndex
 .export _getEdgeTexture
 .export _getEdgeLen
 .export _getOtherSector
-.export _getNextEdge
-.export _getGlobalEdgeTexture
-
 .export getOtherSector
+.export _getNextEdge
+.export _getEdgeTexture
+
 .export getEdgeIndex
 .export getSectorVertexXY
 
@@ -360,7 +361,7 @@ rts
 
 .endproc
 
-.proc _getSectorVertexX : near
+.proc _getVertexIndex : near
 
 ; params:
 ; A - vertexIndex
@@ -381,40 +382,31 @@ sta modify+2
 ldy edgeIndex
 modify:
 lda secVerts,y
-tay
-lda vertX,y
 
 ldy #1
 jmp addysp
 
 .endproc
 
-.proc _getSectorVertexY : near
+.proc _getVertexX : near
 
 ; params:
-; A - vertexIndex
-; TOS - sectorIndex
+; A - global vertexIndex
 
-sta edgeIndex
-ldy #0
-lda (sp),y
+tay
+lda vertX,y
+rts
 
-asl
-asl
-asl
-sta modify+1 ; point to the correct sector verts - requires page alignment!
-lda #0
-adc #>secVerts
-sta modify+2
+.endproc
 
-ldy edgeIndex
-modify:
-lda secVerts,y
+.proc _getVertexY : near
+
+; params:
+; A - global vertexIndex
+
 tay
 lda vertY,y
-
-ldy #1
-jmp addysp
+rts
 
 .endproc
 
@@ -473,121 +465,36 @@ jmp addysp
 .proc _getEdgeTexture : near
 
 ; params:
-; A - edgeIndex
-; TOS - sectorIndex
-
-sta edgeIndex
-ldy #0
-lda (sp),y
-
-asl
-asl
-asl
-sta modify+1
-lda #0
-adc #>secEdges
-sta modify+2
-
-ldy edgeIndex
-modify:
-lda secEdges,y
+; A - global edgeIndex
 
 tay
 lda edgeTex,y
-
-ldy #1
-jmp addysp
+rts
 
 .endproc
 
 .proc _getEdgeLen : near
 
 ; params:
-; A - edgeIndex
-; TOS - sectorIndex
-
-sta edgeIndex
-ldy #0
-lda (sp),y
-
-asl
-asl
-asl
-sta modify+1
-lda #0
-adc #>secEdges
-sta modify+2
-
-ldy edgeIndex
-modify:
-lda secEdges,y
+; A - global edgeIndex
 
 tay
 lda edgeLen,y
-
-ldy #1
-jmp addysp
+rts
 
 .endproc
-
-
-getOtherSector:
-
-; params:
-; A - edgeIndex
-; X - sectorIndex
-
-sta edgeIndex
-txa
-sta sectorIndex
-
-asl
-asl
-asl
-sta modify+1
-lda #0
-adc #>secEdges
-sta modify+2
-
-ldy edgeIndex
-modify:
-lda secEdges,y
-
-tay
-lda edgeSec1,y
-cmp #$ff
-beq @end
-cmp sectorIndex
-bne @end
-lda edgeSec2,y
-
-@end:
-rts
 
 .proc _getOtherSector : near
 
 ; params:
-; A - edgeIndex
-; TOS - sectorIndex
+; A - sector index
+; TOS - global edgeIndex
 
-sta edgeIndex
+sta sectorIndex
 ldy #0
 lda (sp),y
-sta sectorIndex
-
-asl
-asl
-asl
-sta modify+1
-lda #0
-adc #>secEdges
-sta modify+2
-
-ldy edgeIndex
-modify:
-lda secEdges,y
-
 tay
+
 lda edgeSec1,y
 cmp #$ff
 beq end
@@ -598,6 +505,27 @@ lda edgeSec2,y
 end:
 ldy #1
 jmp addysp
+
+.endproc
+
+.proc getOtherSector : near
+
+; params:
+; A - global edgeIndex
+; X - sectorIndex
+
+stx sectorIndex
+tax
+
+lda edgeSec1,x
+cmp #$ff
+beq end
+cmp sectorIndex
+bne end
+lda edgeSec2,x
+
+end:
+rts
 
 .endproc
 
@@ -710,11 +638,6 @@ sta objType,y
 
 ldy #1
 jmp addysp
-
-_getGlobalEdgeTexture:
-tay
-lda edgeTex,y
-rts
 
 _getNumSectors:
 lda numSectors

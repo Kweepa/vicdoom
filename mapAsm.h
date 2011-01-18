@@ -40,17 +40,16 @@ void __fastcall__ setObjectType(char o, char type);
 
 char __fastcall__ getNumVerts(char sec);
 char __fastcall__ getEdgeIndex(char sec, char i);
-char __fastcall__ getEdgeSector(char sec, char i);
-char __fastcall__ getOtherSector(char sec, char i);
+char __fastcall__ getEdgeSector(char i);
+char __fastcall__ getOtherSector(char i, char sec);
+char __fastcall__ getEdgeLen(char i);
+char __fastcall__ getEdgeTexture(char i);
 char __fastcall__ getNextEdge(char sec, char i);
-char __fastcall__ getEdgeLen(char sec, char i);
-char __fastcall__ getEdgeTexture(char sec, char i);
-
-char __fastcall__ getGlobalEdgeTexture(char i);
 
 char __fastcall__ getNumSectors(void);
-signed char __fastcall__ getSectorVertexX(char sec, char i);
-signed char __fastcall__ getSectorVertexY(char sec, char i);
+char __fastcall__ getVertexIndex(char sec, char i);
+signed char __fastcall__ getVertexX(char i);
+signed char __fastcall__ getVertexY(char i);
 
 int __fastcall__ getPlayerSpawnX(void);
 int __fastcall__ getPlayerSpawnY(void);

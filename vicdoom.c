@@ -139,14 +139,14 @@ char combatArmor = 0;
 signed char health = 100;
 
 char endLevel;
-char level = 2;
+char level = 1;
 
 #define TYPE_DOOR 1
 #define TYPE_OBJECT 2
 #define TYPE_SWITCH 3
 char typeAtCenterOfView;
 char itemAtCenterOfView;
-char doorClosedAmount[128];
+char doorClosedAmount[200];
 char openDoors[4];
 char doorOpenTime[4];
 char numOpenDoors = 0;
@@ -188,11 +188,11 @@ void __fastcall__ drawColumnTransparent(char textureIndex, char texYStart, char 
 
 void __fastcall__ drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
 {
-  char textureIndex = getEdgeTexture(sectorIndex, curEdgeIndex);
+  char edgeGlobalIndex = getEdgeIndex(sectorIndex, curEdgeIndex);
+  char textureIndex = getEdgeTexture(edgeGlobalIndex);
   char type = textureIndex & EDGE_TYPE_MASK;
   char prop = textureIndex & EDGE_PROP_MASK;
-  char edgeLen = getEdgeLen(sectorIndex, curEdgeIndex);
-  char edgeGlobalIndex = getEdgeIndex(sectorIndex, curEdgeIndex);
+  char edgeLen = getEdgeLen(edgeGlobalIndex);
 
   // intersect the view direction and the edge
   // http://local.wasp.uwa.edu.au/~pbourke/geometry/lineline2d/
@@ -738,8 +738,8 @@ signed char __fastcall__ ffeis(char curSec, char cameraOutsideSector, signed cha
          if (outside)
          {
             int tx1 = getTransformedX(i);
-            long lx = (getTransformedX(ni) - tx1);
-            long ly = (ty2 - ty1);
+            long lx = getTransformedX(ni) - tx1;
+            long ly = ty2 - ty1;
             long dot = lx*ty1 - ly*tx1;
             if (dot > 0) outside = 0;
          }
@@ -766,6 +766,7 @@ void __fastcall__ drawSpans(void)
   signed char x_L, x_R;
   signed char firstEdge;
   char curEdge;
+  char edgeGlobalIndex;
   signed char curX;
   char nextEdge;
   short nextX;
@@ -785,7 +786,7 @@ void __fastcall__ drawSpans(void)
      x_L = spanStackL[stackTop];
      x_R = spanStackR[stackTop];
      --stackTop;
-
+     
      // STEP 1 - draw objects belonging to this sector!
      // fill in the table of written columns as we progress
      drawObjectsInSector(sectorIndex, x_L, x_R);
@@ -815,10 +816,11 @@ void __fastcall__ drawSpans(void)
         nextX = getScreenX(nextEdge);
         if (nextX < curX || nextX > x_R) nextX = x_R;
 
-        thatSector = getOtherSector(sectorIndex, curEdge);
+        edgeGlobalIndex = getEdgeIndex(sectorIndex, curEdge);
+        thatSector = getOtherSector(edgeGlobalIndex, sectorIndex);
         if (thatSector != -1)
         {
-           char tex = getEdgeTexture(sectorIndex, curEdge);
+           char tex = getEdgeTexture(edgeGlobalIndex);
            if ((tex & EDGE_TYPE_MASK) == EDGE_TYPE_DOOR)
            {
               curX = drawDoor(sectorIndex, curEdge, nextEdge, curX, nextX);
@@ -867,7 +869,7 @@ void __fastcall__ openDoor(char edgeGlobalIndex)
 
 void __fastcall__ doEdgeSpecial(char edgeGlobalIndex)
 {
-	char textureIndex = getGlobalEdgeTexture(edgeGlobalIndex);
+	char textureIndex = getEdgeTexture(edgeGlobalIndex);
 	char type = textureIndex & EDGE_TYPE_MASK;
 	if (type == EDGE_TYPE_SWITCH)
 	{
@@ -886,10 +888,6 @@ void __fastcall__ doEdgeSpecial(char edgeGlobalIndex)
 
 // THIS IS THE NEXT TARGET OF FIXING & OPTIMIZATION!
 
-char __fastcall__ getNumVerts(char sectorIndex);
-signed char __fastcall__ getSectorVertexX(char sectorIndex, char vertexIndex);
-signed char __fastcall__ getSectorVertexY(char sectorIndex, char vertexIndex);
-
 char curSector;
 char thatSector;
 char nextSector;
@@ -902,6 +900,7 @@ long edgeLen;
 long dist;
 long distanceToPush;
 char edgeGlobalIndex;
+char vertGlobalIndex, vert2GlobalIndex;
 char dgz, dle;
 
 typedef enum
@@ -912,22 +911,22 @@ typedef enum
 }
 EPushOutResult;
 
-// could cache ex/edgelen and ey/edgelen
-// would be 512 bytes - could be worse!
-
 EPushOutResult __fastcall__ push_out_from_edge(char i)
 {
 	 ni = getNextEdge(curSector, i);
-     v1x = getSectorVertexX(curSector, i);
-     v1y = getSectorVertexY(curSector, i);
-     v2x = getSectorVertexX(curSector, ni);
-     v2y = getSectorVertexY(curSector, ni);
+	 vertGlobalIndex = getVertexIndex(curSector, i);
+	 vert2GlobalIndex = getVertexIndex(curSector, ni);
+     v1x = getVertexX(vertGlobalIndex);
+     v1y = getVertexY(vertGlobalIndex);
+     v2x = getVertexX(vert2GlobalIndex);
+     v2y = getVertexY(vert2GlobalIndex);
      ex = v2x - v1x;
      ey = v2y - v1y;
      px = playerx - 256*v1x;
      py = playery - 256*v1y;
      // need to precalc 65536/edge.len
-     edgeLen = getEdgeLen(curSector, i);
+     edgeGlobalIndex = getEdgeIndex(curSector, i);
+     edgeLen = getEdgeLen(edgeGlobalIndex);
      height = px * ey - py * ex;
      if (height < INNERCOLLISIONRADIUS*edgeLen)
      {
@@ -937,8 +936,7 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
         dle = (dist < 256*edgeLen*edgeLen);
         if (dgz & dle)
         {
-           thatSector = getOtherSector(curSector, i);
-           edgeGlobalIndex = getEdgeIndex(curSector, i);
+           thatSector = getOtherSector(edgeGlobalIndex, curSector);
            if (thatSector != -1 && doorClosedAmount[edgeGlobalIndex] == 0)
            {
               if (height < 0)
@@ -1167,9 +1165,9 @@ nextLevel:
   mapName = getMapName();
   numObj = getNumObjects();
 
-  for (i = 0; i < 128; ++i)
+  for (i = 0; i < 200; ++i)
   {
-    char tex = getGlobalEdgeTexture(i);
+    char tex = getEdgeTexture(i);
     if ((tex & EDGE_TYPE_MASK) == EDGE_TYPE_DOOR)
     {
       doorClosedAmount[i] = 255;
@@ -1200,7 +1198,7 @@ nextLevel:
     shells = 40;
   }
   keyCards[0] = 1;
-  keyCards[1] = 0;
+  keyCards[1] = 1;
   keyCards[2] = 0;
   keyCards[3] = 0;
   keyCards[4] = 0;
@@ -1304,7 +1302,7 @@ nextLevel:
 		playerx -= 2*sa;
 		playery -= 2*ca;
 	  }
-	  gotoxy(0, 14);
+//	  gotoxy(0, 14);
 //	  cprintf("%d %d %d %d. ", playerSector, playerx, playery, playera);
 	  if (shotgunStage > 0)
 	  {
@@ -1331,7 +1329,7 @@ nextLevel:
 		  }
 		  else if (typeAtCenterOfView == TYPE_DOOR)
 		  {
-			  char tex = getGlobalEdgeTexture(itemAtCenterOfView);
+			  char tex = getEdgeTexture(itemAtCenterOfView);
 			  char prop = (tex & EDGE_PROP_MASK) >> EDGE_PROP_SHIFT;
 			  if (prop == DOOR_TYPE_SHOT)
 			  {
@@ -1361,7 +1359,7 @@ nextLevel:
 	    {
 			if (typeAtCenterOfView == TYPE_DOOR)
 			{
-			  char tex = getGlobalEdgeTexture(itemAtCenterOfView);
+			  char tex = getEdgeTexture(itemAtCenterOfView);
 			  char prop = (tex & EDGE_PROP_MASK) >> EDGE_PROP_SHIFT;
 			  if (keyCards[prop] == 1)
 			  {
@@ -1443,10 +1441,10 @@ nextLevel:
 	pauseMapTimer();
 	
     textcolor(2);
-	cputsxy(5, 15, "press return");
 	if (health <= 0)
 	{
 	  cputsxy(5, 13, "you are dead");
+  	  cputsxy(5, 15, "press return");
 	}
 	else
 	{
@@ -1455,23 +1453,34 @@ nextLevel:
 	}
 	  
 	// screen melt
-	do
 	{
-	  char x = 7 + (P_Random() & 7);
-	  char y;
+	    char meltCount = 180;
+		do
+		{
+		  char x = 7 + (P_Random() & 7);
+		  char y;
 
-	  waitforraster();
-	  
-	  for (y = 9; y > 2; --y)
-	  {
-	     POKE(0x1000 + 22*y + x, PEEK(0x1000 + 22*(y-1) + x));
-	  }
-	  POKE(0x1000 + 44 + x, 32);
-	  
-	  keys = readInput();
-	  ctrlKeys = getControlKeys();
+		  waitforraster();
+		  
+		  for (y = 9; y > 2; --y)
+		  {
+			 POKE(0x1000 + 22*y + x, PEEK(0x1000 + 22*(y-1) + x));
+		  }
+		  POKE(0x1000 + 44 + x, 32);
+		  
+		  if (health <= 0)
+		  {
+  		    keys = readInput();
+		    ctrlKeys = getControlKeys();
+		    if (ctrlKeys & KEY_RETURN) break;
+		  }
+		  else
+		  {
+  		    if (!--meltCount) break;
+  		  }
+		}
+		while (1);
 	}
-	while (!(ctrlKeys & KEY_RETURN));
 	
 	if (health <= 0)
 	{

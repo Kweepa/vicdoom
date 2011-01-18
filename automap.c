@@ -29,6 +29,9 @@ void __fastcall__ automap_enter(void)
 {
   // write white/mono to the colour memory
   char x, y;
+  clearSecondBuffer();
+  copyToPrimaryBuffer();
+  POKE(0x900F, 8 + 3);
   for (x = 0; x < 8; ++x)
   {
     for (y = 0; y < 8; ++y)

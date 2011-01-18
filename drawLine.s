@@ -363,6 +363,8 @@ sta edgeIndex
 @loop:
 lda edgeIndex
 ldx sectorIndex
+jsr getEdgeIndex
+ldx sectorIndex
 jsr getOtherSector
 cmp #0
 bmi :+
