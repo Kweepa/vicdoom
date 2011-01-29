@@ -27,7 +27,7 @@ edgesSeen:
 .res 32, 0
 
 _automap_resetEdges:
-ldx #15
+ldx #31
 lda #0
 :
 sta edgesSeen,x
@@ -339,10 +339,10 @@ offsetY:
 .word 0
 
 _automap_sawEdge:
-pha
+tay
 and #7
 tax
-pla
+tya
 lsr
 lsr
 lsr
@@ -373,10 +373,10 @@ jmp @next
 lda edgeIndex
 ldx sectorIndex
 jsr getEdgeIndex
-pha
+tay
 and #7
 tax
-pla
+tya
 lsr
 lsr
 lsr

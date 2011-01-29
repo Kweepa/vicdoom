@@ -88,7 +88,7 @@ xfvertScreenXhi:
 xfvertScreenXlo:
 .res 8, 0
 
-NUMSEC = 52
+NUMSEC = 64
 
 vertexCount = $60
 vertexCounter = $61
@@ -664,15 +664,15 @@ rts
 
 sectorFirstObj:
 ; one for each sector
-.res 32, $ff
+.res NUMSEC, $ff
 
 sectorNextObj:
 ; one for each object
-.res 32, $ff
+.res NUMSEC, $ff
 
 sectorPrevObj:
 ; one for each object
-.res 32, $ff
+.res NUMSEC, $ff
 
 addObjectToSector:
 ; x contains object index
@@ -709,7 +709,7 @@ rts
 _addObjectsToSectors:
 
 ; clear first objects
-ldx #31
+ldx #63
 lda #$ff
 @clearLoop:
 sta sectorFirstObj,x

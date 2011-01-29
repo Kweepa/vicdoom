@@ -1179,6 +1179,7 @@ nextLevel:
   doorOpenTime[3] = 0;
   
   p_enemy_resetMap();
+  automap_reset();
   for (i = 0; i < numObj; ++i)
   {
     if (getObjectType(i) < 5)
