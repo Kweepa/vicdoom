@@ -17,12 +17,13 @@
 .include "IMPPAIN.S"
 .include "DEMON.S"    ;14
 .include "DEMONATK.S"
-.include "CACO.S"     ;16
+.include "DEMONPAIN.S"
+.include "CACO.S"     ;17
 .include "CACOPAIN.S"
 .include "CACODEAD.S"
-.include "CORPSES.S"  ;19
+.include "CORPSES.S"  ;20
 
-.include "TECHCOLUMN.S"    ;20
+.include "TECHCOLUMN.S"    ;21
 .include "ARMOR.S"
 .include "ITEMS.S"
 .include "BARRELSKULLS.S"

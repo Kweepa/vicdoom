@@ -95,25 +95,25 @@ texFrame texFrames[] =
   { 8, 1, 1, 5 }, // possessed
   { 11, 1, 1, 5 }, // imp
   { 14, 1, 1, 3 }, // demon
-  { 16, 1, 1, 3 }, // caco
+  { 17, 1, 1, 3 }, // caco
   { 11, 1, 1, 5 }, // baron
-  { 21, 0, 0, 5, 8, 8, 0, 16 }, // green armor
-  { 21, 0, 0, 5, 0, 8, 0, 16 }, // blue armor
-  { 22, 0, 0, 5, 8, 8, 0, 16 }, // bullets
-  { 22, 0, 0, 8, 24, 8, 0, 8 }, // medikit
-  { 22, 0, 0, 8, 24, 8, 8, 8 }, // red keycard
-  { 22, 0, 0, 8, 16, 24, 0, 8 }, // green keycard
-  { 22, 0, 0, 8, 16, 8, 8, 8 }, // blue keycard
-  { 23, 0, 0, 8, 16, 16, 0, 16 }, // barrel
-  { 20, 0, 1, 5 }, // pillar
-  { 23, 0, 0, 8, 16, 16, 0, 16 }, // skullpile
-  { 21, 0, 0, 2, 16, 4, 0, 16 }, // acid
-  { 19, 0, 0, 5, 0, 8, 0, 16 }, // possessed corpse
-  { 19, 0, 0, 5, 8, 8, 0, 16 }, // imp corpse
-  { 19, 0, 0, 5, 8, 8, 0, 16 }, // demon corpse
-  { 18, 0, 0, 3, 0, 16, 0, 16 }, // caco corpse
-  { 19, 0, 0, 5, 8, 8, 0, 16 }, // baron corpse
-  { 18, 0, 0, 4, 16, 16, 0, 16 }, // imp shot
+  { 22, 0, 0, 5, 8, 8, 0, 16 }, // green armor
+  { 22, 0, 0, 5, 0, 8, 0, 16 }, // blue armor
+  { 23, 0, 0, 5, 8, 8, 0, 16 }, // bullets
+  { 23, 0, 0, 8, 24, 8, 0, 8 }, // medikit
+  { 23, 0, 0, 8, 24, 8, 8, 8 }, // red keycard
+  { 23, 0, 0, 8, 16, 24, 0, 8 }, // green keycard
+  { 23, 0, 0, 8, 16, 8, 8, 8 }, // blue keycard
+  { 24, 0, 0, 8, 16, 16, 0, 16 }, // barrel
+  { 21, 0, 1, 5 }, // pillar
+  { 24, 0, 0, 8, 16, 16, 0, 16 }, // skullpile
+  { 22, 0, 0, 2, 16, 4, 0, 16 }, // acid
+  { 20, 0, 0, 4, 0, 8, 0, 16 }, // possessed corpse
+  { 20, 0, 0, 4, 8, 8, 0, 16 }, // imp corpse
+  { 20, 0, 0, 3, 16, 8, 0, 16 }, // demon corpse
+  { 19, 0, 0, 3, 0, 16, 0, 16 }, // caco corpse
+  { 20, 0, 0, 3, 24, 8, 0, 16 }, // baron corpse
+  { 19, 0, 0, 4, 16, 16, 0, 16 }, // imp shot
 };
 
 int playerx;
@@ -139,7 +139,7 @@ char combatArmor = 0;
 signed char health = 100;
 
 char endLevel;
-char level = 1;
+char level;
 
 #define TYPE_DOOR 1
 #define TYPE_OBJECT 2
@@ -1154,6 +1154,7 @@ again:
   setUpScreenForBitmap();
   setUpScreenForMenu();
   runMenu(0);
+  level = 1;
   
 nextLevel:
 

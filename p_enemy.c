@@ -60,7 +60,11 @@ char __fastcall__ P_ApproxDistance( int dx, int dy );
 #define STATE_IMPCLAW 6
 #define STATE_IMPMISSILE 7
 #define STATE_IMPFALL 8
-#define STATE_IMPSHOTFLY 9
+#define STATE_DMNCHASE 9
+#define STATE_DMNPAIN 10
+#define STATE_DMNBITE 11
+#define STATE_DMNFALL 12
+#define STATE_IMPSHOTFLY 13
 
 typedef struct
 {
@@ -87,18 +91,20 @@ mobjInfo_t;
 
 #define MOBJINFO_POSSESSED 0
 #define MOBJINFO_IMP 1
-#define MOBJINFO_IMPSHOT 2 // 5
 #define MOBJINFO_DEMON 2
+#define MOBJINFO_IMPSHOT 3 // 5
 #define MOBJINFO_CACODEMON 3
 #define MOBJINFO_BARON 4
 
 // TODO: fill out
 mobjInfo_t mobjinfo[] =
 {
-  { 3, -1, SOUND_GURGLE, SOUND_POPAIN, -1, SOUND_PISTOL, 30, 4,
+  { 3, -1, SOUND_GURGLE, SOUND_POPAIN, -1, SOUND_PISTOL, 10, 2,
     STATE_POSCHASE, STATE_POSPAIN, -1, STATE_POSSHOOT, STATE_POSFALL, kOT_PossessedCorpse },
-  { 4, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, SOUND_CLAW, 30, 4,
+  { 4, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, SOUND_CLAW, 20, 3,
     STATE_IMPCHASE, STATE_IMPPAIN, STATE_IMPCLAW, STATE_IMPMISSILE, STATE_IMPFALL, kOT_ImpCorpse },
+  { 6, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, -1, 20, 4,
+    STATE_DMNCHASE, STATE_DMNPAIN, STATE_DMNBITE, -1, STATE_DMNFALL, kOT_DemonCorpse },
   { }
 };
 
@@ -158,6 +164,11 @@ mobjState_t states[] =
   { 12, ACTION_MISSILE },
   { 13, ACTION_FALL },
   
+  { TEX_ANIMATE + 14, ACTION_CHASE },
+  { 16, ACTION_FLINCH },
+  { 15, ACTION_MELEE },
+  { 16, ACTION_FALL },
+
   { 0, ACTION_FLY }
 };
 
@@ -277,6 +288,7 @@ char __fastcall__ allocMobj(char o)
 {
   char i;
   mobj_t *mobj;
+  mobjInfo_t *info;
 //  if (allocated) return -1;
 //  allocated = 1;
   for (i = 0; i < MAX_MOBJ; ++i)
@@ -299,34 +311,11 @@ char __fastcall__ allocMobj(char o)
       mobj->flags = 0;
       mobj->reactiontime = 2;
       mobj->movecount = 0;
-      switch (getObjectType(o))
-      {
-      case 0:
-        mobj->health = 20;
-        mobj->infoType = 0;
-        mobj->stateIndex = STATE_POSCHASE;
-        break;
-      case 1:
-        mobj->health = 35;
-        mobj->infoType = 1;
-        mobj->stateIndex = STATE_IMPCHASE;
-        break;
-      case 2:
-        mobj->health = 50;
-        mobj->infoType = 0;
-        mobj->stateIndex = STATE_POSCHASE;
-        break;
-      case 3:
-        mobj->health = 100;
-        mobj->infoType = 0;
-        mobj->stateIndex = STATE_POSCHASE;
-        break;
-      case 4:
-        mobj->health = 300;
-        mobj->infoType = 0;
-        mobj->stateIndex = STATE_POSCHASE;
-        break;
-      }
+      mobj->infoType = getObjectType(o);
+      info = &mobjinfo[mobj->infoType];
+      mobj->health = info->spawnhealth;
+      mobj->stateIndex = info->chasestate;
+      
       return i;
     }
   }
