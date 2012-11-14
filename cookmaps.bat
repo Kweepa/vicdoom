@@ -1,6 +1,5 @@
-cl65 -t vic20 -C doom_map_cc65.cfg e1m1.s
-del e1m1
-ren cookedmap e1m1
-cl65 -t vic20 -C doom_map_cc65.cfg e1m2.s
-del e1m2
-ren cookedmap e1m2
+rem call with, eg, e1m1 as the first parameter
+copy /y c:\users\steve\documents\doomedit\compiled\%1.s .
+cl65 -t vic20 -C doom_map_cc65.cfg %1.s
+del %1
+ren cookedmap %1

@@ -16,6 +16,7 @@ enum EObjType
    kOT_Pillar,
    kOT_Skullpile,
    kOT_Acid,
+   kOT_PossessedCorpseWithAmmo,
    kOT_PossessedCorpse,
    kOT_ImpCorpse,
    kOT_DemonCorpse,
@@ -42,6 +43,7 @@ char __fastcall__ getNumVerts(char sec);
 char __fastcall__ getEdgeIndex(char sec, char i);
 char __fastcall__ getEdgeSector(char i);
 char __fastcall__ getOtherSector(char i, char sec);
+void __fastcall__ setEdgeTexture(char i, char texture);
 char __fastcall__ getEdgeLen(char i);
 char __fastcall__ getEdgeTexture(char i);
 char __fastcall__ getNextEdge(char sec, char i);

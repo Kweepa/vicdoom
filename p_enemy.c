@@ -44,7 +44,7 @@ char __fastcall__ P_ApproxDistance( int dx, int dy );
 #define false 0
 #define true 1
 
-#define MELEERANGE 2
+#define MELEERANGE 4
 
 #define MF_JUSTATTACKED 1
 #define MF_THOUGHTTHISFRAME 2
@@ -100,7 +100,7 @@ mobjInfo_t;
 mobjInfo_t mobjinfo[] =
 {
   { 3, -1, SOUND_GURGLE, SOUND_POPAIN, -1, SOUND_PISTOL, 10, 2,
-    STATE_POSCHASE, STATE_POSPAIN, -1, STATE_POSSHOOT, STATE_POSFALL, kOT_PossessedCorpse },
+    STATE_POSCHASE, STATE_POSPAIN, -1, STATE_POSSHOOT, STATE_POSFALL, kOT_PossessedCorpseWithAmmo },
   { 4, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, SOUND_CLAW, 20, 3,
     STATE_IMPCHASE, STATE_IMPPAIN, STATE_IMPCLAW, STATE_IMPMISSILE, STATE_IMPFALL, kOT_ImpCorpse },
   { 6, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, -1, 20, 4,
@@ -293,12 +293,15 @@ char __fastcall__ allocMobj(char o)
 //  allocated = 1;
   for (i = 0; i < MAX_MOBJ; ++i)
   {
-	mobj = &mobjs[i];
+  	mobj = &mobjs[i];
     if (mobj->allocated == false)
     {
       ++numEnemies;
       objForMobj[i] = o;
       mobjForObj[o] = i;
+
+      // temp to test
+      // setObjectType(o, kOT_Demon);
 
       mobj->allocated = true;
       mobj->mobjIndex = i;
@@ -499,6 +502,7 @@ void __fastcall__ P_RadiusAttack(char radius)
    // attempt to damage the player
     if (distanceFromPlayer < radius)
     {
+      playSound(SOUND_OOF);
       damagePlayer(1 + (P_Random()&15));
     }
 }
@@ -508,13 +512,13 @@ void __fastcall__ P_RadiusAttack(char radius)
 //
 boolean __fastcall__ P_CheckMeleeRange(void)
 {
-    if (distanceFromPlayer >= MELEERANGE)
-	return false;
+  if (distanceFromPlayer >= MELEERANGE)
+    return false;
 	
-    if (! P_CheckSight() )
-	return false;
+  if (! P_CheckSight() )
+	  return false;
 							
-    return true;
+  return true;
 }
 
 //
@@ -524,22 +528,22 @@ boolean __fastcall__ P_CheckMissileRange(void)
 {
     char dist;
 
-    if (! P_CheckSight() )
-		return false;
-	
     if (actor->reactiontime)
-		return false;	// do not attack yet
+  		return false;	// do not attack yet
 		
-	dist = distanceFromPlayer;
+    if (! P_CheckSight() )
+		  return false;
+	
+	  dist = distanceFromPlayer;
 		
     if (!info->meleestate && dist >= 20)
-		dist -= 20; // no melee attack, so fire more
+		  dist -= 20; // no melee attack, so fire more
 
     if (dist > 50)
-		dist = 50;
+  		dist = 50;
 		
     if ((P_Random()>>2) < dist)
-		return false;
+	  	return false;
 
     return true;
 }
@@ -578,58 +582,58 @@ signed char __fastcall__ try_move(int trydx, int trydy)
   // see which edge the new coordinate is behind
   for (i = 0; i < secNumVerts; ++i)
   {
-	 ni = getNextEdge(curSector, i);
-	 vertGlobalIndex = getVertexIndex(curSector, i);
-	 vert2GlobalIndex = getVertexIndex(curSector, ni);
-     v1x = getVertexX(vertGlobalIndex);
-     v1y = getVertexY(vertGlobalIndex);
-     v2x = getVertexX(vert2GlobalIndex);
-     v2y = getVertexY(vert2GlobalIndex);
-     ex = v2x - v1x;
-     ey = v2y - v1y;
-     dot = trydx*ey - trydy*ex;
-     if (dot <= 0)
-     {
-		 px = tx - v1x;
-		 py = ty - v1y;
-		 edgeGlobalIndex = getEdgeIndex(curSector, i);
-		 edgeLen = getEdgeLen(edgeGlobalIndex);
-		 height = px * ey - py * ex;
-		 if (height < 2*edgeLen)
-		 {
-			// check we're within the extents of the edge
-			thatSector = getOtherSector(edgeGlobalIndex, curSector);
-			if (thatSector != -1)// && doorClosedAmount[edgeGlobalIndex] == 0)
-			{
-			   distance = px * ex + py * ey;
-			   if (distance > edgeLen && distance < (edgeLen*edgeLen - edgeLen))
-			   {
-			   #if 0
-  			   gotoxy(0,16);
-			   cprintf("%d %d %d %d %d. ", curSector, distance, edgeLen, dot, height);
-			   #endif
-				  if (height <= 0)
-				  {
-				     #if 0
-					 gotoxy(0,4);
-					 cprintf("%d. ", thatSector);
-					 #endif
-					 return thatSector;
-				  }
-				  return curSector;
-			   }
-			   else
-			   {
-				  // hit a wall
-				  sectorToReturn = -1;
-			   }
-			}
-			else
-			{
-			  // hit a wall
-			  sectorToReturn = -1;
-			}
-		 }
+    ni = getNextEdge(curSector, i);
+    vertGlobalIndex = getVertexIndex(curSector, i);
+    vert2GlobalIndex = getVertexIndex(curSector, ni);
+    v1x = getVertexX(vertGlobalIndex);
+    v1y = getVertexY(vertGlobalIndex);
+    v2x = getVertexX(vert2GlobalIndex);
+    v2y = getVertexY(vert2GlobalIndex);
+    ex = v2x - v1x;
+    ey = v2y - v1y;
+    dot = trydx*ey - trydy*ex;
+    if (dot <= 0)
+    {
+      px = tx - v1x;
+      py = ty - v1y;
+      edgeGlobalIndex = getEdgeIndex(curSector, i);
+      edgeLen = getEdgeLen(edgeGlobalIndex);
+      height = px * ey - py * ex;
+      if (height < 2*edgeLen)
+      {
+			  // check we're within the extents of the edge
+			  thatSector = getOtherSector(edgeGlobalIndex, curSector);
+			  if (thatSector != -1)// && doorClosedAmount[edgeGlobalIndex] == 0)
+			  {
+			    distance = px * ex + py * ey;
+			    if (distance > edgeLen && distance < (edgeLen*edgeLen - edgeLen))
+			    {
+            #if 0
+            gotoxy(0,16);
+            cprintf("%d %d %d %d %d. ", curSector, distance, edgeLen, dot, height);
+            #endif
+            if (height <= 0)
+            {
+              #if 0
+              gotoxy(0,4);
+              cprintf("%d. ", thatSector);
+              #endif
+              return thatSector;
+            }
+            return curSector;
+          }
+          else
+          {
+          // hit a wall
+          sectorToReturn = -1;
+          }
+			  }
+			  else
+			  {
+			    // hit a wall
+			    sectorToReturn = -1;
+			  }
+      }
 	  }
   }
   return sectorToReturn;
@@ -787,51 +791,51 @@ void __fastcall__ A_Chase(void)
     // do not attack twice in a row
     if (actor->flags & MF_JUSTATTACKED)
     {
-		actor->flags &= ~MF_JUSTATTACKED;
+  		actor->flags &= ~MF_JUSTATTACKED;
 	    P_NewChaseDir();
-		return;
+	  	return;
     }
     
     // check for melee attack
     if (info->meleestate != 0xff
-		&& P_CheckMeleeRange())
+		  && P_CheckMeleeRange())
     {
-        actor->movecount = 0;
-		P_SetMobjState(info->meleestate);
-		return;
+      actor->movecount = 0;
+		  P_SetMobjState(info->meleestate);
+		  return;
     }
     
     // check for missile attack
     if (info->shootstate != 0xff)
     {
-		if (actor->movecount)
-		{
-			goto nomissile;
-		}
+		  if (actor->movecount)
+		  {
+			  goto nomissile;
+		  }
 		
-		if (!P_CheckMissileRange())
-			goto nomissile;
+		  if (!P_CheckMissileRange())
+			  goto nomissile;
 		
-		P_SetMobjState(info->shootstate);
-		actor->flags |= MF_JUSTATTACKED;
-		return;
+		  P_SetMobjState(info->shootstate);
+		  actor->flags |= MF_JUSTATTACKED;
+		  return;
     }
 
     // ?
   nomissile:
-    
+
     // chase towards player
     if (--actor->movecount < 0
-		|| !P_Move())
+	  	|| !P_Move())
     {
-		P_NewChaseDir();
+  		P_NewChaseDir();
     }
-    
+
     // make active sound
     if (info->activesound != -1
-		&& P_Random() < 3)
+		  && P_Random() < 3)
     {
-		S_StartSound(info->activesound);
+		  S_StartSound(info->activesound);
     }
 }
 
@@ -944,10 +948,11 @@ void __fastcall__ A_Flinch(void)
 void __fastcall__ A_Fly(void)
 {
    boolean die = false;
-   if (distanceFromPlayer < 2)
+   if (distanceFromPlayer < 3)
    {
      die = true;
      damagePlayer(1 + (P_Random()&15));
+      playSound(SOUND_OOF);
    }
    else
    {

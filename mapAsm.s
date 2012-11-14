@@ -16,12 +16,12 @@
 .export _getNumSectors
 .export _getVertexIndex
 .export _getEdgeIndex
-.export _getEdgeTexture
 .export _getEdgeLen
 .export _getOtherSector
 .export getOtherSector
 .export _getNextEdge
 .export _getEdgeTexture
+.export _setEdgeTexture
 
 .export getEdgeIndex
 .export getSectorVertexXY
@@ -470,6 +470,26 @@ jmp addysp
 tay
 lda edgeTex,y
 rts
+
+.endproc
+
+.proc _setEdgeTexture : near
+
+; params:
+; TOS - global edgeIndex
+; A - texture
+
+tax
+
+ldy #0
+lda (sp),y
+tay
+
+txa
+sta edgeTex,y
+
+ldy #1
+jmp addysp
 
 .endproc
 

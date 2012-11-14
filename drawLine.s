@@ -398,6 +398,17 @@ lda edgeIndex
 ldx sectorIndex
 jsr getSectorVertexXY
 stx x0
+
+; 0.75*x
+;txa
+;lsr
+;lsr
+;sta dx
+;lda x0
+;clc
+;sbc dx
+;sta x0
+
 sty y0
 sign_extend x0
 sign_extend y0
@@ -419,6 +430,17 @@ lda secondVertexIndex
 ldx sectorIndex
 jsr getSectorVertexXY
 stx x1
+
+; 0.75*x
+;txa
+;lsr
+;lsr
+;sta dx
+;lda x1
+;clc
+;sbc dx
+;sta x1
+
 sty y1
 sign_extend x1
 sign_extend y1
