@@ -255,7 +255,7 @@ char __fastcall__ getTexture(mobj_t *obj)
 }
 
 char numMobj = 0;
-#define MAX_MOBJ 16
+#define MAX_MOBJ 20
 #define MAX_OBJ 48
 
 mobj_t mobjs[MAX_MOBJ];
@@ -680,7 +680,14 @@ boolean __fastcall__ P_Move(void)
     // are all C++ reserved words
 		
     if (actor->movedir == DI_NODIR)
-	return false;
+    {
+    	return false;
+    }
+
+    if (distanceFromPlayer < MELEERANGE)
+    {
+      return true;
+    }
 
     trydx = info->speed*xspeed[actor->movedir];
     trydy = info->speed*yspeed[actor->movedir];
@@ -822,7 +829,7 @@ void __fastcall__ A_Chase(void)
     }
 
     // ?
-  nomissile:
+nomissile:
 
     // chase towards player
     if (--actor->movecount < 0

@@ -14,17 +14,18 @@
 // X 8. advance levels
 // X 9. menus
 // X 11. use a double buffer scheme that draws to two different sets of characters and just copies the characters over
+// X 13. projectiles!
+// X 14. remote doors need to be openable from the other side - new edge prop that opens a door with e=e-1
 
 // todo
 // 2.5. fix push_out code some more
-// 7.5. and weapons
+// 7.5. and weapons (maybe?)
 // 10. more optimization?
 // 12. optimize push_out code and more importantly the ai try_move code
 // 12.1. any walls that can be collided with should be straight or 45 degree diagonal
 // 12.2. then the push out code can be done in 16 bit, asm
-// 13. projectiles!
-// 14. remote doors need to be openable from the other side - new edge prop that opens a door with e=e-1
 // 15. scale x on map (see drawLine.s (*0.75)) - also need to scale the input position
+// 16. make acid do damage
 
 // memory map:
 // see the .cfg file for how to do this
@@ -165,7 +166,7 @@ char level;
 char typeAtCenterOfView;
 char itemAtCenterOfView;
 char doorClosedAmount[200];
-char openDoors[4];
+unsigned char openDoors[4];
 char doorOpenTime[4];
 char numOpenDoors = 0;
 
@@ -1210,11 +1211,11 @@ int main()
   // set the character set to $1400
   POKE(0x9005, 13 + (PEEK(0x9005)&0xf0));
 
-again:  
+again:
   setUpScreenForBitmap();
   setUpScreenForMenu();
   runMenu(0);
-  level = 3;
+  level = 2;
   
 nextLevel:
 
@@ -1232,6 +1233,10 @@ nextLevel:
     if ((tex & EDGE_TYPE_MASK) == EDGE_TYPE_DOOR)
     {
       doorClosedAmount[i] = 255;
+    }
+    else
+    {
+      doorClosedAmount[i] = 0;
     }
   }
   doorOpenTime[0] = 0;
@@ -1345,24 +1350,27 @@ nextLevel:
       sa = get_sin();
       if (keys & KEY_MOVELEFT)
       {
-          playerx -= 2*ca;
-          playery += 2*sa;
+        playerx -= 2*ca;
+        playery += 2*sa;
       }
       if (keys & KEY_MOVERIGHT)
       {
-          playerx += 2*ca;
-          playery -= 2*sa;
+        playerx += 2*ca;
+        playery -= 2*sa;
       }
 
       if (keys & KEY_FORWARD)
       {
-      playerx += 4*sa;
-      playery += 4*ca;
+        if (!(testFilled(0) < 4 && typeAtCenterOfView == TYPE_OBJECT))
+        {
+          playerx += 4*sa;
+          playery += 4*ca;
+        }
       }
       if (keys & KEY_BACK)
       {
-      playerx -= 2*sa;
-      playery -= 2*ca;
+        playerx -= 2*sa;
+        playery -= 2*ca;
       }
 //      gotoxy(0, 14);
 //      cprintf("%d %d %d %d. ", playerSector, playerx, playery, playera);
@@ -1537,21 +1545,21 @@ nextLevel:
           
           if (health <= 0)
           {
-              keys = readInput();
+            keys = readInput();
             ctrlKeys = getControlKeys();
             if (ctrlKeys & KEY_RETURN) break;
           }
           else
           {
-              if (!--meltCount) break;
-            }
+            if (!--meltCount) break;
+          }
         }
         while (1);
     }
     
     if (health <= 0)
     {
-        goto again;
+      goto again;
     }
     summaryScreen();
     goto nextLevel;
