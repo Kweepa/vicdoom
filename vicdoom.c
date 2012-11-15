@@ -1215,7 +1215,7 @@ again:
   setUpScreenForBitmap();
   setUpScreenForMenu();
   runMenu(0);
-  level = 2;
+  level = 1;
   
 nextLevel:
 
