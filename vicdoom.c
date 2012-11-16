@@ -963,6 +963,7 @@ long distanceToPush;
 char edgeGlobalIndex;
 char vertGlobalIndex, vert2GlobalIndex;
 char dgz, dle;
+char reversedEdge;
 
 typedef enum
 {
@@ -977,6 +978,16 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
      ni = getNextEdge(curSector, i);
      vertGlobalIndex = getVertexIndex(curSector, i);
      vert2GlobalIndex = getVertexIndex(curSector, ni);
+
+     reversedEdge = 0;
+     if (vertGlobalIndex > vert2GlobalIndex)
+     {
+       edgeGlobalIndex = vertGlobalIndex;
+       vertGlobalIndex = vert2GlobalIndex;
+       vert2GlobalIndex = edgeGlobalIndex;
+       reversedEdge = 1;
+     }
+
      v1x = getVertexX(vertGlobalIndex);
      v1y = getVertexY(vertGlobalIndex);
      v2x = getVertexX(vert2GlobalIndex);
@@ -989,6 +1000,10 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
      edgeGlobalIndex = getEdgeIndex(curSector, i);
      edgeLen = getEdgeLen(edgeGlobalIndex);
      height = px * ey - py * ex;
+     if (reversedEdge)
+     {
+       height = -height;
+     }
      if (height < INNERCOLLISIONRADIUS*edgeLen)
      {
         // check we're within the extents of the edge
@@ -1013,6 +1028,11 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
            {
               // try just pushing out
               distanceToPush = OUTERCOLLISIONRADIUS*edgeLen - height;
+              if (reversedEdge)
+              {
+                ex = -ex;
+                ey = -ey;
+              }
               playerx += distanceToPush * ey / (edgeLen*edgeLen);
               playery -= distanceToPush * ex / (edgeLen*edgeLen);
               return kPOR_Wall;
