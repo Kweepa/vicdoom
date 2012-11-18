@@ -140,16 +140,11 @@ int playery;
 char playera;
 char playerSector;
 
-//int playerx = -5891;
-//int playery = 487;
-//char playera = 19;
-//char playerSector = 19;
-
-// a render problem (e1m2):
-//int playerx = 1779;
-//int playery = 1891;
-//char playera = 46;
-//char playerSector = 3; //?
+// a render problem (e1m1):
+//int playerx = 13*256 + 109;
+//int playery = 34*256 + 240;
+//char playera = 10;
+//char playerSector = 8;
 
 char keyCards[8];
 char shells = 40;
@@ -180,7 +175,7 @@ char eraseMessageAfter = 0;
 #define TEXWIDTH 16
 #define TEXHEIGHT 32
 #define INNERCOLLISIONRADIUS 512
-#define OUTERCOLLISIONRADIUS 515
+#define OUTERCOLLISIONRADIUS 528
 #define COLLISIONDELTA (OUTERCOLLISIONRADIUS - INNERCOLLISIONRADIUS)
 
 #define EDGE_TYPE_MASK 0xC0
@@ -753,13 +748,9 @@ void __fastcall__ drawTransparentObjects(void)
 signed char __fastcall__ ffeis(char curSec, char cameraOutsideSector, signed char x_L, signed char x_R)
 {
    char numVerts = getNumVerts(curSec);
-   // this is ugly but it avoids clipping, which is nice
    char i;
-   char minI = 0;
-   signed char minX = x_R;
    for (i = 0; i < numVerts; ++i)
    {
-      char leftInFront, rightInFront;
       int sx1, sx2, ty1, ty2;
       char ni = (i + 1);
       if (ni == numVerts) ni = 0;
@@ -767,43 +758,20 @@ signed char __fastcall__ ffeis(char curSec, char cameraOutsideSector, signed cha
       sx2 = getScreenX(ni);
       ty1 = getTransformedY(i);
       ty2 = getTransformedY(ni);
-      leftInFront = ty1 >= 0; // Rcos45
-      rightInFront = ty2 >= 0;
-      if (leftInFront && rightInFront)
+      // preprocess
+      if (!cameraOutsideSector)
       {
-         if (sx1 < minX && sx2 > x_L && sx2 > sx1)
-         {
-            // possible
-            if (sx1 <= x_L) return i;
-            minX = sx1;
-            minI = i;
-         }
+        // when inside the sector, adjust the edges clipping the camera plane
+        // so that they are definitely facing the player
+        if (ty1 <= 0 && ty2 > 0) sx1 = x_L;
+        if (ty1 > 0 && ty2 <= 0) sx2 = x_R;
       }
-      else if ((rightInFront && sx2 > x_L) || (leftInFront && sx1 < x_R))
+      if (sx1 <= x_L && sx2 > x_L)
       {
-         // possible
-         char outside = cameraOutsideSector;
-         if (outside)
-         {
-            int tx1 = getTransformedX(i);
-            long lx = getTransformedX(ni) - tx1;
-            long ly = ty2 - ty1;
-            long dot = lx*ty1 - ly*tx1;
-            if (dot > 0) outside = 0;
-         }
-         if (!outside)
-         {
-            if (rightInFront) return i;
-            if (sx1 <= x_L) return i;
-            if (sx1 < minX)
-            {
-              minX = sx1;
-              minI = i;
-            }
-         }
+        return i;
       }
    }
-   return minI;
+   return -1;
 }
 
 void __fastcall__ drawSpans(void)
@@ -846,7 +814,6 @@ void __fastcall__ drawSpans(void)
      //POKE(0x900f, 13);
 
      firstEdge = ffeis(sectorIndex, cameraOutsideSector, x_L, x_R);
-     //firstEdge = findFirstEdgeInSpan(cameraOutsideSector, x_L, x_R);
      // any non-zero value means the camera is outside
      cameraOutsideSector++;
      // didn't find a first edge - must be behind
@@ -1482,6 +1449,12 @@ nextLevel:
 
       {
         push_out();
+//        printIntAtXY(playerSector, 0, 1, 2);
+//        printIntAtXY(playerx>>8, 0, 2, 3);
+//          printIntAtXY(playerx&255, 1, 3, 3);
+//        printIntAtXY(playery>>8, 0, 4, 3);
+//          printIntAtXY(playery&255, 1, 5, 3);
+//        printIntAtXY(playera, 0, 6, 3);
       }
 
       setSectorVisited(playerSector);
