@@ -214,6 +214,7 @@ lsr
 ror texY
 sta texY+1
 
+; if (h-32 > 0)
 lda height
 sec
 sbc #32

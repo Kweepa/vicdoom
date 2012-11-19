@@ -107,3 +107,118 @@ char findFirstEdgeInSpan(char numVerts, signed char leftx, signed char rightx)
   return firstEdge;
 }
 
+.export _findFirstEdgeInSpan
+.proc _findFirstEdgeInSpan: near
+
+; x_R in A
+; x_L on stack
+; we're outside the sector flag further down the stack
+
+; save and sign extend L & R
+ldx #0
+sta x_R
+cmp #0
+bpl signExtendR
+dex
+signExtendR:
+stx x_R+1
+
+ldx #0
+ldy #0
+lda (sp), y
+sta x_L
+bpl signExtendL
+dex
+signExtendL:
+stx x_L+1
+
+ldy #1
+lda (sp),y
+sta outsideSector
+
+ldx #0
+stx vertexCounter
+
+keepLooking:
+
+inx
+cpx vertexCount
+bne dontReset
+ldx #0
+dontReset:
+stx vertexCounterPP
+
+; if (sx2 > x_L)
+; interesting that having x_L sign extended makes this quicker and clearer!
+sec
+lda xfvertScreenXlo, x
+sbc x_L
+lda xfvertScreenXhi, x
+sbc x_L+1
+bmi notThisVert
+
+; if (vy2 >= 1 || vy1 >= 1)
+sec
+lda #1
+sbc xfvertYlo, x
+lda #0
+sbc xfvertYhi, x
+
+bmi keepConsideringThisVert1
+
+ldx vertexCounter
+sec
+lda #1
+sbc xfvertYlo, x
+lda #0
+sbc xfvertYhi, x
+bpl notThisVert
+
+keepConsideringThisVert1:
+
+; if ((sx1 <= leftx || (sx1 == 1000 && sx2 < rightx)) // left is off screen
+
+ldx vertexCounter
+sec
+lda x_L
+sbc xfvertScreenXlo, x
+lda x_L+1
+sbc xfvertScreenXhi, x
+bpl thisVert
+
+; the second part of the test should only be done if the camera is inside the sector
+lda outsideSector
+bne notThisVert
+
+lda xfvertScreenXlo, x
+bne notThisVert
+lda xfvertScreenXhi, x
+cmp #$04
+bne notThisVert
+
+ldx vertexCounterPP
+sec
+lda xfvertScreenXlo, x
+sbc x_R
+lda xfvertScreenXhi, x
+sbc x_R+1
+bpl notThisVert
+
+thisVert:
+
+lda vertexCounter
+ldy #2
+jmp addysp
+
+notThisVert:
+inc vertexCounter
+ldx vertexCounter
+cpx vertexCount
+bne keepLooking
+
+lda #255
+ldy #2
+jmp addysp
+
+.endproc
+

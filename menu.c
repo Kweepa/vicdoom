@@ -17,24 +17,24 @@ void __fastcall__ drawLogo(void);
 char *caMenus[][3] =
 {
   {
-	"new game",
-	"options",
-	"credits"
+	  "new game",
+	  "options",
+	  "credits"
   },
   {
-	"knee deep in the dead",
-	"the shores of hell",
-	"inferno"
+	  "knee deep in the dead",
+	  "the shores of hell",
+	  "inferno"
   },
   {
-	"effects volume 15",
-	"music volume 10",
-	"keys"
+	  "effects volume 15",
+	  "music volume 10",
+	  "keys"
   },
   {
     "can i play daddy?",
-	"hurt me plenty",
-	"ultra-violence"
+	  "hurt me plenty",
+	  "ultra-violence"
   }
 };
 

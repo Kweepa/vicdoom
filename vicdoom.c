@@ -230,14 +230,14 @@ void __fastcall__ drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeInd
   unsigned int h;
   char fit;
   char transp;
-  
+
+  automap_sawEdge(edgeGlobalIndex);
+
   textureIndex &= EDGE_TEX_MASK;
   // techwall, switch, door
   fit = (textureIndex == 2 || textureIndex == 5 || textureIndex == 6);
   transp = (textureIndex == 4);
   
-  automap_sawEdge(edgeGlobalIndex);
-
   // add 128 to correct for sampling in the center of the column
   //x4 = (256*x_L + 128)/HALFSCREENWIDTH;
   x4 = 16*x_L + 8;
@@ -940,8 +940,11 @@ typedef enum
 }
 EPushOutResult;
 
+char totalCheckedEdges;
+
 EPushOutResult __fastcall__ push_out_from_edge(char i)
 {
+  totalCheckedEdges++;
      ni = getNextEdge(curSector, i);
      vertGlobalIndex = getVertexIndex(curSector, i);
      vert2GlobalIndex = getVertexIndex(curSector, ni);
@@ -1008,8 +1011,10 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
         else if (!dgz && (dist > -INNERCOLLISIONRADIUS*edgeLen)
           || (!dle && dist < (256*edgeLen + INNERCOLLISIONRADIUS)*edgeLen))
         {
+          // check against the end
           if (dgz)
           {
+            // check the far end
             px = playerx - 256*v2x;
             py = playery - 256*v2y;
           }
@@ -1044,6 +1049,8 @@ void __fastcall__ push_out(void)
 
   char i, secNumVerts;
   EPushOutResult r;
+
+  totalCheckedEdges = 0;
   
   touchedSector = 0xff;
   nextSector = 0xff;
@@ -1056,23 +1063,26 @@ void __fastcall__ push_out(void)
   // see which edge the new coordinate is behind
   for (i = 0; i < secNumVerts; ++i)
   {
-     r = push_out_from_edge(i);
-     if (r == kPOR_Sector)
-     {
-       touchedSector = thatSector;
-     }
-     else if (r == kPOR_Wall)
-     {
-       // add the neighbouring edges
-       if (i > 0)
+    //if (getOtherSector(getEdgeIndex(curSector, i), curSector) != -1)
+    {
+       r = push_out_from_edge(i);
+       if (r == kPOR_Sector)
        {
-         possibleWallsToTouch[numPossibleWallsToTouch++] = i-1;
+         touchedSector = thatSector;
        }
-       if (i == secNumVerts-1)
+       else if (r == kPOR_Wall)
        {
-         possibleWallsToTouch[numPossibleWallsToTouch++] = 0;
+         // add the neighbouring edges
+         if (i > 0)
+         {
+           possibleWallsToTouch[numPossibleWallsToTouch++] = i-1;
+         }
+         if (i == secNumVerts-1)
+         {
+           possibleWallsToTouch[numPossibleWallsToTouch++] = 0;
+         }
        }
-     }
+    }
   }
   
   if (touchedSector != 0xff)
@@ -1100,6 +1110,8 @@ void __fastcall__ push_out(void)
   {
     playerSector = nextSector;
   }
+
+  printIntAtXY(totalCheckedEdges, 0, 1, 2);
 }
 
 char turnSpeed = 0;
@@ -1170,7 +1182,7 @@ void __fastcall__ setUpScreenForGameplay(void)
   playMapTimer();
 }
 
-void __fastcall__ runMenu(char canReturn);
+char __fastcall__ runMenu(char canReturn);
 
 char caLevel[5] = "e1m1";
 
@@ -1198,7 +1210,6 @@ int main()
   // set the character set to $1400
   POKE(0x9005, 13 + (PEEK(0x9005)&0xf0));
 
-again:
   setUpScreenForBitmap();
   setUpScreenForMenu();
   runMenu(0);
@@ -1301,7 +1312,13 @@ nextLevel:
       {
         pauseMapTimer();
         setUpScreenForMenu();
-        runMenu(1);
+        if (runMenu(1) == 1)
+        {
+          // reset
+          level = 1;
+          health = 0;
+          goto nextLevel;
+        }
         setUpScreenForGameplay();
       }
       else if (ctrlKeys & KEY_CTRL)
@@ -1552,7 +1569,8 @@ nextLevel:
     
     if (health <= 0)
     {
-      goto again;
+      // continue
+      goto nextLevel;
     }
     summaryScreen();
     goto nextLevel;
