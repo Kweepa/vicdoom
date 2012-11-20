@@ -195,6 +195,7 @@ char eraseMessageAfter = 0;
 #define SWITCH_TYPE_OPENDOORP 3
 
 #define DOOR_TYPE_SHOT 4
+#define DOOR_TYPE_ONEWAY 6
 
 unsigned char frame = 0;
 
@@ -1440,21 +1441,32 @@ nextLevel:
             {
               char tex = getEdgeTexture(itemAtCenterOfView);
               char prop = (tex & EDGE_PROP_MASK) >> EDGE_PROP_SHIFT;
-              if (keyCards[prop] == 1)
+              if (prop < 4)
               {
-                openDoor(itemAtCenterOfView);
+                if (keyCards[prop] == 1)
+                {
+                  openDoor(itemAtCenterOfView);
+                }
+                else
+                {
+                  playSound(SOUND_OOF);
+                  eraseMessage();
+                  textcolor(7);
+                  cputsxy(1, 14, "you need a       key");
+                  cputsxy(2, 15, "to open this door!");
+                  prop--;
+                  textcolor(keyCardColors[prop]);
+                  cputsxy(12, 14, keyCardNames[prop]);
+                  eraseMessageAfter = 8;
+                }
               }
-              else if (prop < 4)
+              else if (prop == DOOR_TYPE_ONEWAY)
               {
-                playSound(SOUND_OOF);
-                eraseMessage();
-                textcolor(7);
-                cputsxy(1, 14, "you need a       key");
-                cputsxy(2, 15, "to open this door!");
-                prop--;
-                textcolor(keyCardColors[prop]);
-                cputsxy(12, 14, keyCardNames[prop]);
-                eraseMessageAfter = 8;
+                char otherSec = getOtherSector(itemAtCenterOfView, playerSector);
+                if (otherSec < playerSector)
+                {
+                  openDoor(itemAtCenterOfView);
+                }
               }
             }
             else if (typeAtCenterOfView == TYPE_SWITCH)
