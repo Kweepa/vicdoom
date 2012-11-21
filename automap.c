@@ -17,7 +17,7 @@
 int offsetX, offsetY;
 int zoom = 2;
 
-void __fastcall__ automap_draw(int offsetX, int offsetY, char zoom);
+void __fastcall__ automap_draw(int offsetX, int offsetY, char zoom, char player_x, char player_y, char player_a);
 void __fastcall__ automap_resetEdges(void);
 
 void __fastcall__ automap_reset(void)
@@ -85,7 +85,7 @@ char __fastcall__ automap_update(void)
   }
 
   clearSecondBuffer();
-  automap_draw(offsetX - playerx/256, offsetY + playery/256, zoom);
+  automap_draw(offsetX, offsetY, zoom, playerx/256, playery/256, playera);
   // draw arrow to indicate the player
   copyToPrimaryBuffer();
   

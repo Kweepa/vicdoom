@@ -6,6 +6,8 @@
 .export _drawLine
 .export _automap_sawEdge
 .export _automap_resetEdges
+.import _getSinOf
+.import _getCosOf
 
 buffer = $BE00
 
@@ -18,6 +20,16 @@ maxx:
 miny:
 .word 0
 maxy:
+.word 0
+playerx:
+.byte 0
+playery:
+.byte 0
+playera:
+.byte 0
+sina:
+.word 0
+cosa:
 .word 0
 zoom:
 .byte 0
@@ -62,6 +74,13 @@ drewAPixel = $63
    ror
 .endmacro
 
+.macro asr_a_xtimes
+: cmp #$80
+  ror
+  dex
+  bne :-
+.endmacro
+
 .macro neg_a
    eor #$ff
    clc
@@ -69,8 +88,8 @@ drewAPixel = $63
 .endmacro
 
 .macro add16 p, q
-   clc
    lda p
+   clc
    adc q
    sta p
    lda p+1
@@ -78,9 +97,19 @@ drewAPixel = $63
    sta p+1
 .endmacro
 
+.macro sub16 p, q
+   lda p
+   sec
+   sbc q
+   sta p
+   lda p+1
+   sbc q+1
+   sta p+1
+.endmacro
+
 .macro add16_imm8 p, q
-  clc
   lda p
+  clc
   adc #q
   sta p
   lda p+1
@@ -352,6 +381,58 @@ ora shift,x
 sta edgesSeen,y
 rts
 
+offsetAndScaleVerts:
+
+sign_extend x0
+sign_extend y0
+lda offsetX
+clc
+adc x0
+sta x0
+lda offsetX+1
+adc x0+1
+sta x0+1
+lda offsetY
+sec
+sbc y0
+sta y0
+lda offsetY+1
+sbc y0+1
+sta y0+1
+
+sign_extend x1
+sign_extend y1
+lda offsetX
+clc
+adc x1
+sta x1
+lda offsetX+1
+adc x1+1
+sta x1+1
+lda offsetY
+sec
+sbc y1
+sta y1
+lda offsetY+1
+sbc y1+1
+sta y1+1
+
+lda zoom
+cmp #2
+bne :+
+mul16_by2 x0
+mul16_by2 y0
+mul16_by2 x1
+mul16_by2 y1
+:
+
+add16_imm8 x0,32
+add16_imm8 y0,32
+add16_imm8 x1,32
+add16_imm8 y1,32
+
+rts
+
 automap_drawSector:
 
 sta sectorIndex
@@ -398,80 +479,15 @@ lda edgeIndex
 ldx sectorIndex
 jsr getSectorVertexXY
 stx x0
-
-; 0.75*x
-;txa
-;lsr
-;lsr
-;sta dx
-;lda x0
-;clc
-;sbc dx
-;sta x0
-
 sty y0
-sign_extend x0
-sign_extend y0
-lda offsetX
-clc
-adc x0
-sta x0
-lda offsetX+1
-adc x0+1
-sta x0+1
-lda offsetY
-sec
-sbc y0
-sta y0
-lda offsetY+1
-sbc y0+1
-sta y0+1
+
 lda secondVertexIndex
 ldx sectorIndex
 jsr getSectorVertexXY
 stx x1
-
-; 0.75*x
-;txa
-;lsr
-;lsr
-;sta dx
-;lda x1
-;clc
-;sbc dx
-;sta x1
-
 sty y1
-sign_extend x1
-sign_extend y1
-lda offsetX
-clc
-adc x1
-sta x1
-lda offsetX+1
-adc x1+1
-sta x1+1
-lda offsetY
-sec
-sbc y1
-sta y1
-lda offsetY+1
-sbc y1+1
-sta y1+1
 
-lda zoom
-cmp #2
-bne :+
-mul16_by2 x0
-mul16_by2 y0
-mul16_by2 x1
-mul16_by2 y1
-:
-
-add16_imm8 x0,32
-add16_imm8 y0,32
-add16_imm8 x1,32
-add16_imm8 y1,32
+jsr offsetAndScaleVerts
 
 jsr drawLine
 
@@ -486,21 +502,92 @@ rts
 
 _automap_draw:
 
-sta zoom
-
+sta playera
 ldy #0
 lda (sp),y
+sta playery
+iny
+lda (sp),y
+sta playerx
+
+iny
+lda (sp),y
+sta zoom
+
+iny
+lda (sp),y
+clc
+adc playery
 sta offsetY
 iny
 lda (sp),y
+adc #0
 sta offsetY+1
 
 iny
 lda (sp),y
+sec
+sbc playerx
 sta offsetX
 iny
 lda (sp),y
+sbc #0
 sta offsetX+1
+
+; draw player
+; a=0 is pointing right up
+
+lda playera
+jsr _getSinOf
+ldx #5
+asr_a_xtimes
+sta sina
+sign_extend sina
+
+lda playera
+jsr _getCosOf
+ldx #5
+asr_a_xtimes
+sta cosa
+sign_extend cosa
+
+lda playerx
+sta x0
+sta x1
+lda playery
+sta y0
+sta y1
+jsr offsetAndScaleVerts
+
+add16 x1, sina
+sub16 y1, cosa
+
+jsr drawLine
+
+lda sina
+asr_a
+sta sina
+sign_extend sina
+lda cosa
+asr_a
+sta cosa
+sign_extend cosa
+
+lda playerx
+sta x0
+sta x1
+lda playery
+sta y0
+sta y1
+jsr offsetAndScaleVerts
+
+sub16 x0, cosa
+sub16 y0, sina
+
+add16 x1, cosa
+add16 y1, sina
+
+jsr drawLine
 
 jsr _getNumSectors
 sta numSectors
@@ -515,7 +602,7 @@ cmp numSectors
 bne @loop
 
 @end:
-ldy #4
+ldy #7
 jmp addysp
 
 
@@ -549,3 +636,5 @@ jsr drawLine
 
 ldy #6
 jmp addysp
+
+
