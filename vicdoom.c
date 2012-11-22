@@ -1186,6 +1186,7 @@ void __fastcall__ setUpScreenForGameplay(void)
 char __fastcall__ runMenu(char canReturn);
 
 char caLevel[5] = "e1m1";
+char caMusic[8] = "e1m1mus";
 
 int main()
 {
@@ -1196,7 +1197,6 @@ int main()
   char numObj;
   char *mapName;
   
-  read_data_file("e1m1mus", 0xB700, 0x320);
   read_data_file("sounds", 0xBA20, 0x3E0);
 
   playSoundInitialize();
@@ -1220,6 +1220,10 @@ nextLevel:
 
   setUpScreenForBitmap();
   setUpScreenForGameplay();
+
+  caMusic[3] = '0' + level;
+  read_data_file(caMusic, 0xB700, 0x320);
+  startMusic();
 
   caLevel[3] = '0' + level;
   read_data_file(caLevel, 0xAD00, 0xA00);
@@ -1578,13 +1582,12 @@ nextLevel:
         }
         while (1);
     }
+    stopMusic();
     
-    if (health <= 0)
+    if (health > 0)
     {
-      // continue
-      goto nextLevel;
+      summaryScreen();
     }
-    summaryScreen();
     goto nextLevel;
     
     return EXIT_SUCCESS;

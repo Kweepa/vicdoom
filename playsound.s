@@ -12,6 +12,8 @@
 .export _pauseMapTimer
 .export _playMapTimer
 .export _getMapTime
+.export _startMusic
+.export _stopMusic
 .import soundTable
 .import updateInput
 
@@ -61,6 +63,8 @@ effectsVolume:
 musicVolume:
 .byte $1
 tickCount:
+.byte 0
+musicPlaying:
 .byte 0
 
 .proc playSoundIrq : near
@@ -124,6 +128,9 @@ sta $900e
 jmp end
 
 playMusic:
+
+lda musicPlaying
+beq end
 
 dec timeToNextEvent
 beq nextEvent
@@ -279,7 +286,7 @@ rts
 
 .endproc
 
-.proc _playSoundInitialize : near
+resetMusic:
 
 lda #$ff
 sta soundIndex
@@ -290,12 +297,6 @@ lda #>startOfSong
 sta songIndex+1
 lda #1
 sta timeToNextEvent
-
-; insert into chain
-lda #<playSoundIrq
-ldx #>playSoundIrq
-sta irqVector
-stx irqVector+1
 
 ; turn off all channels
 lda #0
@@ -312,8 +313,36 @@ sta $900e
 
 rts
 
+.proc _playSoundInitialize : near
+
+sei
+; insert into chain
+lda #<playSoundIrq
+ldx #>playSoundIrq
+sta irqVector
+stx irqVector+1
+
+jsr resetMusic
+cli
+rts
+
 .endproc
 
+_startMusic:
+sei
+lda #1
+sta musicPlaying
+jsr resetMusic
+cli
+rts
+
+_stopMusic:
+sei
+lda #0
+sta musicPlaying
+jsr resetMusic
+cli
+rts
 
 _getEffectsVolume:
 lda effectsVolume

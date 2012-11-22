@@ -15,7 +15,7 @@
 #define OFFSET_STEP 4
 
 int offsetX, offsetY;
-int zoom = 2;
+char zoom;
 
 void __fastcall__ automap_draw(int offsetX, int offsetY, char zoom, char player_x, char player_y, char player_a);
 void __fastcall__ automap_resetEdges(void);
@@ -42,6 +42,7 @@ void __fastcall__ automap_enter(void)
   // reset offset
   offsetX = 0;
   offsetY = 0;
+  zoom = 1;
 }
 
 char __fastcall__ automap_update(void)
@@ -49,6 +50,7 @@ char __fastcall__ automap_update(void)
   // check for scrolling
   char keys = readInput();
   char ctrlKeys = getControlKeys();
+  char pxhi, pyhi;
   if (ctrlKeys & KEY_CTRL)
   {
     do
@@ -75,18 +77,19 @@ char __fastcall__ automap_update(void)
   {
     offsetY -= OFFSET_STEP;
   }
-  if ((keys & KEY_FIRE) && zoom != 2)
+  if ((keys & KEY_FIRE) && zoom == 1)
   {
     zoom = 2;
   }
-  if ((keys & KEY_USE) && zoom != 1)
+  if ((keys & KEY_USE) && zoom == 2)
   {
     zoom = 1;
   }
 
   clearSecondBuffer();
-  automap_draw(offsetX, offsetY, zoom, playerx/256, playery/256, playera);
-  // draw arrow to indicate the player
+  pxhi = *(((char *)(&playerx))+1);
+  pyhi = *(((char *)(&playery))+1);
+  automap_draw(offsetX, offsetY, zoom, pxhi, pyhi, playera);
   copyToPrimaryBuffer();
   
   return 1;

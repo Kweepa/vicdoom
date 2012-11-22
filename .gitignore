@@ -1,2 +1,15 @@
 *.o
 map.txt
+*.opensdf
+*.sdf
+*.ipch
+*.log
+*.tlog
+*.pdb
+*.idb
+*.obj
+*.ilk
+*.manifest
+*.res
+*.rc
+*.lastbuildstate

@@ -21,11 +21,11 @@ miny:
 .word 0
 maxy:
 .word 0
-playerx:
-.byte 0
-playery:
-.byte 0
-playera:
+player_x:
+.word 0
+player_y:
+.word 0
+player_a:
 .byte 0
 sina:
 .word 0
@@ -129,6 +129,21 @@ drewAPixel = $63
   dey
   :
   sty p+1
+.endmacro
+
+.macro load_char_from_stack p
+  lda (sp),y
+  sta p
+  iny
+.endmacro
+
+.macro load_int_from_stack p
+  lda (sp),y
+  sta p
+  iny
+  lda (sp),y
+  sta p+1
+  iny
 .endmacro
 
 drawLine:
@@ -385,13 +400,7 @@ offsetAndScaleVerts:
 
 sign_extend x0
 sign_extend y0
-lda offsetX
-clc
-adc x0
-sta x0
-lda offsetX+1
-adc x0+1
-sta x0+1
+add16 x0, offsetX
 lda offsetY
 sec
 sbc y0
@@ -402,13 +411,7 @@ sta y0+1
 
 sign_extend x1
 sign_extend y1
-lda offsetX
-clc
-adc x1
-sta x1
-lda offsetX+1
-adc x1+1
-sta x1+1
+add16 x1, offsetX
 lda offsetY
 sec
 sbc y1
@@ -500,61 +503,26 @@ jmp @loop
 :
 rts
 
-_automap_draw:
+drawPlayer:
 
-sta playera
-ldy #0
-lda (sp),y
-sta playery
-iny
-lda (sp),y
-sta playerx
-
-iny
-lda (sp),y
-sta zoom
-
-iny
-lda (sp),y
-clc
-adc playery
-sta offsetY
-iny
-lda (sp),y
-adc #0
-sta offsetY+1
-
-iny
-lda (sp),y
-sec
-sbc playerx
-sta offsetX
-iny
-lda (sp),y
-sbc #0
-sta offsetX+1
-
-; draw player
-; a=0 is pointing right up
-
-lda playera
+lda player_a
 jsr _getSinOf
 ldx #5
 asr_a_xtimes
 sta sina
 sign_extend sina
 
-lda playera
+lda player_a
 jsr _getCosOf
 ldx #5
 asr_a_xtimes
 sta cosa
 sign_extend cosa
 
-lda playerx
+lda player_x
 sta x0
 sta x1
-lda playery
+lda player_y
 sta y0
 sta y1
 jsr offsetAndScaleVerts
@@ -573,10 +541,10 @@ asr_a
 sta cosa
 sign_extend cosa
 
-lda playerx
+lda player_x
 sta x0
 sta x1
-lda playery
+lda player_y
 sta y0
 sta y1
 jsr offsetAndScaleVerts
@@ -588,6 +556,30 @@ add16 x1, cosa
 add16 y1, sina
 
 jsr drawLine
+
+rts
+
+_automap_draw:
+
+sta player_a
+
+ldy #0
+load_char_from_stack player_y
+load_char_from_stack player_x
+load_char_from_stack zoom
+load_int_from_stack offsetY
+load_int_from_stack offsetX
+
+sign_extend player_x
+sign_extend player_y
+
+sub16 offsetX, player_x
+add16 offsetY, player_y
+
+; draw player
+; a=0 is pointing right up
+
+jsr drawPlayer
 
 jsr _getNumSectors
 sta numSectors

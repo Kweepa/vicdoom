@@ -1,0 +1,119 @@
+MFile 1 2 89
+MTrk
+0 Tempo 631552
+0 KeySig 0 major
+0 Meta Copyright "\x12\0z\0"
+0 TimeSig 4/4 24 8
+0 Meta TrkEnd
+TrkEnd
+MTrk
+0 Par ch=1 c=0 v=0
+0 Par ch=1 c=32 v=0
+0 PrCh ch=1 p=30
+0 Meta TrkName "Untitled\0"
+0 Par ch=1 c=7 v=127
+0 Par ch=1 c=0 v=0
+0 Par ch=1 c=7 v=127
+0 Par ch=1 c=7 v=100
+0 Par ch=1 c=10 v=74
+0 On ch=1 n=49 v=92
+116 Off ch=1 n=49 v=0
+116 On ch=1 n=47 v=92
+140 Off ch=1 n=47 v=0
+163 On ch=1 n=47 v=92
+186 Off ch=1 n=47 v=0
+186 On ch=1 n=49 v=92
+303 Off ch=1 n=49 v=0
+303 On ch=1 n=47 v=92
+326 Off ch=1 n=47 v=0
+350 On ch=1 n=47 v=92
+373 Off ch=1 n=47 v=0
+373 On ch=1 n=49 v=92
+490 Off ch=1 n=49 v=0
+490 On ch=1 n=47 v=92
+513 Off ch=1 n=47 v=0
+536 On ch=1 n=47 v=91
+560 Off ch=1 n=47 v=0
+560 On ch=1 n=49 v=92
+606 Off ch=1 n=49 v=0
+606 On ch=1 n=50 v=94
+653 Off ch=1 n=50 v=0
+653 On ch=1 n=49 v=92
+700 Off ch=1 n=49 v=0
+700 On ch=1 n=47 v=92
+746 Off ch=1 n=47 v=0
+746 On ch=1 n=49 v=92
+863 Off ch=1 n=49 v=0
+863 On ch=1 n=47 v=91
+886 Off ch=1 n=47 v=0
+910 On ch=1 n=47 v=92
+933 Off ch=1 n=47 v=0
+933 On ch=1 n=49 v=93
+1050 Off ch=1 n=49 v=0
+1050 On ch=1 n=47 v=94
+1073 Off ch=1 n=47 v=0
+1096 On ch=1 n=47 v=92
+1120 Off ch=1 n=47 v=0
+1120 On ch=1 n=49 v=92
+1236 Off ch=1 n=49 v=0
+1236 On ch=1 n=47 v=93
+1260 Off ch=1 n=47 v=0
+1283 On ch=1 n=47 v=90
+1306 Off ch=1 n=47 v=0
+1306 On ch=1 n=49 v=94
+1353 Off ch=1 n=49 v=0
+1353 On ch=1 n=50 v=92
+1400 Off ch=1 n=50 v=0
+1400 On ch=1 n=49 v=94
+1446 Off ch=1 n=49 v=0
+1446 On ch=1 n=47 v=93
+1493 Off ch=1 n=47 v=0
+1493 On ch=1 n=49 v=93
+1610 Off ch=1 n=49 v=0
+1610 On ch=1 n=47 v=92
+1633 Off ch=1 n=47 v=0
+1656 On ch=1 n=47 v=92
+1680 Off ch=1 n=47 v=0
+1680 On ch=1 n=49 v=92
+1796 Off ch=1 n=49 v=0
+1796 On ch=1 n=47 v=92
+1820 Off ch=1 n=47 v=0
+1843 On ch=1 n=47 v=92
+1866 Off ch=1 n=47 v=0
+1866 On ch=1 n=49 v=92
+1983 Off ch=1 n=49 v=0
+1983 On ch=1 n=47 v=93
+2006 Off ch=1 n=47 v=0
+2030 On ch=1 n=47 v=91
+2053 Off ch=1 n=47 v=0
+2053 On ch=1 n=49 v=92
+2100 Off ch=1 n=49 v=0
+2100 On ch=1 n=50 v=92
+2146 Off ch=1 n=50 v=0
+2146 On ch=1 n=49 v=93
+2193 Off ch=1 n=49 v=0
+2193 On ch=1 n=47 v=92
+2240 Off ch=1 n=47 v=0
+2240 On ch=1 n=49 v=95
+2356 Off ch=1 n=49 v=0
+2356 On ch=1 n=47 v=92
+2380 Off ch=1 n=47 v=0
+2403 On ch=1 n=47 v=92
+2426 Off ch=1 n=47 v=0
+2426 On ch=1 n=49 v=92
+2543 Off ch=1 n=49 v=0
+2543 On ch=1 n=47 v=92
+2566 Off ch=1 n=47 v=0
+2590 On ch=1 n=47 v=91
+2613 Off ch=1 n=47 v=0
+2613 On ch=1 n=49 v=92
+2730 Off ch=1 n=49 v=0
+2730 On ch=1 n=47 v=95
+2753 Off ch=1 n=47 v=0
+2776 On ch=1 n=47 v=92
+2800 Off ch=1 n=47 v=0
+2800 On ch=1 n=49 v=96
+2823 Off ch=1 n=49 v=0
+23495 Par ch=1 c=127 v=0
+23495 Meta TrkEnd
+TrkEnd

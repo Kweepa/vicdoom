@@ -22,6 +22,9 @@ void __fastcall__ playSound(char soundIndex);
 void __fastcall__ setEffectsVolume(char vol);
 char __fastcall__ getEffectsVolume(void);
 
+void __fastcall__ startMusic(void);
+void __fastcall__ stopMusic(void);
+
 void __fastcall__ setMusicVolume(char vol);
 char __fastcall__ getMusicVolume(void);
 

@@ -1,0 +1,43 @@
+MFile 1 2 89
+MTrk
+0 TimeSig 4/4 24 8
+0 Tempo 631578
+0 KeySig 0 major
+0 Meta Copyright "@Ez"
+38104 Meta TrkEnd
+TrkEnd
+MTrk
+0 Meta TrkName "Untitled"
+0 Par ch=1 c=0 v=0
+0 Par ch=1 c=32 v=0
+0 PrCh ch=1 p=92
+0 Par ch=1 c=7 v=127
+0 Par ch=1 c=7 v=100
+0 Par ch=1 c=10 v=84
+1120 On ch=1 n=63 v=104
+1400 Off ch=1 n=63 v=48
+2240 On ch=1 n=63 v=104
+2520 Off ch=1 n=63 v=48
+3360 On ch=1 n=63 v=104
+3640 Off ch=1 n=63 v=48
+4480 On ch=1 n=63 v=104
+4760 Off ch=1 n=63 v=48
+5600 On ch=1 n=68 v=104
+5880 Off ch=1 n=68 v=48
+6720 On ch=1 n=68 v=104
+7000 Off ch=1 n=68 v=48
+7840 On ch=1 n=63 v=104
+8120 Off ch=1 n=63 v=48
+8960 On ch=1 n=63 v=104
+9240 Off ch=1 n=63 v=48
+10080 On ch=1 n=58 v=104
+10360 Off ch=1 n=58 v=48
+10920 On ch=1 n=63 v=104
+11200 Off ch=1 n=63 v=48
+11200 On ch=1 n=63 v=104
+11480 Off ch=1 n=63 v=48
+12320 On ch=1 n=63 v=104
+12600 Off ch=1 n=63 v=48
+38091 Par ch=1 c=127 v=0
+38104 Meta TrkEnd
+TrkEnd

@@ -1,0 +1,57 @@
+MFile 1 2 89
+MTrk
+0 Tempo 631552
+0 KeySig 0 major
+0 Meta Copyright "@Ez\08\xfcX\x07\x17\0\0\0\x17\0\0\0\0\x01QUET\0"
+0 TimeSig 4/4 24 8
+0 Meta TrkEnd
+TrkEnd
+MTrk
+0 Par ch=1 c=0 v=0
+0 Par ch=1 c=32 v=0
+0 PrCh ch=1 p=48
+0 Meta TrkName "Untitled\0"
+0 Par ch=1 c=7 v=127
+0 Par ch=1 c=7 v=110
+0 Par ch=1 c=10 v=64
+6720 On ch=1 n=26 v=111
+7000 Off ch=1 n=26 v=0
+7000 On ch=1 n=28 v=111
+7280 Off ch=1 n=28 v=0
+7280 On ch=1 n=29 v=112
+7560 Off ch=1 n=29 v=0
+7560 On ch=1 n=31 v=109
+7840 Off ch=1 n=31 v=0
+7840 On ch=1 n=26 v=112
+8120 Off ch=1 n=26 v=0
+8120 On ch=1 n=28 v=98
+8400 Off ch=1 n=28 v=0
+8400 On ch=1 n=29 v=106
+8680 Off ch=1 n=29 v=0
+8680 On ch=1 n=31 v=109
+8890 Off ch=1 n=31 v=0
+8890 On ch=1 n=33 v=106
+8960 Off ch=1 n=33 v=0
+8960 On ch=1 n=26 v=106
+9240 Off ch=1 n=26 v=0
+9240 On ch=1 n=28 v=96
+9520 Off ch=1 n=28 v=0
+9520 On ch=1 n=29 v=106
+9800 Off ch=1 n=29 v=0
+9800 On ch=1 n=31 v=106
+10080 Off ch=1 n=31 v=0
+10080 On ch=1 n=34 v=113
+10360 Off ch=1 n=34 v=0
+10360 On ch=1 n=33 v=104
+10640 Off ch=1 n=33 v=0
+10640 On ch=1 n=31 v=102
+10920 Off ch=1 n=31 v=0
+10920 On ch=1 n=29 v=107
+11060 Off ch=1 n=29 v=0
+11060 On ch=1 n=28 v=109
+11200 Off ch=1 n=28 v=0
+11200 On ch=1 n=26 v=106
+11760 Off ch=1 n=26 v=0
+23139 Par ch=1 c=127 v=0
+23139 Meta TrkEnd
+TrkEnd
