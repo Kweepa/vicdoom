@@ -1214,7 +1214,7 @@ int main()
   setUpScreenForBitmap();
   setUpScreenForMenu();
   runMenu(0);
-  level = 1;
+  level = 6;
   
 nextLevel:
 
@@ -1550,6 +1550,9 @@ nextLevel:
     else
     {
       cputsxy(5, 13, "map complete");
+      stopMusic();
+      read_data_file("intermus", 0xB700, 0x320);
+      startMusic();
       ++level;
     }
       
@@ -1582,12 +1585,12 @@ nextLevel:
         }
         while (1);
     }
-    stopMusic();
     
     if (health > 0)
     {
       summaryScreen();
     }
+    stopMusic();
     goto nextLevel;
     
     return EXIT_SUCCESS;

@@ -23,7 +23,7 @@ struct SNote
    int note;
 };
 
-SEvent try_get_event_from_file(FILE *fp, int voice, int octaveShift)
+SEvent try_get_event_from_file(FILE *fp, int voice, int octaveShift, int bpm)
 {
    SEvent e;
    e.got = false;
@@ -49,7 +49,7 @@ SEvent try_get_event_from_file(FILE *fp, int voice, int octaveShift)
    if (e.got)
    {
       // scale it to jiffy units (original bpm was 141)
-      e.tick = (180*e.tick)/(141*3);
+      e.tick = (180*e.tick)/(bpm*3);
       // adjust the octave
       e.note = e.note - 12*(voice+1-octaveShift);
       if (e.note < 0)
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 
    if (argc < 2)
    {
-      printf("mid2vic <mapname> [<octave shift>]\n");
+      printf("mid2vic <mapname> [<octave shift> [<bpm>]]\n");
       return 0;
    }
 
@@ -95,6 +95,12 @@ int main(int argc, char *argv[])
       octaveShift = atoi(argv[2]);
    }
 
+   int bpm = 141;
+   if (argc > 3)
+   {
+     bpm = atoi(argv[3]);
+   }
+
    if (fp1 != NULL && fp2 != NULL && fp3 != NULL)
    {
       int lastTick = 0;
@@ -104,9 +110,9 @@ int main(int argc, char *argv[])
 
          SEvent e;
          e.got = false;
-         SEvent e1 = try_get_event_from_file(fp1, 1, octaveShift);
-         SEvent e2 = try_get_event_from_file(fp2, 2, octaveShift);
-         SEvent e3 = try_get_event_from_file(fp3, 3, octaveShift);
+         SEvent e1 = try_get_event_from_file(fp1, 1, octaveShift, bpm);
+         SEvent e2 = try_get_event_from_file(fp2, 2, octaveShift, bpm);
+         SEvent e3 = try_get_event_from_file(fp3, 3, octaveShift, bpm);
 //          e2.got = false; // remove this track
 //          e3.got = false; // remove this track
 

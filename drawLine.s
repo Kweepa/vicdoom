@@ -112,9 +112,9 @@ drewAPixel = $63
   clc
   adc #q
   sta p
-  lda p+1
-  adc #0
-  sta p+1
+  bcc :+
+  inc p+1
+:
 .endmacro
 
 .macro mul16_by2 p
@@ -396,7 +396,7 @@ ora shift,x
 sta edgesSeen,y
 rts
 
-offsetAndScaleVerts:
+offsetAndScaleVert0:
 
 sign_extend x0
 sign_extend y0
@@ -408,6 +408,19 @@ sta y0
 lda offsetY+1
 sbc y0+1
 sta y0+1
+
+lda zoom
+cmp #2
+bne :+
+mul16_by2 x0
+mul16_by2 y0
+:
+add16_imm8 x0,32
+add16_imm8 y0,32
+
+rts
+
+offsetAndScaleVert1:
 
 sign_extend x1
 sign_extend y1
@@ -423,18 +436,18 @@ sta y1+1
 lda zoom
 cmp #2
 bne :+
-mul16_by2 x0
-mul16_by2 y0
 mul16_by2 x1
 mul16_by2 y1
 :
-
-add16_imm8 x0,32
-add16_imm8 y0,32
 add16_imm8 x1,32
 add16_imm8 y1,32
 
 rts
+
+offsetAndScaleVerts:
+
+jsr offsetAndScaleVert0
+jmp offsetAndScaleVert1
 
 automap_drawSector:
 
@@ -530,30 +543,39 @@ jsr offsetAndScaleVerts
 add16 x1, sina
 sub16 y1, cosa
 
+sub16 x0, sina
+add16 y0, cosa
+
 jsr drawLine
 
-lda sina
-asr_a
-sta sina
+;lda sina
+;asr_a
+;sta sina
 sign_extend sina
-lda cosa
-asr_a
-sta cosa
+;lda cosa
+;asr_a
+;sta cosa
 sign_extend cosa
 
 lda player_x
 sta x0
-sta x1
 lda player_y
 sta y0
-sta y1
-jsr offsetAndScaleVerts
+jsr offsetAndScaleVert0
 
 sub16 x0, cosa
 sub16 y0, sina
 
-add16 x1, cosa
-add16 y1, sina
+jsr drawLine
+
+lda player_x
+sta x0
+lda player_y
+sta y0
+jsr offsetAndScaleVert0
+
+add16 x0, cosa
+add16 y0, sina
 
 jsr drawLine
 

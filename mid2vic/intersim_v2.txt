@@ -1,0 +1,179 @@
+MFile 1 2 96
+MTrk
+0 Tempo 425504
+0 KeySig 0 major
+0 TimeSig 4/4 24 8
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Meta TrkEnd
+TrkEnd
+MTrk
+0 Par ch=1 c=0 v=0
+0 Par ch=1 c=32 v=0
+0 PrCh ch=1 p=30
+0 Meta TrkName "Untitled\0"
+0 Par ch=1 c=7 v=127
+0 Par ch=1 c=0 v=0
+0 Par ch=1 c=7 v=127
+0 Par ch=1 c=0 v=0
+0 Par ch=1 c=10 v=94
+0 Par ch=1 c=7 v=100
+0 On ch=1 n=47 v=119
+12 Off ch=1 n=47 v=0
+36 On ch=1 n=47 v=113
+48 Off ch=1 n=47 v=0
+74 On ch=1 n=47 v=127
+84 Off ch=1 n=47 v=0
+110 On ch=1 n=47 v=110
+120 Off ch=1 n=47 v=0
+146 On ch=1 n=47 v=127
+158 Off ch=1 n=47 v=0
+184 On ch=1 n=47 v=127
+194 Off ch=1 n=47 v=0
+220 On ch=1 n=47 v=122
+232 Off ch=1 n=47 v=0
+256 On ch=1 n=47 v=122
+268 Off ch=1 n=47 v=0
+292 On ch=1 n=47 v=127
+304 Off ch=1 n=47 v=0
+328 On ch=1 n=47 v=127
+340 Off ch=1 n=47 v=0
+364 On ch=1 n=47 v=127
+376 Off ch=1 n=47 v=0
+400 On ch=1 n=47 v=127
+412 Off ch=1 n=47 v=0
+438 On ch=1 n=47 v=127
+448 Off ch=1 n=47 v=0
+510 On ch=1 n=47 v=127
+520 Off ch=1 n=47 v=0
+548 On ch=1 n=47 v=127
+582 Off ch=1 n=47 v=0
+584 On ch=1 n=50 v=122
+620 Off ch=1 n=50 v=0
+620 On ch=1 n=47 v=127
+632 Off ch=1 n=47 v=0
+656 On ch=1 n=47 v=107
+668 Off ch=1 n=47 v=0
+692 On ch=1 n=47 v=110
+728 On ch=1 n=49 v=127
+730 Off ch=1 n=47 v=0
+762 Off ch=1 n=49 v=0
+766 On ch=1 n=47 v=119
+780 Off ch=1 n=47 v=0
+802 On ch=1 n=47 v=110
+814 Off ch=1 n=47 v=0
+838 On ch=1 n=47 v=95
+876 On ch=1 n=53 v=127
+878 Off ch=1 n=47 v=0
+912 Off ch=1 n=53 v=0
+912 On ch=1 n=47 v=104
+940 Off ch=1 n=47 v=0
+948 On ch=1 n=52 v=127
+982 Off ch=1 n=52 v=0
+984 On ch=1 n=47 v=89
+1020 Off ch=1 n=47 v=0
+1020 On ch=1 n=50 v=119
+1052 Off ch=1 n=50 v=0
+1056 On ch=1 n=47 v=95
+1072 Off ch=1 n=47 v=0
+1092 On ch=1 n=47 v=98
+1104 Off ch=1 n=47 v=0
+1130 On ch=1 n=47 v=104
+1164 Off ch=1 n=47 v=0
+1166 On ch=1 n=50 v=116
+1200 Off ch=1 n=50 v=0
+1202 On ch=1 n=47 v=110
+1216 Off ch=1 n=47 v=0
+1240 On ch=1 n=47 v=89
+1252 Off ch=1 n=47 v=0
+1276 On ch=1 n=47 v=98
+1312 On ch=1 n=49 v=127
+1314 Off ch=1 n=47 v=0
+1346 Off ch=1 n=49 v=0
+1348 On ch=1 n=47 v=107
+1362 Off ch=1 n=47 v=0
+1384 On ch=1 n=47 v=101
+1396 Off ch=1 n=47 v=0
+1420 On ch=1 n=47 v=98
+1458 On ch=1 n=53 v=127
+1460 Off ch=1 n=47 v=0
+1490 Off ch=1 n=53 v=0
+1494 On ch=1 n=47 v=104
+1528 Off ch=1 n=47 v=0
+1530 On ch=1 n=52 v=127
+1566 Off ch=1 n=52 v=0
+1568 On ch=1 n=47 v=113
+1602 Off ch=1 n=47 v=0
+1604 On ch=1 n=50 v=113
+1676 Off ch=1 n=50 v=0
+1676 On ch=1 n=47 v=98
+1688 Off ch=1 n=47 v=0
+1712 On ch=1 n=47 v=119
+1744 Off ch=1 n=47 v=0
+1748 On ch=1 n=50 v=127
+1784 Off ch=1 n=50 v=0
+1784 On ch=1 n=47 v=113
+1798 Off ch=1 n=47 v=0
+1822 On ch=1 n=47 v=98
+1834 Off ch=1 n=47 v=0
+1858 On ch=1 n=47 v=98
+1894 Off ch=1 n=47 v=0
+1894 On ch=1 n=49 v=127
+1930 Off ch=1 n=49 v=0
+1932 On ch=1 n=47 v=110
+1944 Off ch=1 n=47 v=0
+1968 On ch=1 n=47 v=89
+1980 Off ch=1 n=47 v=0
+2004 On ch=1 n=47 v=113
+2040 Off ch=1 n=47 v=0
+2040 On ch=1 n=53 v=127
+2074 Off ch=1 n=53 v=0
+2076 On ch=1 n=47 v=110
+2108 Off ch=1 n=47 v=0
+2112 On ch=1 n=52 v=127
+2150 Off ch=1 n=52 v=0
+2150 On ch=1 n=47 v=119
+2184 Off ch=1 n=47 v=0
+2186 On ch=1 n=50 v=122
+2216 Off ch=1 n=50 v=0
+2222 On ch=1 n=47 v=98
+2236 Off ch=1 n=47 v=0
+2260 On ch=1 n=47 v=98
+2270 Off ch=1 n=47 v=0
+2296 On ch=1 n=47 v=107
+2328 Off ch=1 n=47 v=0
+2332 On ch=1 n=50 v=127
+2366 Off ch=1 n=50 v=0
+2368 On ch=1 n=47 v=98
+2380 Off ch=1 n=47 v=0
+2404 On ch=1 n=47 v=104
+2416 Off ch=1 n=47 v=0
+2440 On ch=1 n=47 v=119
+2476 Off ch=1 n=47 v=0
+2476 On ch=1 n=49 v=127
+2514 Off ch=1 n=49 v=0
+2514 On ch=1 n=47 v=107
+2528 Off ch=1 n=47 v=0
+2550 On ch=1 n=47 v=113
+2562 Off ch=1 n=47 v=0
+2586 On ch=1 n=47 v=107
+2622 Off ch=1 n=47 v=0
+2624 On ch=1 n=53 v=127
+2660 Off ch=1 n=53 v=0
+2660 On ch=1 n=47 v=107
+2692 Off ch=1 n=47 v=0
+2696 On ch=1 n=52 v=127
+2730 Off ch=1 n=52 v=0
+2732 On ch=1 n=47 v=119
+2768 Off ch=1 n=47 v=0
+2768 On ch=1 n=50 v=127
+2804 Off ch=1 n=50 v=0
+2804 On ch=1 n=47 v=122
+2816 Off ch=1 n=47 v=0
+3839 Par ch=1 c=127 v=0
+3839 Meta TrkEnd
+TrkEnd
