@@ -1,0 +1,141 @@
+MFile 1 2 96
+MTrk
+0 Tempo 500000
+0 KeySig 0 major
+0 TimeSig 4/4 24 8
+0 Meta TrkEnd
+TrkEnd
+MTrk
+0 Par ch=1 c=0 v=0
+0 Par ch=1 c=32 v=0
+0 PrCh ch=1 p=30
+0 Meta TrkName "MUS2MIDI v0.82 - joakim.erdfelt@swsbbs.com\0"
+0 Par ch=1 c=7 v=127
+0 Pb ch=1 v=12032
+2 Pb ch=1 v=12672
+4 Pb ch=1 v=13184
+8 Pb ch=1 v=13696
+12 Pb ch=1 v=11904
+16 Pb ch=1 v=10752
+18 Pb ch=1 v=10112
+20 Pb ch=1 v=9600
+24 Pb ch=1 v=9216
+26 Pb ch=1 v=8832
+28 Pb ch=1 v=8704
+34 Pb ch=1 v=8320
+42 Pb ch=1 v=8192
+4742 On ch=1 n=61 v=97
+4760 Off ch=1 n=61 v=0
+4778 On ch=1 n=61 v=100
+4816 Off ch=1 n=61 v=0
+4816 On ch=1 n=63 v=95
+4852 Off ch=1 n=63 v=0
+4852 On ch=1 n=64 v=90
+4888 Off ch=1 n=64 v=0
+4888 On ch=1 n=63 v=95
+4906 Off ch=1 n=63 v=0
+4924 On ch=1 n=63 v=89
+4960 Off ch=1 n=63 v=0
+4960 On ch=1 n=61 v=87
+4996 Off ch=1 n=61 v=0
+4996 On ch=1 n=59 v=83
+5032 Off ch=1 n=59 v=0
+5032 On ch=1 n=56 v=97
+5052 Off ch=1 n=56 v=0
+5070 On ch=1 n=56 v=89
+5106 Off ch=1 n=56 v=0
+5106 On ch=1 n=57 v=83
+5142 Off ch=1 n=57 v=0
+5142 On ch=1 n=59 v=88
+5180 Off ch=1 n=59 v=0
+5180 On ch=1 n=57 v=95
+5252 Off ch=1 n=57 v=0
+5252 On ch=1 n=56 v=94
+5324 Off ch=1 n=56 v=0
+5324 On ch=1 n=61 v=96
+5344 Off ch=1 n=61 v=0
+5360 On ch=1 n=61 v=100
+5398 Off ch=1 n=61 v=0
+5398 On ch=1 n=63 v=93
+5434 Off ch=1 n=63 v=0
+5434 On ch=1 n=64 v=91
+5470 Off ch=1 n=64 v=0
+5470 On ch=1 n=66 v=102
+5508 Off ch=1 n=66 v=0
+5508 On ch=1 n=64 v=95
+5544 Off ch=1 n=64 v=0
+5544 On ch=1 n=63 v=91
+5580 Off ch=1 n=63 v=0
+5580 On ch=1 n=61 v=93
+5616 Off ch=1 n=61 v=0
+5616 On ch=1 n=56 v=97
+5634 Off ch=1 n=56 v=0
+5652 On ch=1 n=56 v=93
+5688 Off ch=1 n=56 v=0
+5688 On ch=1 n=57 v=93
+5726 Off ch=1 n=57 v=0
+5726 On ch=1 n=59 v=97
+5762 Off ch=1 n=59 v=0
+5762 On ch=1 n=57 v=91
+5834 Off ch=1 n=57 v=0
+5834 On ch=1 n=56 v=102
+5908 Off ch=1 n=56 v=0
+5908 On ch=1 n=61 v=83
+5944 Off ch=1 n=61 v=0
+5944 On ch=1 n=68 v=88
+5980 Off ch=1 n=68 v=0
+5980 On ch=1 n=67 v=83
+6016 Off ch=1 n=67 v=0
+6016 On ch=1 n=68 v=88
+6052 Off ch=1 n=68 v=0
+6052 On ch=1 n=69 v=89
+6090 Off ch=1 n=69 v=0
+6090 On ch=1 n=68 v=86
+6126 Off ch=1 n=68 v=0
+6126 On ch=1 n=64 v=83
+6162 Off ch=1 n=64 v=0
+6162 On ch=1 n=68 v=89
+6200 Off ch=1 n=68 v=0
+6200 On ch=1 n=56 v=95
+6236 Off ch=1 n=56 v=0
+6236 On ch=1 n=63 v=92
+6272 Off ch=1 n=63 v=0
+6272 On ch=1 n=62 v=89
+6308 Off ch=1 n=62 v=0
+6308 On ch=1 n=63 v=93
+6344 Off ch=1 n=63 v=0
+6344 On ch=1 n=64 v=95
+6418 Off ch=1 n=64 v=0
+6418 On ch=1 n=57 v=94
+6490 Off ch=1 n=57 v=0
+6490 On ch=1 n=61 v=83
+6526 Off ch=1 n=61 v=0
+6526 On ch=1 n=68 v=88
+6564 Off ch=1 n=68 v=0
+6564 On ch=1 n=67 v=83
+6600 Off ch=1 n=67 v=0
+6600 On ch=1 n=68 v=88
+6636 Off ch=1 n=68 v=0
+6636 On ch=1 n=64 v=89
+6672 Off ch=1 n=64 v=0
+6672 On ch=1 n=68 v=86
+6708 Off ch=1 n=68 v=0
+6708 On ch=1 n=63 v=83
+6744 Off ch=1 n=63 v=0
+6744 On ch=1 n=68 v=89
+6782 Off ch=1 n=68 v=0
+6782 On ch=1 n=56 v=95
+6818 Off ch=1 n=56 v=0
+6818 On ch=1 n=63 v=92
+6854 Off ch=1 n=63 v=0
+6854 On ch=1 n=62 v=89
+6892 Off ch=1 n=62 v=0
+6892 On ch=1 n=63 v=93
+6928 Off ch=1 n=63 v=0
+6928 On ch=1 n=64 v=95
+7000 Off ch=1 n=64 v=0
+7000 On ch=1 n=57 v=94
+7072 Off ch=1 n=57 v=0
+7295 Par ch=1 c=127 v=0
+7295 Meta TrkEnd
+TrkEnd

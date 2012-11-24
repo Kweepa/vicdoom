@@ -1219,7 +1219,7 @@ start:
   setUpScreenForBitmap();
   setUpScreenForMenu();
   stopMusic();
-  read_data_file("intromus", 0xB700, 0x320);
+  read_data_file("e1m9mus", 0xB700, 0x320);
   startMusic();
   runMenu(0);
   stopMusic();
