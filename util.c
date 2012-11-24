@@ -45,7 +45,7 @@ void __fastcall__ printCentered(char *str, char y)
 void __fastcall__ waitforraster(void)
 {
     while (PEEK(0x9004) > 16) ;
-    while (PEEK(0x9004) < 16) ;
+    while (PEEK(0x9004) <= 16) ;
 }
 
 unsigned int __fastcall__ sqrt(unsigned long x)

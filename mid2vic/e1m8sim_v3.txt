@@ -1,0 +1,1548 @@
+MFile 1 2 96
+MTrk
+0 Tempo 500000
+0 KeySig 0 major
+0 TimeSig 4/4 24 8
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Meta TrkEnd
+TrkEnd
+MTrk
+0 Par ch=1 c=0 v=0
+0 Par ch=1 c=32 v=0
+0 PrCh ch=1 p=29
+0 Meta TrkName "Untitled\0"
+0 Par ch=1 c=7 v=127
+0 Par ch=1 c=0 v=0
+0 Par ch=1 c=7 v=127
+0 Par ch=1 c=0 v=0
+0 Par ch=1 c=10 v=64
+0 Par ch=1 c=7 v=100
+0 Par ch=1 c=7 v=100
+0 Par ch=1 c=10 v=64
+0 Par ch=1 c=7 v=100
+0 Par ch=1 c=10 v=64
+4478 On ch=1 n=67 v=104
+4516 Pb ch=1 v=8192
+4522 Pb ch=1 v=8320
+4524 Pb ch=1 v=8704
+4528 Pb ch=1 v=9088
+4532 Pb ch=1 v=9344
+4536 Pb ch=1 v=9600
+4538 Pb ch=1 v=10240
+4544 Pb ch=1 v=10752
+4548 Pb ch=1 v=11136
+4556 Pb ch=1 v=11520
+4560 Pb ch=1 v=11904
+4562 Pb ch=1 v=12160
+4568 Pb ch=1 v=12352
+4646 Par ch=1 c=1 v=1
+4652 Par ch=1 c=1 v=3
+4656 Par ch=1 c=1 v=4
+4664 Par ch=1 c=1 v=5
+4666 Par ch=1 c=1 v=6
+4670 Par ch=1 c=1 v=7
+4676 Par ch=1 c=1 v=9
+4680 Par ch=1 c=1 v=10
+4686 Par ch=1 c=1 v=12
+4690 Par ch=1 c=1 v=13
+4696 Par ch=1 c=1 v=15
+4700 Par ch=1 c=1 v=16
+4706 Par ch=1 c=1 v=18
+4716 Par ch=1 c=1 v=19
+4720 Par ch=1 c=1 v=20
+4726 Par ch=1 c=1 v=21
+4736 Par ch=1 c=1 v=22
+4824 Par ch=1 c=1 v=20
+4838 Par ch=1 c=1 v=19
+4844 Par ch=1 c=1 v=18
+4854 Par ch=1 c=1 v=17
+4860 Par ch=1 c=1 v=16
+4878 Par ch=1 c=1 v=15
+4892 Par ch=1 c=1 v=14
+4918 Par ch=1 c=1 v=11
+4928 Par ch=1 c=1 v=10
+4936 Par ch=1 c=1 v=9
+4944 Par ch=1 c=1 v=8
+4952 Par ch=1 c=1 v=7
+4966 Par ch=1 c=1 v=6
+4980 Par ch=1 c=1 v=4
+4988 Par ch=1 c=1 v=3
+4992 Par ch=1 c=1 v=2
+4996 Par ch=1 c=1 v=1
+5004 Par ch=1 c=1 v=0
+5038 Off ch=1 n=67 v=0
+5038 Pb ch=1 v=8192
+5038 On ch=1 n=67 v=104
+5100 Off ch=1 n=67 v=0
+5100 On ch=1 n=65 v=104
+5164 Off ch=1 n=65 v=0
+5164 On ch=1 n=63 v=104
+5224 Off ch=1 n=63 v=0
+5224 On ch=1 n=67 v=104
+5346 Par ch=1 c=1 v=1
+5356 Par ch=1 c=1 v=3
+5360 Par ch=1 c=1 v=4
+5366 Par ch=1 c=1 v=5
+5368 Par ch=1 c=1 v=6
+5372 Par ch=1 c=1 v=7
+5380 Par ch=1 c=1 v=9
+5382 Par ch=1 c=1 v=10
+5388 Par ch=1 c=1 v=12
+5392 Par ch=1 c=1 v=13
+5400 Par ch=1 c=1 v=14
+5404 Par ch=1 c=1 v=15
+5412 Par ch=1 c=1 v=16
+5416 Par ch=1 c=1 v=17
+5424 Par ch=1 c=1 v=18
+5432 Par ch=1 c=1 v=19
+5446 Par ch=1 c=1 v=20
+5460 Par ch=1 c=1 v=21
+5466 Par ch=1 c=1 v=22
+5476 Par ch=1 c=1 v=23
+5528 Par ch=1 c=1 v=26
+5550 Par ch=1 c=1 v=27
+5712 Par ch=1 c=1 v=24
+5722 Par ch=1 c=1 v=23
+5728 Par ch=1 c=1 v=22
+5742 Par ch=1 c=1 v=21
+5800 Par ch=1 c=1 v=18
+5804 Par ch=1 c=1 v=17
+5810 Par ch=1 c=1 v=16
+5816 Par ch=1 c=1 v=15
+5826 Par ch=1 c=1 v=14
+5836 Par ch=1 c=1 v=13
+5844 Par ch=1 c=1 v=12
+5846 Par ch=1 c=1 v=11
+5856 Par ch=1 c=1 v=10
+5860 Par ch=1 c=1 v=9
+5864 Par ch=1 c=1 v=8
+5870 Par ch=1 c=1 v=7
+5872 Par ch=1 c=1 v=6
+5884 Par ch=1 c=1 v=5
+5890 Par ch=1 c=1 v=4
+5896 Par ch=1 c=1 v=3
+5904 Par ch=1 c=1 v=2
+5908 Par ch=1 c=1 v=1
+5910 Par ch=1 c=1 v=0
+5940 Off ch=1 n=67 v=0
+5972 On ch=1 n=67 v=104
+6016 Pb ch=1 v=8320
+6018 Pb ch=1 v=8704
+6022 Pb ch=1 v=9088
+6024 Pb ch=1 v=9344
+6028 Pb ch=1 v=9600
+6032 Pb ch=1 v=10240
+6038 Pb ch=1 v=10752
+6042 Pb ch=1 v=11136
+6048 Pb ch=1 v=11520
+6052 Pb ch=1 v=11904
+6056 Pb ch=1 v=12160
+6062 Pb ch=1 v=12352
+6234 Par ch=1 c=1 v=1
+6240 Par ch=1 c=1 v=2
+6244 Par ch=1 c=1 v=3
+6248 Par ch=1 c=1 v=4
+6254 Par ch=1 c=1 v=5
+6256 Par ch=1 c=1 v=6
+6268 Par ch=1 c=1 v=8
+6270 Par ch=1 c=1 v=9
+6280 Par ch=1 c=1 v=11
+6288 Par ch=1 c=1 v=12
+6294 Par ch=1 c=1 v=13
+6296 Par ch=1 c=1 v=14
+6308 Par ch=1 c=1 v=16
+6314 Par ch=1 c=1 v=17
+6320 Par ch=1 c=1 v=18
+6398 Par ch=1 c=1 v=21
+6408 Par ch=1 c=1 v=22
+6422 Par ch=1 c=1 v=23
+6512 Par ch=1 c=1 v=20
+6524 Par ch=1 c=1 v=18
+6530 Par ch=1 c=1 v=17
+6532 Off ch=1 n=67 v=0
+6532 Pb ch=1 v=8192
+6532 On ch=1 n=67 v=104
+6536 Par ch=1 c=1 v=16
+6540 Par ch=1 c=1 v=15
+6544 Par ch=1 c=1 v=14
+6550 Par ch=1 c=1 v=13
+6552 Par ch=1 c=1 v=12
+6556 Par ch=1 c=1 v=11
+6564 Par ch=1 c=1 v=9
+6566 Par ch=1 c=1 v=8
+6572 Par ch=1 c=1 v=6
+6576 Par ch=1 c=1 v=5
+6584 Par ch=1 c=1 v=3
+6590 Par ch=1 c=1 v=2
+6594 Off ch=1 n=67 v=0
+6594 On ch=1 n=65 v=104
+6596 Par ch=1 c=1 v=1
+6600 Par ch=1 c=1 v=0
+6656 Off ch=1 n=65 v=0
+6656 On ch=1 n=63 v=104
+6718 Off ch=1 n=63 v=0
+6718 On ch=1 n=67 v=104
+6846 Par ch=1 c=1 v=1
+6856 Par ch=1 c=1 v=3
+6860 Par ch=1 c=1 v=4
+6866 Par ch=1 c=1 v=6
+6868 Par ch=1 c=1 v=7
+6876 Par ch=1 c=1 v=9
+6880 Par ch=1 c=1 v=10
+6888 Par ch=1 c=1 v=11
+6892 Par ch=1 c=1 v=12
+6900 Par ch=1 c=1 v=13
+6906 Par ch=1 c=1 v=14
+6920 Par ch=1 c=1 v=15
+6940 Par ch=1 c=1 v=16
+6970 Par ch=1 c=1 v=18
+6980 Par ch=1 c=1 v=19
+6994 Par ch=1 c=1 v=20
+7044 Par ch=1 c=1 v=22
+7054 Par ch=1 c=1 v=23
+7100 Par ch=1 c=1 v=25
+7112 Par ch=1 c=1 v=26
+7220 Par ch=1 c=1 v=24
+7232 Par ch=1 c=1 v=23
+7266 Par ch=1 c=1 v=20
+7280 Par ch=1 c=1 v=19
+7290 Par ch=1 c=1 v=18
+7300 Par ch=1 c=1 v=17
+7304 Par ch=1 c=1 v=16
+7310 Par ch=1 c=1 v=15
+7320 Par ch=1 c=1 v=14
+7330 Par ch=1 c=1 v=13
+7336 Par ch=1 c=1 v=12
+7348 Par ch=1 c=1 v=11
+7356 Par ch=1 c=1 v=10
+7364 Par ch=1 c=1 v=9
+7374 Par ch=1 c=1 v=8
+7376 Par ch=1 c=1 v=7
+7384 Par ch=1 c=1 v=6
+7390 Par ch=1 c=1 v=5
+7394 Par ch=1 c=1 v=4
+7404 Par ch=1 c=1 v=2
+7408 Par ch=1 c=1 v=1
+7416 Par ch=1 c=1 v=0
+7432 Off ch=1 n=67 v=0
+7464 On ch=1 n=67 v=104
+7508 Pb ch=1 v=8320
+7512 Pb ch=1 v=8704
+7516 Pb ch=1 v=9088
+7518 Pb ch=1 v=9344
+7522 Pb ch=1 v=9600
+7524 Pb ch=1 v=10240
+7532 Pb ch=1 v=10752
+7536 Pb ch=1 v=11136
+7542 Pb ch=1 v=11520
+7546 Pb ch=1 v=11904
+7548 Pb ch=1 v=12160
+7556 Pb ch=1 v=12352
+7656 Par ch=1 c=1 v=1
+7666 Par ch=1 c=1 v=2
+7680 Par ch=1 c=1 v=3
+7690 Par ch=1 c=1 v=4
+7696 Par ch=1 c=1 v=5
+7706 Par ch=1 c=1 v=7
+7712 Par ch=1 c=1 v=8
+7720 Par ch=1 c=1 v=9
+7724 Par ch=1 c=1 v=10
+7732 Par ch=1 c=1 v=12
+7740 Par ch=1 c=1 v=13
+7748 Par ch=1 c=1 v=14
+7756 Par ch=1 c=1 v=15
+7764 Par ch=1 c=1 v=16
+7774 Par ch=1 c=1 v=17
+7784 Par ch=1 c=1 v=18
+7798 Par ch=1 c=1 v=19
+7834 Par ch=1 c=1 v=21
+7924 Par ch=1 c=1 v=18
+7936 Par ch=1 c=1 v=17
+7940 Par ch=1 c=1 v=16
+7948 Par ch=1 c=1 v=15
+7960 Par ch=1 c=1 v=14
+7976 Par ch=1 c=1 v=13
+7982 Par ch=1 c=1 v=12
+8008 Par ch=1 c=1 v=9
+8012 Par ch=1 c=1 v=8
+8020 Par ch=1 c=1 v=6
+8024 Off ch=1 n=67 v=0
+8024 Par ch=1 c=1 v=5
+8024 Pb ch=1 v=8192
+8024 On ch=1 n=68 v=104
+8030 Par ch=1 c=1 v=1
+8032 Par ch=1 c=1 v=0
+8088 Off ch=1 n=68 v=0
+8088 On ch=1 n=72 v=104
+8150 Off ch=1 n=72 v=0
+8150 On ch=1 n=68 v=104
+8214 Pb ch=1 v=7936
+8218 Pb ch=1 v=7552
+8220 Pb ch=1 v=7168
+8228 Pb ch=1 v=6912
+8232 Pb ch=1 v=6784
+8238 Pb ch=1 v=6528
+8240 Pb ch=1 v=6272
+8248 Pb ch=1 v=5888
+8252 Pb ch=1 v=5760
+8258 Pb ch=1 v=5504
+8260 Pb ch=1 v=5248
+8268 Pb ch=1 v=4992
+8278 Pb ch=1 v=4736
+8294 Pb ch=1 v=4608
+8298 Pb ch=1 v=4736
+8308 Pb ch=1 v=4608
+8356 Pb ch=1 v=4352
+8380 Par ch=1 c=1 v=1
+8392 Par ch=1 c=1 v=2
+8420 Par ch=1 c=1 v=4
+8432 Par ch=1 c=1 v=5
+8476 Par ch=1 c=1 v=7
+8480 Par ch=1 c=1 v=8
+8494 Par ch=1 c=1 v=9
+8536 Par ch=1 c=1 v=11
+8548 Par ch=1 c=1 v=12
+8560 Par ch=1 c=1 v=13
+8624 Par ch=1 c=1 v=15
+8642 Par ch=1 c=1 v=16
+8668 Par ch=1 c=1 v=18
+8678 Par ch=1 c=1 v=19
+8780 Par ch=1 c=1 v=16
+8790 Par ch=1 c=1 v=15
+8796 Par ch=1 c=1 v=14
+8806 Par ch=1 c=1 v=12
+8812 Par ch=1 c=1 v=11
+8820 Par ch=1 c=1 v=9
+8826 Par ch=1 c=1 v=8
+8832 Par ch=1 c=1 v=7
+8836 Par ch=1 c=1 v=6
+8840 Par ch=1 c=1 v=5
+8848 Par ch=1 c=1 v=4
+8850 Par ch=1 c=1 v=3
+8856 Par ch=1 c=1 v=2
+8860 Par ch=1 c=1 v=1
+8864 Par ch=1 c=1 v=0
+8958 Off ch=1 n=68 v=0
+8958 Pb ch=1 v=8192
+8958 On ch=1 n=68 v=104
+9136 Par ch=1 c=1 v=1
+9146 Par ch=1 c=1 v=2
+9156 Par ch=1 c=1 v=3
+9166 Par ch=1 c=1 v=4
+9172 Par ch=1 c=1 v=5
+9180 Par ch=1 c=1 v=6
+9190 Par ch=1 c=1 v=7
+9196 Par ch=1 c=1 v=8
+9204 Par ch=1 c=1 v=9
+9210 Par ch=1 c=1 v=10
+9224 Par ch=1 c=1 v=11
+9230 Par ch=1 c=1 v=12
+9244 Par ch=1 c=1 v=13
+9250 Par ch=1 c=1 v=14
+9268 Par ch=1 c=1 v=15
+9280 Par ch=1 c=1 v=16
+9300 Par ch=1 c=1 v=18
+9304 Par ch=1 c=1 v=19
+9398 Par ch=1 c=1 v=16
+9408 Par ch=1 c=1 v=15
+9412 Par ch=1 c=1 v=14
+9424 Par ch=1 c=1 v=13
+9428 Par ch=1 c=1 v=12
+9436 Par ch=1 c=1 v=11
+9442 Par ch=1 c=1 v=10
+9448 Par ch=1 c=1 v=9
+9456 Par ch=1 c=1 v=8
+9460 Par ch=1 c=1 v=7
+9468 Par ch=1 c=1 v=6
+9472 Par ch=1 c=1 v=5
+9480 Par ch=1 c=1 v=4
+9486 Par ch=1 c=1 v=3
+9492 Par ch=1 c=1 v=2
+9502 Par ch=1 c=1 v=1
+9510 Par ch=1 c=1 v=0
+9518 Off ch=1 n=68 v=0
+9518 On ch=1 n=68 v=104
+9580 Off ch=1 n=68 v=0
+9580 On ch=1 n=72 v=104
+9644 Off ch=1 n=72 v=0
+9644 On ch=1 n=75 v=104
+9704 Off ch=1 n=75 v=0
+9704 On ch=1 n=72 v=104
+9836 Par ch=1 c=1 v=1
+9842 Par ch=1 c=1 v=2
+9844 Par ch=1 c=1 v=3
+9852 Par ch=1 c=1 v=4
+9856 Par ch=1 c=1 v=5
+9866 Par ch=1 c=1 v=6
+9868 Par ch=1 c=1 v=7
+9880 Par ch=1 c=1 v=8
+9886 Par ch=1 c=1 v=9
+9900 Par ch=1 c=1 v=10
+9910 Par ch=1 c=1 v=11
+9924 Par ch=1 c=1 v=12
+9936 Par ch=1 c=1 v=13
+9946 Par ch=1 c=1 v=14
+9960 Par ch=1 c=1 v=15
+10096 Par ch=1 c=1 v=18
+10352 Par ch=1 c=1 v=14
+10364 Par ch=1 c=1 v=12
+10370 Par ch=1 c=1 v=11
+10376 Par ch=1 c=1 v=9
+10380 Par ch=1 c=1 v=8
+10388 Par ch=1 c=1 v=6
+10390 Par ch=1 c=1 v=5
+10396 Par ch=1 c=1 v=3
+10400 Par ch=1 c=1 v=2
+10408 Par ch=1 c=1 v=0
+10444 Off ch=1 n=72 v=0
+10452 On ch=1 n=67 v=104
+10496 Pb ch=1 v=8320
+10498 Pb ch=1 v=8704
+10502 Pb ch=1 v=9088
+10504 Pb ch=1 v=9344
+10508 Pb ch=1 v=9600
+10512 Pb ch=1 v=10240
+10518 Pb ch=1 v=10752
+10522 Pb ch=1 v=11136
+10528 Pb ch=1 v=11520
+10532 Pb ch=1 v=11904
+10536 Pb ch=1 v=12160
+10542 Pb ch=1 v=12352
+10676 Par ch=1 c=1 v=1
+10680 Par ch=1 c=1 v=2
+10686 Par ch=1 c=1 v=3
+10692 Par ch=1 c=1 v=4
+10700 Par ch=1 c=1 v=5
+10708 Par ch=1 c=1 v=6
+10714 Par ch=1 c=1 v=7
+10724 Par ch=1 c=1 v=8
+10726 Par ch=1 c=1 v=9
+10744 Par ch=1 c=1 v=10
+10756 Par ch=1 c=1 v=11
+10760 Par ch=1 c=1 v=12
+10768 Par ch=1 c=1 v=13
+10780 Par ch=1 c=1 v=14
+10860 Par ch=1 c=1 v=17
+10872 Par ch=1 c=1 v=18
+10884 Par ch=1 c=1 v=19
+11000 Par ch=1 c=1 v=14
+11004 Par ch=1 c=1 v=13
+11008 Par ch=1 c=1 v=10
+11012 Off ch=1 n=67 v=0
+11012 Pb ch=1 v=8192
+11012 Par ch=1 c=1 v=9
+11012 On ch=1 n=67 v=104
+11020 Par ch=1 c=1 v=6
+11024 Par ch=1 c=1 v=5
+11030 Par ch=1 c=1 v=2
+11032 Par ch=1 c=1 v=1
+11036 Par ch=1 c=1 v=0
+11074 Off ch=1 n=67 v=0
+11074 On ch=1 n=65 v=104
+11136 Off ch=1 n=65 v=0
+11136 On ch=1 n=63 v=104
+11198 Off ch=1 n=63 v=0
+11198 On ch=1 n=67 v=104
+11336 Par ch=1 c=1 v=1
+11340 Par ch=1 c=1 v=2
+11346 Par ch=1 c=1 v=4
+11348 Par ch=1 c=1 v=5
+11356 Par ch=1 c=1 v=6
+11360 Par ch=1 c=1 v=7
+11372 Par ch=1 c=1 v=8
+11386 Par ch=1 c=1 v=9
+11424 Par ch=1 c=1 v=11
+11432 Par ch=1 c=1 v=12
+11440 Par ch=1 c=1 v=13
+11454 Par ch=1 c=1 v=14
+11468 Par ch=1 c=1 v=15
+11496 Par ch=1 c=1 v=18
+11510 Par ch=1 c=1 v=19
+11656 Par ch=1 c=1 v=17
+11658 Par ch=1 c=1 v=16
+11664 Par ch=1 c=1 v=15
+11672 Par ch=1 c=1 v=14
+11682 Par ch=1 c=1 v=13
+11688 Par ch=1 c=1 v=12
+11702 Par ch=1 c=1 v=11
+11760 Par ch=1 c=1 v=9
+11762 Par ch=1 c=1 v=8
+11784 Par ch=1 c=1 v=7
+11816 Par ch=1 c=1 v=4
+11828 Par ch=1 c=1 v=3
+11864 Par ch=1 c=1 v=0
+11944 Off ch=1 n=67 v=0
+11944 On ch=1 n=67 v=104
+11988 Pb ch=1 v=8320
+11992 Pb ch=1 v=8704
+11996 Pb ch=1 v=9088
+11998 Pb ch=1 v=9344
+12002 Pb ch=1 v=9600
+12004 Pb ch=1 v=10240
+12012 Pb ch=1 v=10752
+12016 Pb ch=1 v=11136
+12022 Pb ch=1 v=11520
+12026 Pb ch=1 v=11904
+12028 Pb ch=1 v=12160
+12036 Pb ch=1 v=12352
+12120 Par ch=1 c=1 v=1
+12130 Par ch=1 c=1 v=2
+12132 Par ch=1 c=1 v=3
+12136 Par ch=1 c=1 v=4
+12146 Par ch=1 c=1 v=5
+12164 Par ch=1 c=1 v=6
+12196 Par ch=1 c=1 v=9
+12206 Par ch=1 c=1 v=10
+12254 Par ch=1 c=1 v=13
+12268 Par ch=1 c=1 v=14
+12314 Par ch=1 c=1 v=17
+12324 Par ch=1 c=1 v=18
+12338 Par ch=1 c=1 v=19
+12446 Par ch=1 c=1 v=15
+12448 Par ch=1 c=1 v=14
+12456 Par ch=1 c=1 v=13
+12458 Par ch=1 c=1 v=12
+12468 Par ch=1 c=1 v=11
+12476 Par ch=1 c=1 v=10
+12480 Par ch=1 c=1 v=9
+12486 Par ch=1 c=1 v=8
+12492 Par ch=1 c=1 v=7
+12504 Off ch=1 n=67 v=0
+12504 Par ch=1 c=1 v=6
+12504 Pb ch=1 v=8192
+12504 On ch=1 n=67 v=104
+12512 Par ch=1 c=1 v=5
+12516 Par ch=1 c=1 v=4
+12524 Par ch=1 c=1 v=3
+12530 Par ch=1 c=1 v=2
+12536 Par ch=1 c=1 v=1
+12540 Par ch=1 c=1 v=0
+12568 Off ch=1 n=67 v=0
+12568 On ch=1 n=65 v=104
+12630 Off ch=1 n=65 v=0
+12630 On ch=1 n=63 v=104
+12692 Off ch=1 n=63 v=0
+12692 On ch=1 n=67 v=104
+12788 Par ch=1 c=1 v=1
+12796 Par ch=1 c=1 v=2
+12802 Par ch=1 c=1 v=4
+12808 Par ch=1 c=1 v=5
+12816 Par ch=1 c=1 v=6
+12822 Par ch=1 c=1 v=7
+12832 Par ch=1 c=1 v=9
+12840 Par ch=1 c=1 v=10
+12846 Par ch=1 c=1 v=11
+12848 Par ch=1 c=1 v=12
+12852 Par ch=1 c=1 v=13
+12862 Par ch=1 c=1 v=14
+12876 Par ch=1 c=1 v=15
+12882 Par ch=1 c=1 v=16
+12886 Par ch=1 c=1 v=17
+12896 Par ch=1 c=1 v=18
+12910 Par ch=1 c=1 v=19
+12944 Par ch=1 c=1 v=21
+12954 Par ch=1 c=1 v=22
+12966 Par ch=1 c=1 v=23
+13020 Par ch=1 c=1 v=25
+13032 Par ch=1 c=1 v=26
+13148 Par ch=1 c=1 v=24
+13158 Par ch=1 c=1 v=23
+13168 Par ch=1 c=1 v=22
+13178 Par ch=1 c=1 v=21
+13182 Par ch=1 c=1 v=20
+13188 Par ch=1 c=1 v=19
+13200 Par ch=1 c=1 v=18
+13202 Par ch=1 c=1 v=17
+13212 Par ch=1 c=1 v=16
+13220 Par ch=1 c=1 v=15
+13226 Par ch=1 c=1 v=14
+13236 Par ch=1 c=1 v=13
+13246 Par ch=1 c=1 v=12
+13252 Par ch=1 c=1 v=11
+13266 Par ch=1 c=1 v=10
+13270 Par ch=1 c=1 v=9
+13276 Par ch=1 c=1 v=8
+13282 Par ch=1 c=1 v=7
+13292 Par ch=1 c=1 v=5
+13300 Par ch=1 c=1 v=4
+13306 Par ch=1 c=1 v=3
+13310 Par ch=1 c=1 v=2
+13320 Par ch=1 c=1 v=1
+13324 Par ch=1 c=1 v=0
+13404 Off ch=1 n=67 v=0
+13438 On ch=1 n=67 v=104
+13482 Pb ch=1 v=8320
+13484 Pb ch=1 v=8704
+13488 Pb ch=1 v=9088
+13492 Pb ch=1 v=9344
+13496 Pb ch=1 v=9600
+13498 Pb ch=1 v=10240
+13504 Pb ch=1 v=10752
+13508 Pb ch=1 v=11136
+13516 Pb ch=1 v=11520
+13520 Pb ch=1 v=11904
+13522 Pb ch=1 v=12160
+13528 Pb ch=1 v=12352
+13612 Par ch=1 c=1 v=1
+13622 Par ch=1 c=1 v=2
+13626 Par ch=1 c=1 v=3
+13632 Par ch=1 c=1 v=4
+13640 Par ch=1 c=1 v=5
+13646 Par ch=1 c=1 v=6
+13656 Par ch=1 c=1 v=7
+13664 Par ch=1 c=1 v=8
+13670 Par ch=1 c=1 v=9
+13680 Par ch=1 c=1 v=10
+13690 Par ch=1 c=1 v=11
+13700 Par ch=1 c=1 v=12
+13708 Par ch=1 c=1 v=13
+13712 Par ch=1 c=1 v=14
+13728 Par ch=1 c=1 v=15
+13736 Par ch=1 c=1 v=16
+13744 Par ch=1 c=1 v=17
+13750 Par ch=1 c=1 v=18
+13772 Par ch=1 c=1 v=19
+13852 Par ch=1 c=1 v=16
+13856 Par ch=1 c=1 v=15
+13876 Par ch=1 c=1 v=14
+13904 Par ch=1 c=1 v=12
+13916 Par ch=1 c=1 v=11
+13922 Par ch=1 c=1 v=10
+13940 Par ch=1 c=1 v=9
+13942 Par ch=1 c=1 v=8
+13948 Par ch=1 c=1 v=7
+13956 Par ch=1 c=1 v=6
+13960 Par ch=1 c=1 v=5
+13968 Par ch=1 c=1 v=4
+13972 Par ch=1 c=1 v=3
+13980 Par ch=1 c=1 v=2
+13986 Par ch=1 c=1 v=1
+13990 Par ch=1 c=1 v=0
+13996 Off ch=1 n=67 v=0
+13998 Pb ch=1 v=8192
+13998 On ch=1 n=68 v=104
+14060 Off ch=1 n=68 v=0
+14060 On ch=1 n=72 v=104
+14124 Off ch=1 n=72 v=0
+14124 On ch=1 n=68 v=104
+14184 Off ch=1 n=68 v=0
+14184 On ch=1 n=68 v=104
+14188 Pb ch=1 v=7936
+14192 Pb ch=1 v=7552
+14194 Pb ch=1 v=7168
+14200 Pb ch=1 v=6912
+14204 Pb ch=1 v=6784
+14212 Pb ch=1 v=6528
+14214 Pb ch=1 v=6272
+14220 Pb ch=1 v=5888
+14224 Pb ch=1 v=5760
+14232 Pb ch=1 v=5504
+14234 Pb ch=1 v=5248
+14240 Pb ch=1 v=4992
+14252 Pb ch=1 v=4736
+14268 Pb ch=1 v=4608
+14272 Pb ch=1 v=4736
+14282 Pb ch=1 v=4608
+14328 Pb ch=1 v=4352
+14368 Par ch=1 c=1 v=1
+14380 Par ch=1 c=1 v=2
+14390 Par ch=1 c=1 v=3
+14396 Par ch=1 c=1 v=4
+14410 Par ch=1 c=1 v=5
+14474 Par ch=1 c=1 v=8
+14488 Par ch=1 c=1 v=9
+14540 Par ch=1 c=1 v=11
+14552 Par ch=1 c=1 v=12
+14598 Par ch=1 c=1 v=14
+14608 Par ch=1 c=1 v=15
+14702 Par ch=1 c=1 v=13
+14706 Par ch=1 c=1 v=12
+14716 Par ch=1 c=1 v=11
+14728 Par ch=1 c=1 v=10
+14748 Par ch=1 c=1 v=9
+14772 Par ch=1 c=1 v=7
+14776 Par ch=1 c=1 v=6
+14790 Par ch=1 c=1 v=5
+14832 Par ch=1 c=1 v=3
+14836 Par ch=1 c=1 v=2
+14856 Par ch=1 c=1 v=1
+14880 Par ch=1 c=1 v=0
+14932 Off ch=1 n=68 v=0
+14932 Pb ch=1 v=8192
+14932 On ch=1 n=68 v=104
+15130 Par ch=1 c=1 v=1
+15144 Par ch=1 c=1 v=2
+15152 Par ch=1 c=1 v=3
+15166 Par ch=1 c=1 v=4
+15176 Par ch=1 c=1 v=5
+15190 Par ch=1 c=1 v=6
+15216 Par ch=1 c=1 v=9
+15228 Par ch=1 c=1 v=10
+15236 Par ch=1 c=1 v=11
+15248 Par ch=1 c=1 v=12
+15256 Par ch=1 c=1 v=13
+15268 Par ch=1 c=1 v=14
+15280 Par ch=1 c=1 v=15
+15320 Par ch=1 c=1 v=18
+15338 Par ch=1 c=1 v=19
+15378 Par ch=1 c=1 v=21
+15388 Par ch=1 c=1 v=22
+15396 Par ch=1 c=1 v=23
+15456 Par ch=1 c=1 v=20
+15460 Par ch=1 c=1 v=19
+15466 Par ch=1 c=1 v=16
+15468 Par ch=1 c=1 v=15
+15476 Par ch=1 c=1 v=12
+15480 Par ch=1 c=1 v=11
+15486 Par ch=1 c=1 v=8
+15488 Par ch=1 c=1 v=6
+15492 Off ch=1 n=68 v=0
+15492 On ch=1 n=68 v=104
+15496 Par ch=1 c=1 v=4
+15500 Par ch=1 c=1 v=3
+15506 Par ch=1 c=1 v=0
+15554 Off ch=1 n=68 v=0
+15554 On ch=1 n=72 v=104
+15616 Off ch=1 n=72 v=0
+15616 On ch=1 n=75 v=104
+15678 Off ch=1 n=75 v=0
+15678 On ch=1 n=72 v=104
+15862 Par ch=1 c=1 v=1
+15910 Par ch=1 c=1 v=5
+15920 Par ch=1 c=1 v=6
+15924 Par ch=1 c=1 v=7
+15930 Par ch=1 c=1 v=8
+15936 Par ch=1 c=1 v=9
+15950 Par ch=1 c=1 v=10
+15956 Par ch=1 c=1 v=11
+15968 Par ch=1 c=1 v=12
+15976 Par ch=1 c=1 v=13
+15990 Par ch=1 c=1 v=14
+16040 Par ch=1 c=1 v=15
+16044 Par ch=1 c=1 v=16
+16156 Par ch=1 c=1 v=14
+16164 Par ch=1 c=1 v=13
+16226 Par ch=1 c=1 v=11
+16236 Par ch=1 c=1 v=10
+16250 Par ch=1 c=1 v=9
+16276 Par ch=1 c=1 v=7
+16286 Par ch=1 c=1 v=6
+16290 Par ch=1 c=1 v=5
+16304 Par ch=1 c=1 v=4
+16316 Par ch=1 c=1 v=3
+16320 Par ch=1 c=1 v=2
+16330 Par ch=1 c=1 v=1
+16336 Par ch=1 c=1 v=0
+16418 Off ch=1 n=72 v=0
+16424 On ch=1 n=55 v=104
+16468 Pb ch=1 v=8320
+16472 Pb ch=1 v=8704
+16476 Pb ch=1 v=9088
+16478 Pb ch=1 v=9344
+16482 Pb ch=1 v=9600
+16484 Pb ch=1 v=10240
+16492 Pb ch=1 v=10752
+16496 Pb ch=1 v=11136
+16502 Pb ch=1 v=11520
+16506 Pb ch=1 v=11904
+16508 Pb ch=1 v=12160
+16516 Pb ch=1 v=12352
+16656 Par ch=1 c=1 v=1
+16664 Par ch=1 c=1 v=2
+16670 Par ch=1 c=1 v=3
+16676 Par ch=1 c=1 v=4
+16684 Par ch=1 c=1 v=5
+16692 Par ch=1 c=1 v=6
+16700 Par ch=1 c=1 v=7
+16708 Par ch=1 c=1 v=8
+16714 Par ch=1 c=1 v=9
+16720 Par ch=1 c=1 v=10
+16730 Par ch=1 c=1 v=11
+16734 Par ch=1 c=1 v=12
+16736 Par ch=1 c=1 v=13
+16744 Par ch=1 c=1 v=14
+16756 Par ch=1 c=1 v=15
+16764 Par ch=1 c=1 v=16
+16774 Par ch=1 c=1 v=17
+16784 Par ch=1 c=1 v=18
+16798 Par ch=1 c=1 v=19
+16844 Par ch=1 c=1 v=21
+16858 Par ch=1 c=1 v=22
+16924 Par ch=1 c=1 v=20
+16938 Par ch=1 c=1 v=19
+16972 Par ch=1 c=1 v=16
+16982 Par ch=1 c=1 v=15
+16984 Off ch=1 n=55 v=0
+16984 Pb ch=1 v=8192
+16984 On ch=1 n=55 v=104
+16986 Par ch=1 c=1 v=14
+16996 Par ch=1 c=1 v=13
+17004 Par ch=1 c=1 v=12
+17010 Par ch=1 c=1 v=11
+17012 Par ch=1 c=1 v=10
+17020 Par ch=1 c=1 v=8
+17024 Par ch=1 c=1 v=7
+17030 Par ch=1 c=1 v=5
+17032 Par ch=1 c=1 v=3
+17040 Par ch=1 c=1 v=0
+17048 Off ch=1 n=55 v=0
+17048 On ch=1 n=53 v=104
+17110 Off ch=1 n=53 v=0
+17110 On ch=1 n=51 v=104
+17172 Off ch=1 n=51 v=0
+17172 On ch=1 n=55 v=104
+17326 Par ch=1 c=1 v=1
+17328 Par ch=1 c=1 v=2
+17340 Par ch=1 c=1 v=3
+17342 Par ch=1 c=1 v=4
+17356 Par ch=1 c=1 v=5
+17362 Par ch=1 c=1 v=6
+17376 Par ch=1 c=1 v=7
+17384 Par ch=1 c=1 v=8
+17400 Par ch=1 c=1 v=9
+17412 Par ch=1 c=1 v=10
+17450 Par ch=1 c=1 v=12
+17460 Par ch=1 c=1 v=13
+17474 Par ch=1 c=1 v=14
+17510 Par ch=1 c=1 v=16
+17564 Par ch=1 c=1 v=19
+17644 Par ch=1 c=1 v=21
+17648 Par ch=1 c=1 v=22
+17668 Par ch=1 c=1 v=23
+17772 Par ch=1 c=1 v=19
+17776 Par ch=1 c=1 v=18
+17784 Par ch=1 c=1 v=17
+17786 Par ch=1 c=1 v=16
+17796 Par ch=1 c=1 v=15
+17800 Par ch=1 c=1 v=14
+17806 Par ch=1 c=1 v=13
+17812 Par ch=1 c=1 v=12
+17820 Par ch=1 c=1 v=11
+17830 Par ch=1 c=1 v=10
+17844 Par ch=1 c=1 v=9
+17848 Par ch=1 c=1 v=8
+17856 Par ch=1 c=1 v=7
+17864 Par ch=1 c=1 v=6
+17874 Par ch=1 c=1 v=5
+17880 Par ch=1 c=1 v=4
+17890 Par ch=1 c=1 v=3
+17894 Par ch=1 c=1 v=2
+17900 Par ch=1 c=1 v=1
+17908 Par ch=1 c=1 v=0
+17918 Off ch=1 n=55 v=0
+17918 On ch=1 n=55 v=104
+17962 Pb ch=1 v=8320
+17964 Pb ch=1 v=8704
+17968 Pb ch=1 v=9088
+17972 Pb ch=1 v=9344
+17976 Pb ch=1 v=9600
+17978 Pb ch=1 v=10240
+17984 Pb ch=1 v=10752
+17988 Pb ch=1 v=11136
+17996 Pb ch=1 v=11520
+18000 Pb ch=1 v=11904
+18002 Pb ch=1 v=12160
+18008 Pb ch=1 v=12352
+18192 Par ch=1 c=1 v=1
+18200 Par ch=1 c=1 v=2
+18208 Par ch=1 c=1 v=3
+18210 Par ch=1 c=1 v=4
+18220 Par ch=1 c=1 v=5
+18228 Par ch=1 c=1 v=6
+18236 Par ch=1 c=1 v=7
+18240 Par ch=1 c=1 v=8
+18244 Par ch=1 c=1 v=9
+18252 Par ch=1 c=1 v=10
+18254 Par ch=1 c=1 v=11
+18264 Par ch=1 c=1 v=12
+18270 Par ch=1 c=1 v=13
+18284 Par ch=1 c=1 v=14
+18288 Par ch=1 c=1 v=15
+18294 Par ch=1 c=1 v=16
+18300 Par ch=1 c=1 v=17
+18304 Par ch=1 c=1 v=18
+18314 Par ch=1 c=1 v=19
+18372 Par ch=1 c=1 v=21
+18382 Par ch=1 c=1 v=22
+18396 Par ch=1 c=1 v=23
+18472 Par ch=1 c=1 v=18
+18476 Par ch=1 c=1 v=17
+18478 Off ch=1 n=55 v=0
+18478 Pb ch=1 v=8192
+18478 On ch=1 n=55 v=104
+18482 Par ch=1 c=1 v=15
+18490 Par ch=1 c=1 v=14
+18496 Par ch=1 c=1 v=12
+18500 Par ch=1 c=1 v=11
+18506 Par ch=1 c=1 v=8
+18508 Par ch=1 c=1 v=7
+18516 Par ch=1 c=1 v=4
+18520 Par ch=1 c=1 v=3
+18526 Par ch=1 c=1 v=0
+18540 Off ch=1 n=55 v=0
+18540 On ch=1 n=53 v=104
+18604 Off ch=1 n=53 v=0
+18604 On ch=1 n=51 v=104
+18664 Off ch=1 n=51 v=0
+18664 On ch=1 n=55 v=104
+18910 Par ch=1 c=1 v=1
+18920 Par ch=1 c=1 v=2
+18974 Par ch=1 c=1 v=4
+18976 Par ch=1 c=1 v=5
+18996 Par ch=1 c=1 v=6
+19032 Par ch=1 c=1 v=8
+19034 Par ch=1 c=1 v=9
+19048 Par ch=1 c=1 v=10
+19098 Par ch=1 c=1 v=12
+19108 Par ch=1 c=1 v=13
+19182 Par ch=1 c=1 v=15
+19196 Par ch=1 c=1 v=16
+19244 Par ch=1 c=1 v=18
+19246 Par ch=1 c=1 v=19
+19286 Par ch=1 c=1 v=22
+19296 Par ch=1 c=1 v=23
+19360 Par ch=1 c=1 v=16
+19364 Par ch=1 c=1 v=14
+19368 Par ch=1 c=1 v=11
+19370 Par ch=1 c=1 v=9
+19374 Par ch=1 c=1 v=6
+19376 Par ch=1 c=1 v=3
+19380 Par ch=1 c=1 v=1
+19384 Par ch=1 c=1 v=0
+19412 Off ch=1 n=55 v=0
+19412 On ch=1 n=55 v=104
+19456 Pb ch=1 v=8320
+19458 Pb ch=1 v=8704
+19462 Pb ch=1 v=9088
+19464 Pb ch=1 v=9344
+19468 Pb ch=1 v=9600
+19472 Pb ch=1 v=10240
+19478 Pb ch=1 v=10752
+19482 Pb ch=1 v=11136
+19488 Pb ch=1 v=11520
+19492 Pb ch=1 v=11904
+19496 Pb ch=1 v=12160
+19502 Pb ch=1 v=12352
+19666 Par ch=1 c=1 v=1
+19672 Par ch=1 c=1 v=2
+19680 Par ch=1 c=1 v=3
+19686 Par ch=1 c=1 v=4
+19690 Par ch=1 c=1 v=5
+19700 Par ch=1 c=1 v=6
+19710 Par ch=1 c=1 v=7
+19720 Par ch=1 c=1 v=8
+19724 Par ch=1 c=1 v=9
+19736 Par ch=1 c=1 v=10
+19740 Par ch=1 c=1 v=11
+19748 Par ch=1 c=1 v=12
+19754 Par ch=1 c=1 v=13
+19764 Par ch=1 c=1 v=14
+19778 Par ch=1 c=1 v=15
+19800 Par ch=1 c=1 v=18
+19812 Par ch=1 c=1 v=19
+19858 Par ch=1 c=1 v=22
+19868 Par ch=1 c=1 v=23
+19882 Par ch=1 c=1 v=24
+19906 Par ch=1 c=1 v=26
+19916 Par ch=1 c=1 v=25
+19922 Par ch=1 c=1 v=24
+19924 Par ch=1 c=1 v=23
+19932 Par ch=1 c=1 v=21
+19936 Par ch=1 c=1 v=20
+19942 Par ch=1 c=1 v=17
+19946 Par ch=1 c=1 v=15
+19952 Par ch=1 c=1 v=13
+19956 Par ch=1 c=1 v=12
+19962 Par ch=1 c=1 v=9
+19966 Par ch=1 c=1 v=8
+19970 Off ch=1 n=55 v=0
+19972 Pb ch=1 v=8192
+19972 Par ch=1 c=1 v=5
+19972 On ch=1 n=56 v=104
+19976 Par ch=1 c=1 v=4
+19984 Par ch=1 c=1 v=2
+19992 Par ch=1 c=1 v=0
+20034 Off ch=1 n=56 v=0
+20034 On ch=1 n=60 v=104
+20096 Off ch=1 n=60 v=0
+20096 On ch=1 n=56 v=104
+20158 Off ch=1 n=56 v=0
+20158 On ch=1 n=56 v=104
+20160 Pb ch=1 v=7936
+20164 Pb ch=1 v=7552
+20168 Pb ch=1 v=7168
+20174 Pb ch=1 v=6912
+20178 Pb ch=1 v=6784
+20184 Pb ch=1 v=6528
+20188 Pb ch=1 v=6272
+20194 Pb ch=1 v=5888
+20198 Pb ch=1 v=5760
+20204 Pb ch=1 v=5504
+20208 Pb ch=1 v=5248
+20214 Pb ch=1 v=4992
+20224 Pb ch=1 v=4736
+20240 Pb ch=1 v=4608
+20244 Pb ch=1 v=4736
+20256 Pb ch=1 v=4608
+20298 Par ch=1 c=1 v=1
+20302 Pb ch=1 v=4352
+20306 Par ch=1 c=1 v=2
+20312 Par ch=1 c=1 v=3
+20316 Par ch=1 c=1 v=4
+20322 Par ch=1 c=1 v=5
+20328 Par ch=1 c=1 v=6
+20340 Par ch=1 c=1 v=7
+20346 Par ch=1 c=1 v=8
+20356 Par ch=1 c=1 v=9
+20416 Par ch=1 c=1 v=12
+20440 Par ch=1 c=1 v=13
+20532 Par ch=1 c=1 v=15
+20548 Par ch=1 c=1 v=16
+20588 Par ch=1 c=1 v=18
+20602 Par ch=1 c=1 v=19
+20676 Par ch=1 c=1 v=16
+20686 Par ch=1 c=1 v=15
+20688 Par ch=1 c=1 v=14
+20700 Par ch=1 c=1 v=13
+20708 Par ch=1 c=1 v=12
+20716 Par ch=1 c=1 v=11
+20722 Par ch=1 c=1 v=10
+20730 Par ch=1 c=1 v=9
+20740 Par ch=1 c=1 v=8
+20746 Par ch=1 c=1 v=7
+20756 Par ch=1 c=1 v=6
+20764 Par ch=1 c=1 v=5
+20776 Par ch=1 c=1 v=4
+20790 Par ch=1 c=1 v=3
+20792 Par ch=1 c=1 v=2
+20804 Par ch=1 c=1 v=1
+20814 Par ch=1 c=1 v=0
+20904 Off ch=1 n=56 v=0
+20904 Pb ch=1 v=8192
+20904 On ch=1 n=56 v=104
+21086 Par ch=1 c=1 v=1
+21096 Par ch=1 c=1 v=2
+21106 Par ch=1 c=1 v=4
+21112 Par ch=1 c=1 v=5
+21122 Par ch=1 c=1 v=6
+21132 Par ch=1 c=1 v=7
+21144 Par ch=1 c=1 v=8
+21150 Par ch=1 c=1 v=9
+21160 Par ch=1 c=1 v=10
+21164 Par ch=1 c=1 v=11
+21172 Par ch=1 c=1 v=12
+21180 Par ch=1 c=1 v=13
+21192 Par ch=1 c=1 v=14
+21216 Par ch=1 c=1 v=15
+21260 Par ch=1 c=1 v=18
+21274 Par ch=1 c=1 v=19
+21338 Par ch=1 c=1 v=21
+21356 Par ch=1 c=1 v=22
+21402 Par ch=1 c=1 v=17
+21404 Par ch=1 c=1 v=15
+21412 Par ch=1 c=1 v=13
+21416 Par ch=1 c=1 v=12
+21422 Par ch=1 c=1 v=11
+21428 Par ch=1 c=1 v=10
+21442 Par ch=1 c=1 v=9
+21448 Par ch=1 c=1 v=8
+21460 Par ch=1 c=1 v=6
+21462 Par ch=1 c=1 v=5
+21464 Off ch=1 n=56 v=0
+21464 On ch=1 n=56 v=104
+21468 Par ch=1 c=1 v=4
+21472 Par ch=1 c=1 v=3
+21484 Par ch=1 c=1 v=1
+21488 Par ch=1 c=1 v=0
+21528 Off ch=1 n=56 v=0
+21812 Par ch=1 c=1 v=1
+21816 Par ch=1 c=1 v=2
+21826 Par ch=1 c=1 v=3
+21828 Par ch=1 c=1 v=4
+21836 Par ch=1 c=1 v=5
+21840 Par ch=1 c=1 v=6
+21850 Par ch=1 c=1 v=8
+21856 Par ch=1 c=1 v=9
+21866 Par ch=1 c=1 v=10
+21880 Par ch=1 c=1 v=11
+21890 Par ch=1 c=1 v=12
+22014 Par ch=1 c=1 v=14
+22224 Par ch=1 c=1 v=16
+22246 Par ch=1 c=1 v=17
+22354 Par ch=1 c=1 v=13
+22356 Par ch=1 c=1 v=12
+22364 Par ch=1 c=1 v=9
+22368 Par ch=1 c=1 v=7
+22370 Par ch=1 c=1 v=5
+22374 Par ch=1 c=1 v=3
+22376 Par ch=1 c=1 v=1
+22380 Par ch=1 c=1 v=0
+22442 Pb ch=1 v=8320
+22444 Pb ch=1 v=8704
+22448 Pb ch=1 v=9088
+22452 Pb ch=1 v=9344
+22456 Pb ch=1 v=9600
+22458 Pb ch=1 v=10240
+22464 Pb ch=1 v=10752
+22468 Pb ch=1 v=11136
+22476 Pb ch=1 v=11520
+22480 Pb ch=1 v=11904
+22482 Pb ch=1 v=12160
+22488 Pb ch=1 v=12352
+22626 Par ch=1 c=1 v=1
+22666 Par ch=1 c=1 v=3
+22676 Par ch=1 c=1 v=4
+22684 Par ch=1 c=1 v=5
+22696 Par ch=1 c=1 v=6
+22704 Par ch=1 c=1 v=7
+22714 Par ch=1 c=1 v=8
+22724 Par ch=1 c=1 v=9
+22736 Par ch=1 c=1 v=10
+22748 Par ch=1 c=1 v=11
+22758 Par ch=1 c=1 v=12
+22774 Par ch=1 c=1 v=13
+22812 Par ch=1 c=1 v=15
+22820 Par ch=1 c=1 v=16
+22908 Par ch=1 c=1 v=10
+22912 Par ch=1 c=1 v=8
+22916 Par ch=1 c=1 v=5
+22920 Par ch=1 c=1 v=3
+22922 Par ch=1 c=1 v=0
+22936 Pb ch=1 v=10624
+22936 Pb ch=1 v=11264
+22940 Pb ch=1 v=11776
+22940 Pb ch=1 v=12288
+22944 Pb ch=1 v=11776
+22948 Pb ch=1 v=10880
+22950 Pb ch=1 v=10112
+22952 Pb ch=1 v=9856
+22952 Pb ch=1 v=9600
+22956 Pb ch=1 v=9216
+22960 Pb ch=1 v=9088
+22964 Pb ch=1 v=8960
+22968 Pb ch=1 v=8832
+23276 Par ch=1 c=1 v=1
+23284 Par ch=1 c=1 v=3
+23288 Par ch=1 c=1 v=4
+23300 Par ch=1 c=1 v=5
+23302 Par ch=1 c=1 v=6
+23306 Par ch=1 c=1 v=7
+23312 Par ch=1 c=1 v=8
+23320 Par ch=1 c=1 v=9
+23328 Par ch=1 c=1 v=10
+23372 Par ch=1 c=1 v=13
+23384 Par ch=1 c=1 v=14
+23396 Par ch=1 c=1 v=15
+23400 Par ch=1 c=1 v=16
+23410 Par ch=1 c=1 v=17
+23416 Par ch=1 c=1 v=18
+23428 Par ch=1 c=1 v=19
+23500 Par ch=1 c=1 v=16
+23504 Par ch=1 c=1 v=15
+23512 Par ch=1 c=1 v=12
+23514 Par ch=1 c=1 v=10
+23520 Par ch=1 c=1 v=8
+23524 Par ch=1 c=1 v=6
+23528 Par ch=1 c=1 v=4
+23532 Par ch=1 c=1 v=2
+23534 Par ch=1 c=1 v=0
+23642 Par ch=1 c=1 v=2
+23644 Par ch=1 c=1 v=3
+23652 Par ch=1 c=1 v=6
+23656 Par ch=1 c=1 v=7
+23662 Par ch=1 c=1 v=9
+23668 Par ch=1 c=1 v=10
+23676 Par ch=1 c=1 v=11
+23682 Par ch=1 c=1 v=12
+23692 Par ch=1 c=1 v=13
+23706 Par ch=1 c=1 v=14
+23708 Par ch=1 c=1 v=15
+23724 Par ch=1 c=1 v=16
+23732 Par ch=1 c=1 v=17
+23744 Par ch=1 c=1 v=18
+23792 Par ch=1 c=1 v=20
+23796 Par ch=1 c=1 v=21
+23810 Par ch=1 c=1 v=22
+23870 Par ch=1 c=1 v=15
+23874 Par ch=1 c=1 v=12
+23878 Par ch=1 c=1 v=9
+23880 Par ch=1 c=1 v=5
+23884 Par ch=1 c=1 v=1
+23888 Par ch=1 c=1 v=0
+23928 Pb ch=1 v=8192
+23936 Pb ch=1 v=8320
+23938 Pb ch=1 v=8704
+23942 Pb ch=1 v=9088
+23944 Pb ch=1 v=9344
+23948 Pb ch=1 v=9600
+23952 Pb ch=1 v=10240
+23958 Pb ch=1 v=10752
+23962 Pb ch=1 v=11136
+23968 Pb ch=1 v=11520
+23972 Pb ch=1 v=11904
+23976 Pb ch=1 v=12160
+23982 Pb ch=1 v=12352
+24080 Par ch=1 c=1 v=2
+24082 Par ch=1 c=1 v=3
+24092 Par ch=1 c=1 v=5
+24106 Par ch=1 c=1 v=6
+24112 Par ch=1 c=1 v=7
+24116 Par ch=1 c=1 v=8
+24126 Par ch=1 c=1 v=9
+24130 Par ch=1 c=1 v=10
+24132 Par ch=1 c=1 v=11
+24140 Par ch=1 c=1 v=12
+24146 Par ch=1 c=1 v=13
+24152 Par ch=1 c=1 v=14
+24160 Par ch=1 c=1 v=15
+24170 Par ch=1 c=1 v=16
+24176 Par ch=1 c=1 v=17
+24186 Par ch=1 c=1 v=18
+24194 Par ch=1 c=1 v=19
+24216 Par ch=1 c=1 v=20
+24260 Par ch=1 c=1 v=22
+24272 Par ch=1 c=1 v=23
+24332 Par ch=1 c=1 v=25
+24342 Par ch=1 c=1 v=26
+24356 Par ch=1 c=1 v=27
+24398 Par ch=1 c=1 v=20
+24402 Par ch=1 c=1 v=18
+24404 Par ch=1 c=1 v=15
+24408 Par ch=1 c=1 v=12
+24412 Par ch=1 c=1 v=10
+24416 Par ch=1 c=1 v=7
+24420 Par ch=1 c=1 v=4
+24422 Par ch=1 c=1 v=1
+24424 Par ch=1 c=1 v=0
+24428 Pb ch=1 v=10624
+24430 Pb ch=1 v=11264
+24432 Pb ch=1 v=11776
+24434 Pb ch=1 v=12288
+24438 Pb ch=1 v=11776
+24440 Pb ch=1 v=10880
+24444 Pb ch=1 v=10112
+24444 Pb ch=1 v=9856
+24446 Pb ch=1 v=9600
+24450 Pb ch=1 v=9216
+24452 Pb ch=1 v=9088
+24456 Pb ch=1 v=8960
+24462 Pb ch=1 v=8832
+24742 Par ch=1 c=1 v=1
+24748 Par ch=1 c=1 v=3
+24756 Par ch=1 c=1 v=4
+24762 Par ch=1 c=1 v=5
+24764 Par ch=1 c=1 v=6
+24768 Par ch=1 c=1 v=7
+24776 Par ch=1 c=1 v=8
+24782 Par ch=1 c=1 v=9
+24792 Par ch=1 c=1 v=10
+24796 Par ch=1 c=1 v=11
+24802 Par ch=1 c=1 v=12
+24808 Par ch=1 c=1 v=13
+24816 Par ch=1 c=1 v=14
+24826 Par ch=1 c=1 v=15
+24840 Par ch=1 c=1 v=16
+24842 Par ch=1 c=1 v=17
+24852 Par ch=1 c=1 v=18
+24870 Par ch=1 c=1 v=19
+24884 Par ch=1 c=1 v=20
+24930 Par ch=1 c=1 v=22
+24940 Par ch=1 c=1 v=23
+25060 Par ch=1 c=1 v=26
+25200 Par ch=1 c=1 v=24
+25216 Par ch=1 c=1 v=23
+25260 Par ch=1 c=1 v=21
+25264 Par ch=1 c=1 v=20
+25284 Par ch=1 c=1 v=19
+25304 Par ch=1 c=1 v=16
+25306 Par ch=1 c=1 v=15
+25314 Par ch=1 c=1 v=13
+25324 Par ch=1 c=1 v=10
+25328 Par ch=1 c=1 v=9
+25334 Par ch=1 c=1 v=7
+25336 Par ch=1 c=1 v=5
+25344 Par ch=1 c=1 v=3
+25348 Par ch=1 c=1 v=2
+25354 Par ch=1 c=1 v=0
+25422 Pb ch=1 v=8192
+25428 Pb ch=1 v=8320
+25432 Pb ch=1 v=8704
+25436 Pb ch=1 v=9088
+25438 Pb ch=1 v=9344
+25442 Pb ch=1 v=9600
+25444 Pb ch=1 v=10240
+25452 Pb ch=1 v=10752
+25456 Pb ch=1 v=11136
+25462 Pb ch=1 v=11520
+25466 Pb ch=1 v=11904
+25468 Pb ch=1 v=12160
+25476 Pb ch=1 v=12352
+25548 Par ch=1 c=1 v=1
+25552 Par ch=1 c=1 v=2
+25556 Par ch=1 c=1 v=3
+25562 Par ch=1 c=1 v=4
+25566 Par ch=1 c=1 v=5
+25568 Par ch=1 c=1 v=6
+25576 Par ch=1 c=1 v=7
+25580 Par ch=1 c=1 v=8
+25588 Par ch=1 c=1 v=10
+25596 Par ch=1 c=1 v=11
+25602 Par ch=1 c=1 v=12
+25610 Par ch=1 c=1 v=13
+25620 Par ch=1 c=1 v=14
+25630 Par ch=1 c=1 v=15
+25640 Par ch=1 c=1 v=16
+25644 Par ch=1 c=1 v=17
+25650 Par ch=1 c=1 v=18
+25660 Par ch=1 c=1 v=19
+25670 Par ch=1 c=1 v=20
+25680 Par ch=1 c=1 v=21
+25694 Par ch=1 c=1 v=22
+25704 Par ch=1 c=1 v=23
+25748 Par ch=1 c=1 v=26
+25818 Par ch=1 c=1 v=28
+25828 Par ch=1 c=1 v=29
+25888 Par ch=1 c=1 v=24
+25892 Par ch=1 c=1 v=22
+25896 Par ch=1 c=1 v=19
+25898 Par ch=1 c=1 v=17
+25902 Par ch=1 c=1 v=15
+25906 Par ch=1 c=1 v=12
+25908 Par ch=1 c=1 v=11
+25912 Par ch=1 c=1 v=9
+25916 Par ch=1 c=1 v=7
+25918 Par ch=1 c=1 v=5
+25922 Pb ch=1 v=10624
+25922 Par ch=1 c=1 v=3
+25924 Pb ch=1 v=11264
+25926 Par ch=1 c=1 v=0
+25926 Pb ch=1 v=11776
+25928 Pb ch=1 v=12288
+25932 Pb ch=1 v=11776
+25934 Pb ch=1 v=10880
+25936 Pb ch=1 v=10112
+25938 Pb ch=1 v=9856
+25940 Pb ch=1 v=9600
+25944 Pb ch=1 v=9216
+25946 Pb ch=1 v=9088
+25950 Pb ch=1 v=8960
+25956 Pb ch=1 v=8832
+26232 Par ch=1 c=1 v=1
+26236 Par ch=1 c=1 v=2
+26242 Par ch=1 c=1 v=5
+26244 Par ch=1 c=1 v=6
+26252 Par ch=1 c=1 v=8
+26256 Par ch=1 c=1 v=9
+26262 Par ch=1 c=1 v=11
+26268 Par ch=1 c=1 v=12
+26276 Par ch=1 c=1 v=13
+26282 Par ch=1 c=1 v=14
+26292 Par ch=1 c=1 v=15
+26296 Par ch=1 c=1 v=16
+26302 Par ch=1 c=1 v=17
+26308 Par ch=1 c=1 v=18
+26320 Par ch=1 c=1 v=19
+26336 Par ch=1 c=1 v=20
+26400 Pb ch=1 v=8192
+26412 Pb ch=1 v=7936
+26414 Pb ch=1 v=7552
+26416 Pb ch=1 v=7040
+26418 Pb ch=1 v=6528
+26420 Par ch=1 c=1 v=11
+26420 Pb ch=1 v=6016
+26424 Pb ch=1 v=5504
+26424 Par ch=1 c=1 v=8
+26424 Pb ch=1 v=5120
+26426 Par ch=1 c=1 v=5
+26428 Pb ch=1 v=4736
+26430 Par ch=1 c=1 v=1
+26434 Par ch=1 c=1 v=0
+26436 Pb ch=1 v=4864
+26440 Pb ch=1 v=4992
+26450 Pb ch=1 v=6272
+26452 Pb ch=1 v=6912
+26454 Pb ch=1 v=7552
+26456 Pb ch=1 v=7936
+26458 Pb ch=1 v=8192
+26474 Pb ch=1 v=8064
+26476 Pb ch=1 v=7552
+26478 Pb ch=1 v=6912
+26480 Pb ch=1 v=6272
+26484 Pb ch=1 v=5760
+26486 Pb ch=1 v=5248
+26488 Pb ch=1 v=4864
+26490 Pb ch=1 v=4608
+26494 Pb ch=1 v=4224
+26496 Pb ch=1 v=4096
+26500 Pb ch=1 v=4224
+26504 Pb ch=1 v=8192
+26612 Par ch=1 c=1 v=2
+26616 Par ch=1 c=1 v=4
+26622 Par ch=1 c=1 v=7
+26624 Par ch=1 c=1 v=8
+26632 Par ch=1 c=1 v=10
+26636 Par ch=1 c=1 v=11
+26642 Par ch=1 c=1 v=12
+26644 Par ch=1 c=1 v=13
+26648 Par ch=1 c=1 v=14
+26656 Par ch=1 c=1 v=15
+26660 Par ch=1 c=1 v=16
+26664 Par ch=1 c=1 v=18
+26672 Par ch=1 c=1 v=19
+26680 Par ch=1 c=1 v=20
+26688 Par ch=1 c=1 v=21
+26692 Par ch=1 c=1 v=22
+26702 Par ch=1 c=1 v=23
+26720 Par ch=1 c=1 v=24
+26780 Par ch=1 c=1 v=21
+26784 Par ch=1 c=1 v=19
+26790 Par ch=1 c=1 v=16
+26792 Par ch=1 c=1 v=14
+26796 Par ch=1 c=1 v=12
+26800 Par ch=1 c=1 v=10
+26804 Par ch=1 c=1 v=8
+26808 Par ch=1 c=1 v=6
+26810 Par ch=1 c=1 v=4
+26814 Par ch=1 c=1 v=1
+26816 Par ch=1 c=1 v=0
+26938 Pb ch=1 v=9344
+26940 Pb ch=1 v=9472
+26948 Pb ch=1 v=9856
+26958 Pb ch=1 v=10240
+26960 Pb ch=1 v=10368
+26964 Pb ch=1 v=10752
+26968 Pb ch=1 v=10496
+26976 Pb ch=1 v=10752
+26978 Pb ch=1 v=10880
+26984 Pb ch=1 v=11136
+26992 Pb ch=1 v=11264
+26998 Pb ch=1 v=11520
+27002 Pb ch=1 v=11648
+27012 Par ch=1 c=1 v=3
+27016 Par ch=1 c=1 v=4
+27022 Pb ch=1 v=11520
+27022 Par ch=1 c=1 v=7
+27026 Par ch=1 c=1 v=8
+27032 Par ch=1 c=1 v=9
+27036 Par ch=1 c=1 v=10
+27042 Par ch=1 c=1 v=11
+27046 Par ch=1 c=1 v=12
+27056 Par ch=1 c=1 v=13
+27060 Par ch=1 c=1 v=14
+27066 Par ch=1 c=1 v=15
+27076 Par ch=1 c=1 v=16
+27082 Pb ch=1 v=10752
+27082 Par ch=1 c=1 v=17
+27086 Pb ch=1 v=11008
+27088 Par ch=1 c=1 v=18
+27092 Pb ch=1 v=10880
+27092 Par ch=1 c=1 v=19
+27096 Pb ch=1 v=11008
+27106 Par ch=1 c=1 v=20
+27120 Par ch=1 c=1 v=21
+27124 Pb ch=1 v=11392
+27126 Pb ch=1 v=11264
+27130 Pb ch=1 v=11008
+27144 Pb ch=1 v=11136
+27146 Pb ch=1 v=10624
+27152 Pb ch=1 v=11136
+27156 Pb ch=1 v=10624
+27160 Pb ch=1 v=9984
+27164 Pb ch=1 v=9600
+27166 Pb ch=1 v=9344
+27172 Pb ch=1 v=8960
+27176 Pb ch=1 v=8832
+27184 Pb ch=1 v=8704
+27186 Pb ch=1 v=8576
+27188 Par ch=1 c=1 v=13
+27190 Par ch=1 c=1 v=10
+27194 Par ch=1 c=1 v=7
+27196 Par ch=1 c=1 v=3
+27200 Par ch=1 c=1 v=0
+27214 Pb ch=1 v=8448
+27312 Pb ch=1 v=9344
+27316 Pb ch=1 v=9472
+27318 Pb ch=1 v=9728
+27326 Pb ch=1 v=9600
+27332 Pb ch=1 v=9856
+27340 Pb ch=1 v=9984
+27342 Par ch=1 c=1 v=1
+27342 Pb ch=1 v=10496
+27348 Par ch=1 c=1 v=3
+27348 Pb ch=1 v=11008
+27352 Par ch=1 c=1 v=4
+27352 Pb ch=1 v=11392
+27356 Pb ch=1 v=11648
+27358 Par ch=1 c=1 v=6
+27360 Pb ch=1 v=11904
+27362 Par ch=1 c=1 v=7
+27362 Pb ch=1 v=12288
+27368 Par ch=1 c=1 v=9
+27378 Par ch=1 c=1 v=11
+27384 Par ch=1 c=1 v=12
+27392 Par ch=1 c=1 v=13
+27400 Par ch=1 c=1 v=14
+27408 Par ch=1 c=1 v=15
+27438 Pb ch=1 v=8192
+27442 Par ch=1 c=1 v=6
+27446 Par ch=1 c=1 v=2
+27448 Par ch=1 c=1 v=0
+27510 Par ch=1 c=1 v=1
+27512 Par ch=1 c=1 v=2
+27520 Par ch=1 c=1 v=5
+27524 Par ch=1 c=1 v=6
+27530 Par ch=1 c=1 v=9
+27532 Par ch=1 c=1 v=11
+27540 Par ch=1 c=1 v=13
+27544 Par ch=1 c=1 v=14
+27550 Par ch=1 c=1 v=16
+27554 Par ch=1 c=1 v=17
+27560 Par ch=1 c=1 v=18
+27564 Par ch=1 c=1 v=19
+27574 Par ch=1 c=1 v=20
+27588 Par ch=1 c=1 v=21
+27628 Par ch=1 c=1 v=11
+27632 Par ch=1 c=1 v=6
+27634 Par ch=1 c=1 v=0
+27748 Par ch=1 c=1 v=1
+27758 Par ch=1 c=1 v=2
+27762 Par ch=1 c=1 v=3
+27768 Par ch=1 c=1 v=4
+27780 Par ch=1 c=1 v=5
+27820 Par ch=1 c=1 v=8
+27828 Par ch=1 c=1 v=9
+27842 Par ch=1 c=1 v=10
+27866 Par ch=1 c=1 v=13
+27876 Par ch=1 c=1 v=14
+27934 Par ch=1 c=1 v=16
+27944 Par ch=1 c=1 v=17
+27956 Par ch=1 c=1 v=18
+28012 Par ch=1 c=1 v=20
+28024 Par ch=1 c=1 v=21
+28168 Par ch=1 c=1 v=19
+28180 Par ch=1 c=1 v=18
+28192 Par ch=1 c=1 v=17
+28196 Par ch=1 c=1 v=16
+28206 Par ch=1 c=1 v=15
+28220 Par ch=1 c=1 v=14
+28230 Par ch=1 c=1 v=13
+28240 Par ch=1 c=1 v=12
+28252 Par ch=1 c=1 v=11
+28264 Par ch=1 c=1 v=10
+28292 Par ch=1 c=1 v=8
+28296 Par ch=1 c=1 v=7
+28316 Par ch=1 c=1 v=6
+28336 Par ch=1 c=1 v=3
+28348 Par ch=1 c=1 v=1
+28354 Par ch=1 c=1 v=0
+28415 Par ch=1 c=127 v=0
+28415 Par ch=1 c=127 v=0
+28415 Meta TrkEnd
+TrkEnd

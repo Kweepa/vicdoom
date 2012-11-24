@@ -1,0 +1,94 @@
+MFile 1 2 96
+MTrk
+0 Tempo 500000
+0 KeySig 0 major
+0 TimeSig 4/4 24 8
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Tempo 508608
+0 Meta TrkEnd
+TrkEnd
+MTrk
+0 Par ch=1 c=0 v=0
+0 Par ch=1 c=32 v=0
+0 PrCh ch=1 p=48
+0 Meta TrkName "MUS2MIDI v0.82 - joakim.erdfelt@swsbbs.com\0"
+0 Par ch=1 c=7 v=127
+0 Par ch=1 c=0 v=0
+0 Par ch=1 c=10 v=64
+0 Par ch=1 c=7 v=110
+0 On ch=1 n=60 v=34
+160 Off ch=1 n=60 v=0
+160 On ch=1 n=66 v=37
+320 Off ch=1 n=66 v=0
+320 On ch=1 n=63 v=40
+480 Off ch=1 n=63 v=0
+480 On ch=1 n=57 v=43
+640 Off ch=1 n=57 v=0
+640 On ch=1 n=60 v=46
+800 Off ch=1 n=60 v=0
+800 On ch=1 n=66 v=49
+960 Off ch=1 n=66 v=0
+960 On ch=1 n=63 v=52
+1120 Off ch=1 n=63 v=0
+1120 On ch=1 n=57 v=55
+1280 Off ch=1 n=57 v=0
+1280 On ch=1 n=60 v=59
+1360 Off ch=1 n=60 v=0
+1360 On ch=1 n=66 v=60
+1440 Off ch=1 n=66 v=0
+1440 On ch=1 n=63 v=62
+1520 Off ch=1 n=63 v=0
+1520 On ch=1 n=57 v=63
+1600 Off ch=1 n=57 v=0
+1600 On ch=1 n=60 v=65
+1680 Off ch=1 n=60 v=0
+1680 On ch=1 n=66 v=66
+1760 Off ch=1 n=66 v=0
+1760 On ch=1 n=63 v=68
+1840 Off ch=1 n=63 v=0
+1840 On ch=1 n=57 v=69
+1920 Off ch=1 n=57 v=0
+1920 On ch=1 n=60 v=71
+1960 Off ch=1 n=60 v=0
+1960 On ch=1 n=66 v=72
+2000 Off ch=1 n=66 v=0
+2000 On ch=1 n=63 v=73
+2040 Off ch=1 n=63 v=0
+2040 On ch=1 n=57 v=73
+2080 Off ch=1 n=57 v=0
+2080 On ch=1 n=60 v=74
+2120 Off ch=1 n=60 v=0
+2120 On ch=1 n=66 v=75
+2160 Off ch=1 n=66 v=0
+2160 On ch=1 n=63 v=76
+2200 Off ch=1 n=63 v=0
+2200 On ch=1 n=57 v=76
+2240 Off ch=1 n=57 v=0
+2240 On ch=1 n=60 v=77
+2280 Off ch=1 n=60 v=0
+2280 On ch=1 n=66 v=78
+2320 Off ch=1 n=66 v=0
+2320 On ch=1 n=63 v=79
+2360 Off ch=1 n=63 v=0
+2360 On ch=1 n=57 v=80
+2400 Off ch=1 n=57 v=0
+2400 On ch=1 n=60 v=80
+2440 Off ch=1 n=60 v=0
+2440 On ch=1 n=66 v=81
+2480 Off ch=1 n=66 v=0
+2480 On ch=1 n=63 v=82
+2520 Off ch=1 n=63 v=0
+2520 On ch=1 n=57 v=83
+2560 Off ch=1 n=57 v=0
+17663 Par ch=1 c=127 v=0
+17663 Meta TrkEnd
+TrkEnd

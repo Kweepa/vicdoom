@@ -37,6 +37,8 @@
 
 #pragma staticlocals(on)
 
+extern char doorClosedAmount[200];
+
 char __fastcall__ P_ApproxDistance( int dx, int dy );
 
 #define fixed_t int
@@ -64,7 +66,12 @@ char __fastcall__ P_ApproxDistance( int dx, int dy );
 #define STATE_DMNPAIN 10
 #define STATE_DMNBITE 11
 #define STATE_DMNFALL 12
-#define STATE_IMPSHOTFLY 13
+#define STATE_CACCHASE 13
+#define STATE_CACPAIN 14
+#define STATE_CACCLAW 15
+#define STATE_CACMISSILE 16
+#define STATE_CACFALL 17
+#define STATE_IMPSHOTFLY 18
 
 typedef struct
 {
@@ -74,7 +81,8 @@ typedef struct
    char painsound;
    char meleesound;
    char missilesound;
-   
+
+   char missiledamage;
    char spawnhealth;
    char painchance;
 
@@ -85,26 +93,27 @@ typedef struct
    char deathstate;
    
    char deathObjectType;
-   char dummy;
 }
 mobjInfo_t;
 
 #define MOBJINFO_POSSESSED 0
 #define MOBJINFO_IMP 1
 #define MOBJINFO_DEMON 2
-#define MOBJINFO_IMPSHOT 3 // 5
 #define MOBJINFO_CACODEMON 3
+#define MOBJINFO_IMPSHOT 4 // 5
 #define MOBJINFO_BARON 4
 
 // TODO: fill out
 mobjInfo_t mobjinfo[] =
 {
-  { 3, -1, SOUND_GURGLE, SOUND_POPAIN, -1, SOUND_PISTOL, 10, 2,
+  { 3, -1, SOUND_GURGLE, SOUND_POPAIN, -1, SOUND_PISTOL, 0, 10, 2,
     STATE_POSCHASE, STATE_POSPAIN, -1, STATE_POSSHOOT, STATE_POSFALL, kOT_PossessedCorpseWithAmmo },
-  { 4, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, SOUND_CLAW, 20, 3,
+  { 4, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, SOUND_CLAW, 10, 20, 3,
     STATE_IMPCHASE, STATE_IMPPAIN, STATE_IMPCLAW, STATE_IMPMISSILE, STATE_IMPFALL, kOT_ImpCorpse },
-  { 6, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, -1, 20, 4,
+  { 6, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, -1, 0, 20, 4,
     STATE_DMNCHASE, STATE_DMNPAIN, STATE_DMNBITE, -1, STATE_DMNFALL, kOT_DemonCorpse },
+  { 5, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, SOUND_CLAW, 30, 99, 5,
+    STATE_CACCHASE, STATE_CACPAIN, STATE_CACCLAW, STATE_CACMISSILE, STATE_CACFALL, kOT_CacodemonCorpse },
   { }
 };
 
@@ -169,6 +178,12 @@ mobjState_t states[] =
   { 15, ACTION_MELEE },
   { 16, ACTION_FALL },
 
+  { TEX_ANIMATE + 17, ACTION_CHASE },
+  { 18, ACTION_FLINCH },
+  { 17, ACTION_MELEE },
+  { 17, ACTION_MISSILE },
+  { 18, ACTION_FALL },
+  
   { 0, ACTION_FLY }
 };
 
@@ -603,7 +618,7 @@ signed char __fastcall__ try_move(int trydx, int trydy)
       {
 			  // check we're within the extents of the edge
 			  thatSector = getOtherSector(edgeGlobalIndex, curSector);
-			  if (thatSector != -1)// && doorClosedAmount[edgeGlobalIndex] == 0)
+			  if (thatSector != -1 && doorClosedAmount[edgeGlobalIndex] == 0)
 			  {
 			    distance = px * ex + py * ey;
 			    if (distance > edgeLen && distance < (edgeLen*edgeLen - edgeLen))
@@ -851,15 +866,15 @@ nomissile:
 //
 void __fastcall__ A_Shoot(void)
 {
-    int		damage;
-    char dist = distanceFromPlayer;
+  int	damage;
+  char dist = distanceFromPlayer;
 	
-    S_StartSound(info->missilesound);
-    if (dist > 55) dist = 55;
-    if ((P_Random()>>2) > dist)
-    {
-	    damage = ((P_Random()&3)+2)*3; // this was ((r%5)+1)*3
-	    damagePlayer(damage);
+  S_StartSound(info->missilesound);
+  if (dist > 28) dist = 28;
+  if ((P_Random()&31) > dist)
+  {
+	  damage = ((P_Random()&3)+2)*3; // this was ((r%5)+1)*3
+	  damagePlayer(damage);
 	}
 	actor->reactiontime = P_Random()&7;
 	P_SetMobjState(info->chasestate);
@@ -928,6 +943,8 @@ void __fastcall__ A_Melee(void)
     }
 }
 
+int cacodemonsDead = 0;
+extern char doorClosedAmount[200];
 
 void __fastcall__ A_Fall(void)
 {
@@ -936,6 +953,18 @@ void __fastcall__ A_Fall(void)
      // make the object into a static corpse
      char o = objForMobj[actor->mobjIndex];
      setObjectType(o, info->deathObjectType);
+     if (info->deathObjectType == kOT_CacodemonCorpse)
+     {
+       // count to 2
+       ++cacodemonsDead;
+       // open door when done
+       if (cacodemonsDead == 2)
+       {
+         // edge 3 is the door to the final switch
+         doorClosedAmount[3] = 0;
+         playSound(SOUND_DOROPN);
+       }
+     }
      actor->allocated = false;
    }
 }

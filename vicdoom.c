@@ -55,6 +55,7 @@
 #include "p_enemy.h"
 #include "util.h"
 #include "summary.h"
+#include "victory.h"
 
 #pragma staticlocals(on)
 
@@ -113,7 +114,7 @@ texFrame texFrames[] =
   { 23, 0, 0, 8, 16, 8, 8, 8 }, // blue keycard
   { 24, 0, 0, 8, 16, 16, 0, 16 }, // barrel
   { 21, 0, 1, 5 }, // pillar
-  { 24, 0, 0, 8, 16, 16, 0, 16 }, // skullpile
+  { 24, 0, 0, 8, 0, 16, 0, 16 }, // skullpile
   { 22, 0, 0, 2, 16, 4, 0, 16 }, // acid
   { 20, 0, 0, 4, 0, 8, 0, 16 }, // possessed corpse (with bullets)
   { 20, 0, 0, 4, 0, 8, 0, 16 }, // possessed corpse
@@ -908,9 +909,12 @@ void __fastcall__ doEdgeSpecial(char edgeGlobalIndex)
       }
       else if (prop == SWITCH_TYPE_REMOVEDOOR)
       {
-        playSound(SOUND_DOROPN);
         ++edgeGlobalIndex;
-        doorClosedAmount[edgeGlobalIndex] = 0;
+        if (doorClosedAmount[edgeGlobalIndex] != 0)
+        {
+          playSound(SOUND_DOROPN);
+          doorClosedAmount[edgeGlobalIndex] = 0;
+        }
       }
     }
 }
@@ -1211,10 +1215,11 @@ int main()
   // set the character set to $1400
   POKE(0x9005, 13 + (PEEK(0x9005)&0xf0));
 
+start:
   setUpScreenForBitmap();
   setUpScreenForMenu();
   runMenu(0);
-  level = 6;
+  level = 1;
   
 nextLevel:
 
@@ -1589,6 +1594,11 @@ nextLevel:
     if (health > 0)
     {
       summaryScreen();
+      if (level == 9)
+      {
+        victoryScreen();
+        goto start;
+      }
     }
     stopMusic();
     goto nextLevel;

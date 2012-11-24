@@ -1,0 +1,101 @@
+MFile 1 2 192
+MTrk
+0 Tempo 500000
+0 KeySig 0 major
+0 TimeSig 4/4 24 8
+0 Meta TrkEnd
+TrkEnd
+MTrk
+0 Par ch=1 c=0 v=0
+0 Par ch=1 c=32 v=0
+0 PrCh ch=1 p=32
+0 Meta TrkName "Untitled\0"
+0 Par ch=1 c=7 v=127
+0 Par ch=1 c=7 v=100
+0 Par ch=1 c=10 v=64
+0 Par ch=1 c=0 v=0
+2984 On ch=1 n=36 v=86
+4476 Off ch=1 n=36 v=0
+4476 On ch=1 n=36 v=81
+5968 Off ch=1 n=36 v=0
+5968 On ch=1 n=36 v=81
+7348 Off ch=1 n=36 v=0
+7368 On ch=1 n=34 v=77
+7464 Off ch=1 n=34 v=0
+7464 On ch=1 n=36 v=81
+8840 Off ch=1 n=36 v=0
+8864 On ch=1 n=34 v=77
+8956 Off ch=1 n=34 v=0
+8956 On ch=1 n=36 v=81
+10336 Off ch=1 n=36 v=0
+10356 On ch=1 n=34 v=77
+10448 Off ch=1 n=34 v=0
+10448 On ch=1 n=36 v=81
+11828 Off ch=1 n=36 v=0
+11848 On ch=1 n=34 v=77
+11944 Off ch=1 n=34 v=0
+11944 On ch=1 n=36 v=78
+12592 Off ch=1 n=36 v=0
+12596 On ch=1 n=34 v=71
+12688 Off ch=1 n=34 v=0
+12688 On ch=1 n=36 v=75
+13328 Off ch=1 n=36 v=0
+13344 On ch=1 n=38 v=83
+13436 On ch=1 n=36 v=81
+13444 Off ch=1 n=38 v=0
+14088 On ch=1 n=34 v=76
+14096 Off ch=1 n=36 v=0
+14184 On ch=1 n=36 v=78
+14188 Off ch=1 n=34 v=0
+14824 Off ch=1 n=36 v=0
+14836 On ch=1 n=38 v=82
+14928 On ch=1 n=36 v=79
+14936 Off ch=1 n=38 v=0
+15564 Off ch=1 n=36 v=0
+15584 On ch=1 n=34 v=85
+15676 On ch=1 n=36 v=76
+15680 Off ch=1 n=34 v=0
+16316 Off ch=1 n=36 v=0
+16328 On ch=1 n=38 v=73
+16424 On ch=1 n=36 v=84
+16432 Off ch=1 n=38 v=0
+17076 Off ch=1 n=36 v=0
+17076 On ch=1 n=34 v=90
+17152 Off ch=1 n=34 v=0
+17168 On ch=1 n=36 v=83
+17824 On ch=1 n=38 v=84
+17840 Off ch=1 n=36 v=0
+17916 Off ch=1 n=38 v=0
+17916 On ch=1 n=39 v=78
+18568 Off ch=1 n=39 v=0
+18568 On ch=1 n=37 v=71
+18660 Off ch=1 n=37 v=0
+18664 On ch=1 n=39 v=75
+19300 Off ch=1 n=39 v=0
+19316 On ch=1 n=41 v=83
+19408 On ch=1 n=39 v=81
+19416 Off ch=1 n=41 v=0
+20064 On ch=1 n=37 v=76
+20072 Off ch=1 n=39 v=0
+20156 On ch=1 n=39 v=78
+20160 Off ch=1 n=37 v=0
+20796 Off ch=1 n=39 v=0
+20808 On ch=1 n=41 v=82
+20904 On ch=1 n=39 v=79
+20908 Off ch=1 n=41 v=0
+21536 Off ch=1 n=39 v=0
+21556 On ch=1 n=37 v=85
+21648 On ch=1 n=39 v=76
+21652 Off ch=1 n=37 v=0
+22288 Off ch=1 n=39 v=0
+22304 On ch=1 n=41 v=73
+22396 On ch=1 n=39 v=84
+22404 Off ch=1 n=41 v=0
+23048 Off ch=1 n=39 v=0
+23048 On ch=1 n=37 v=90
+23128 Off ch=1 n=37 v=0
+23144 On ch=1 n=39 v=83
+23816 Off ch=1 n=39 v=0
+24575 Par ch=1 c=127 v=0
+24575 Meta TrkEnd
+TrkEnd
