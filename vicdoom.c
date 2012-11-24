@@ -639,6 +639,39 @@ void __fastcall__ drawTransparentObject(char o, int vx, int vy, signed char x_L,
   }
 }
 
+char acidBurn = 0;
+void __fastcall__ updateAcid(void)
+{
+  char o, d;
+  int dx, dy;
+
+  if (acidBurn > 0)
+  {
+    acidBurn--;
+  }
+  if (acidBurn == 0)
+  {
+    for (o = getFirstObjectInSector(playerSector); o != 0xff; o = getNextObjectInSector(o))
+    {
+      if (getObjectType(o) == kOT_Acid)
+      {
+        dx = getObjectX(o) - playerx;
+        dy = getObjectY(o) - playery;
+
+        d = P_ApproxDistance(dx, dy);
+
+        if (d < 3)
+        {
+          playSound(SOUND_OOF);
+          damagePlayer(1 + (P_Random()&7));
+          acidBurn = 4;
+          break;
+        }
+      }
+    }
+  }
+}
+
 typedef struct
 {
   char o;
@@ -1200,13 +1233,20 @@ int main()
   signed char ca, sa;
   char numObj;
   char *mapName;
-  
-  read_data_file("sounds", 0xBA20, 0x3E0);
+
+  // clear screen
+  putchar(147);
+  putchar(13);
+  cputsxy(0, 1, "R_Init: Init DOOM");
+  cputsxy(0, 2, "refresh daemon...");
+
+  read_data_file("sounds", 0xBA20, 0x2A0);
 
   playSoundInitialize();
 
   read_data_file("sluts", 0x400, 0x400);
   read_data_file("lowcode", 0x800, 0x800);
+  read_data_file("hicode", 0xBCC0, 0x140);
   read_data_file("textures", 0xA000, 0xD00);
 
   POKE(0x900E, (6<<4) + (PEEK(0x900E)&0x0f)); // blue aux color
@@ -1218,21 +1258,17 @@ int main()
 start:
   setUpScreenForBitmap();
   setUpScreenForMenu();
-  stopMusic();
-  read_data_file("e1m9mus", 0xB700, 0x320);
-  startMusic();
+  playMusic("e1m9mus");
   runMenu(0);
-  stopMusic();
   level = 1;
   
 nextLevel:
 
+  caMusic[3] = '0' + level;
+  playMusic(caMusic);
+
   setUpScreenForBitmap();
   setUpScreenForGameplay();
-
-  caMusic[3] = '0' + level;
-  read_data_file(caMusic, 0xB700, 0x320);
-  startMusic();
 
   caLevel[3] = '0' + level;
   read_data_file(caLevel, 0xAD00, 0xA00);
@@ -1307,6 +1343,7 @@ nextLevel:
   
   playMapTimer();
   resetMapTime();
+
   while (health > 0 && !endLevel)
   {
       if (!flashBorderTime)
@@ -1489,6 +1526,8 @@ nextLevel:
         }
       }
 
+      updateAcid();
+
       {
         push_out();
 //        printIntAtXY(playerSector, 0, 1, 2);
@@ -1559,9 +1598,7 @@ nextLevel:
     else
     {
       cputsxy(5, 13, "map complete");
-      stopMusic();
-      read_data_file("intermus", 0xB700, 0x320);
-      startMusic();
+      playMusic("intermus");
       ++level;
     }
       

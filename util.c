@@ -4,6 +4,7 @@
 #include <conio.h>
 
 #include "util.h"
+#include "playSound.h"
 
 char textColor = 1;
 
@@ -75,4 +76,11 @@ void __fastcall__ read_data_file(char *name, unsigned int addr, int maxSize)
     fread((void *)addr, maxSize, 1, fp);
     fclose(fp);
   }
+}
+
+void __fastcall__ playMusic(char *name)
+{
+  stopMusic();
+  read_data_file(name, 0xB700, 0x320);
+  startMusic();
 }

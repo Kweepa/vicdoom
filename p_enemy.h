@@ -1,5 +1,7 @@
 #define TEX_ANIMATE 64
 
+char __fastcall__ P_ApproxDistance( int dx, int dy );
+
 void __fastcall__ p_enemy_resetMap(void);
 
 void __fastcall__ p_enemy_startframe(void);

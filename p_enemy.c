@@ -39,8 +39,6 @@
 
 extern char doorClosedAmount[200];
 
-char __fastcall__ P_ApproxDistance( int dx, int dy );
-
 #define fixed_t int
 #define boolean char
 #define false 0

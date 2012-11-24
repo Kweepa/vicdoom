@@ -17,9 +17,7 @@ void __fastcall__ victoryScreen(void)
   char j, x;
   char caFileName[] = "victory1.txt";
 
-  stopMusic();
-  read_data_file("victormus", 0xB700, 0x320);
-  startMusic();
+  playMusic("victormus");
 
   for (j = 0; j < 2; ++j)
   {
