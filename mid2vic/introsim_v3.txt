@@ -1,0 +1,16 @@
+0 On ch=1 n=50 v=127
+16 Off ch=1 n=50 v=0
+40 On ch=1 n=50 v=121
+50 Off ch=1 n=50 v=0
+80 On ch=1 n=50 v=115
+92 Off ch=1 n=50 v=0
+120 On ch=1 n=50 v=109
+130 Off ch=1 n=50 v=0
+160 On ch=1 n=50 v=102
+172 Off ch=1 n=50 v=0
+200 On ch=1 n=50 v=96
+212 Off ch=1 n=50 v=0
+240 On ch=1 n=50 v=90
+252 Off ch=1 n=50 v=0
+280 On ch=1 n=50 v=84
+292 Off ch=1 n=50 v=0

@@ -518,7 +518,7 @@ void __fastcall__ P_RadiusAttack(char radius)
     if (distanceFromPlayer < radius)
     {
       playSound(SOUND_OOF);
-      damagePlayer(1 + (P_Random()&15));
+      damagePlayer(actor->health + (P_Random()&15));
     }
 }
 
@@ -905,12 +905,14 @@ void __fastcall__ A_Missile(void)
 	    miss->infoType = MOBJINFO_IMPSHOT;
 	    miss->stateIndex = STATE_IMPSHOTFLY;
 	    miss->mobjIndex = MAX_MOBJ - 1;
+      info = &mobjinfo[actor->infoType];
+      miss->health = info->missiledamage;
 
 #if 0
 	    gotoxy(1,1);
 	    cprintf("%ld %ld %d %d. \n", dx, dy, miss->momx, miss->momy);
 #endif
-	    objForMobj[MAX_MOBJ-1] = MAX_OBJ - 1;
+	    objForMobj[MAX_MOBJ - 1] = MAX_OBJ - 1;
 	    mobjForObj[MAX_OBJ - 1] = MAX_MOBJ - 1;
 	    setObjectSector(MAX_OBJ - 1, miss->sector);
 	    setObjectX(MAX_OBJ - 1, miss->x);
@@ -987,8 +989,8 @@ void __fastcall__ A_Fly(void)
    if (distanceFromPlayer < 3)
    {
      die = true;
-     damagePlayer(1 + (P_Random()&15));
-      playSound(SOUND_OOF);
+     damagePlayer(actor->health + (P_Random()&15));
+     playSound(SOUND_OOF);
    }
    else
    {

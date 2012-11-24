@@ -311,6 +311,14 @@ and #$f0
 ora musicVolume
 sta $900e
 
+; clear current notes
+lda #255
+ldx #3
+:
+sta noteInVoice,x
+dex
+bpl :-
+
 rts
 
 .proc _playSoundInitialize : near

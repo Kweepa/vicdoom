@@ -1218,7 +1218,11 @@ int main()
 start:
   setUpScreenForBitmap();
   setUpScreenForMenu();
+  stopMusic();
+  read_data_file("intromus", 0xB700, 0x320);
+  startMusic();
   runMenu(0);
+  stopMusic();
   level = 1;
   
 nextLevel:
@@ -1550,7 +1554,7 @@ nextLevel:
     if (health <= 0)
     {
       cputsxy(5, 13, "you are dead");
-        cputsxy(5, 15, "press return");
+      cputsxy(5, 15, "press return");
     }
     else
     {
