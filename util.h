@@ -10,3 +10,6 @@ void __fastcall__ waitforraster(void);
 unsigned int __fastcall__ sqrt(unsigned long x);
 void __fastcall__ read_data_file(char *name, unsigned int addr, int maxSize);
 void __fastcall__ playMusic(char *name);
+
+void __fastcall__ load_data_file(char *fname);
+void __fastcall__ load_file(char *fname, char fnamelen);

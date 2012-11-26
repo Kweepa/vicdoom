@@ -15,9 +15,9 @@ void __fastcall__ victoryScreen(void)
 {
   int i;
   char j, x;
-  char caFileName[] = "victory1.txt";
+  char caFileName[] = "pvictory1.txt";
 
-  playMusic("victormus");
+  playMusic("pvictormus");
 
   for (j = 0; j < 2; ++j)
   {
@@ -30,8 +30,8 @@ void __fastcall__ victoryScreen(void)
     }
 
     // read in the text, then reveal it by painting red slowly.
-    caFileName[7] = '1' + j;
-    read_data_file(caFileName, 0x1000, 506);
+    caFileName[8] = '1' + j;
+    load_data_file(caFileName);
 
     for (i = 0; i < 506; ++i)
     {

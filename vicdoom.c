@@ -16,6 +16,7 @@
 // X 11. use a double buffer scheme that draws to two different sets of characters and just copies the characters over
 // X 13. projectiles!
 // X 14. remote doors need to be openable from the other side - new edge prop that opens a door with e=e-1
+// X 16. make acid do damage
 
 // todo
 // 2.5. fix push_out code some more
@@ -35,7 +36,7 @@
 // 1400-15FF character font
 // 1600-17FF 8x8 bitmapped display character ram
 // 1800-7FFF code/data
-// A000-BDFF texture data, level data, music
+// A000-BDFF texture data, level data, music, sound
 // BE00-BFFF back buffer
 
 #define IDDQD 0
@@ -1222,8 +1223,8 @@ void __fastcall__ setUpScreenForGameplay(void)
 
 char __fastcall__ runMenu(char canReturn);
 
-char caLevel[5] = "e1m1";
-char caMusic[8] = "e1m1mus";
+char caLevel[] = "pe1m1";
+char caMusic[] = "pe1m1mus";
 
 int main()
 {
@@ -1240,14 +1241,14 @@ int main()
   cputsxy(0, 1, "R_Init: Init DOOM");
   cputsxy(0, 2, "refresh daemon...");
 
-  read_data_file("sounds", 0xBA20, 0x2A0);
+  load_data_file("psounds");
 
   playSoundInitialize();
 
-  read_data_file("sluts", 0x400, 0x400);
-  read_data_file("lowcode", 0x800, 0x800);
-  read_data_file("hicode", 0xBCC0, 0x140);
-  read_data_file("textures", 0xA000, 0xD00);
+  load_data_file("psluts");
+  load_data_file("plowcode");
+  load_data_file("phicode");
+  load_data_file("ptextures");
 
   POKE(0x900E, (6<<4) + (PEEK(0x900E)&0x0f)); // blue aux color
   POKE(0x900F, 8 + 5); // green border, and black screen
@@ -1258,20 +1259,23 @@ int main()
 start:
   setUpScreenForBitmap();
   setUpScreenForMenu();
-  playMusic("e1m9mus");
+
+  playMusic("pe1m9mus");
+
   runMenu(0);
   level = 1;
   
 nextLevel:
 
-  caMusic[3] = '0' + level;
+  caMusic[4] = '0' + level;
   playMusic(caMusic);
+//  playMusic("pe1m1mus");
 
   setUpScreenForBitmap();
   setUpScreenForGameplay();
 
-  caLevel[3] = '0' + level;
-  read_data_file(caLevel, 0xAD00, 0xA00);
+  caLevel[4] = '0' + level;
+  load_data_file(caLevel);
   mapName = getMapName();
   numObj = getNumObjects();
 
@@ -1598,7 +1602,7 @@ nextLevel:
     else
     {
       cputsxy(5, 13, "map complete");
-      playMusic("intermus");
+      playMusic("pintermus");
       ++level;
     }
       

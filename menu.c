@@ -40,16 +40,16 @@ char *caMenus[][3] =
 
 char *caInfos[] =
 {
-  "cred.pt",
-  "keys.pt",
-  "buy.pt"
+  "pcred.pt",
+  "pkeys.pt",
+  "pbuy.pt"
 };
 
 char *caColors[] =
 {
-  "cred.co",
-  "keys.co",
-  "buy.co"
+  "pcred.co",
+  "pkeys.co",
+  "pbuy.co"
 };
 
 char nextMenu[3][3] = { { 1, 2, -1 }, { 3, -3, -3 }, { -10, -10, -2 } };
@@ -69,10 +69,10 @@ char oldCtrlKeys = 0;
 char moveKeys = 0;
 char ctrlKeys = 0;
 
-void __fastcall__ load_text_screen(char scr, unsigned int addr)
+void __fastcall__ load_text_screen(char scr)
 {
-   read_data_file(caInfos[scr], addr, 512);
-   read_data_file(caColors[scr], addr + 0x8400, 512);
+  load_data_file(caInfos[scr]);
+  load_data_file(caColors[scr]);
 }
 
 char __fastcall__ keyPressed(char keyMask)
@@ -198,71 +198,71 @@ char __fastcall__ runMenu(char canReturn)
    {
      oldKeys = moveKeys;
      oldCtrlKeys = ctrlKeys;
-	 moveKeys = readInput();
-	 ctrlKeys = getControlKeys();
+	   moveKeys = readInput();
+	   ctrlKeys = getControlKeys();
 	 
-	 if (keyPressed(KEY_FORWARD))
-	 {
-	   char oldItem = item;
-	   --item;
-	   drawMenuItem(oldItem);
-	   if (item == 255) item = 2;
-	   drawMenuItem(item);
-	   playSound(SOUND_STNMOV);
-	 }
-	 if (keyPressed(KEY_BACK))
-	 {
-	   char oldItem = item;
-	   ++item;
-	   drawMenuItem(oldItem);
-	   if (item == 3) item = 0;
-	   drawMenuItem(item);
-	   playSound(SOUND_STNMOV);
-	 }
+	   if (keyPressed(KEY_FORWARD))
+	   {
+	     char oldItem = item;
+	     --item;
+	     drawMenuItem(oldItem);
+	     if (item == 255) item = 2;
+	     drawMenuItem(item);
+	     playSound(SOUND_STNMOV);
+	   }
+	   if (keyPressed(KEY_BACK))
+	   {
+	     char oldItem = item;
+	     ++item;
+	     drawMenuItem(oldItem);
+	     if (item == 3) item = 0;
+	     drawMenuItem(item);
+	     playSound(SOUND_STNMOV);
+	   }
      if (menu == 2)
      {
-		 if (keyPressed(KEY_MOVERIGHT))
-		 {
-		   if (item == 0)
+		   if (keyPressed(KEY_MOVERIGHT))
 		   {
-			 addToEffectsVolume(1);
+		     if (item == 0)
+		     {
+  			   addToEffectsVolume(1);
+		     }
+		     else if (item == 1)
+		     {
+		       addToMusicVolume(1);
+		     }
 		   }
-		   else if (item == 1)
+		   if (keyPressed(KEY_MOVELEFT))
 		   {
-		     addToMusicVolume(1);
+		     if (item == 0)
+		     {
+			   addToEffectsVolume(255);
+		     }
+		     else if (item == 1)
+		     {
+		       addToMusicVolume(255);
+		     }
 		   }
-		 }
-		 if (keyPressed(KEY_MOVELEFT))
-		 {
-		   if (item == 0)
-		   {
-			 addToEffectsVolume(255);
-		   }
-		   else if (item == 1)
-		   {
-		     addToMusicVolume(255);
-		   }
-		 }
-	  }
-	  if (ctrlKeyPressed(KEY_ESC))
-	  {
-	    if (stackDepth == 0)
+	    }
+	    if (ctrlKeyPressed(KEY_ESC))
 	    {
-	       if (canReturn)
-	       {
-             playSound(SOUND_OOF);
-  	         waitForEscReleased();
-		     return 0;
-		   }
-		}
-		else
-		{
+	      if (stackDepth == 0)
+	      {
+          if (canReturn)
+          {
             playSound(SOUND_OOF);
-			--stackDepth;
-			menu = menuStack[stackDepth];
-			item = itemStack[stackDepth];
-			drawMenu();
-		}
+            waitForEscReleased();
+            return 0;
+		      }
+		    }
+		    else
+		    {
+          playSound(SOUND_OOF);
+			    --stackDepth;
+			    menu = menuStack[stackDepth];
+			    item = itemStack[stackDepth];
+			    drawMenu();
+		    }
 	  }
 	  if (ctrlKeyPressed(KEY_RETURN))
 	  {
@@ -274,28 +274,28 @@ char __fastcall__ runMenu(char canReturn)
 	      return 1;
 	    }
 
-        next = nextMenu[menu][item];
-        if (next != -10)
-        {
-            playSound(SOUND_PISTOL);
-			if (next >= 0)
-			{
-			  menuStack[stackDepth] = menu;
-			  itemStack[stackDepth] = item;
-			  ++stackDepth;
-			  menu = next;
-			  item = 0;
-			  drawMenu();
-			}
-			else
-			{
-			  next = (-next)-1;
-			  POKE(198,0);
-			  load_text_screen(next, 0x1000 + 242);
-			  while (PEEK(198) == 0) ;
-			  drawMenu();
-			}
-		}
+      next = nextMenu[menu][item];
+      if (next != -10)
+      {
+        playSound(SOUND_PISTOL);
+			  if (next >= 0)
+			  {
+			    menuStack[stackDepth] = menu;
+			    itemStack[stackDepth] = item;
+			    ++stackDepth;
+			    menu = next;
+			    item = 0;
+			    drawMenu();
+			  }
+			  else
+			  {
+			    next = (-next)-1;
+			    POKE(198,0);
+			    load_text_screen(next);
+			    while (PEEK(198) == 0) ;
+			    drawMenu();
+			  }
+  		}
 	  }
 	}
 

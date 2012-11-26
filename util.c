@@ -68,19 +68,14 @@ unsigned int __fastcall__ sqrt(unsigned long x)
   return ((unsigned int)y);
 }
 
-void __fastcall__ read_data_file(char *name, unsigned int addr, int maxSize)
+void __fastcall__ load_data_file(char *fname)
 {
-  FILE *fp = fopen(name, "r");
-  if (fp != NULL)
-  {
-    fread((void *)addr, maxSize, 1, fp);
-    fclose(fp);
-  }
+  load_file(fname, strlen(fname));
 }
 
 void __fastcall__ playMusic(char *name)
 {
   stopMusic();
-  read_data_file(name, 0xB700, 0x320);
+  load_data_file(name);
   startMusic();
 }
