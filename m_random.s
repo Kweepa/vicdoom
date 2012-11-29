@@ -14,6 +14,8 @@
 .setcpu "6502"
 .export _P_Random
 
+.if 0
+
 .segment "LUTS"
 
 rndtable:
@@ -49,3 +51,23 @@ inc prndindex
 ldx prndindex
 lda rndtable,x
 rts
+
+.else
+
+.segment "CODE"
+
+prnd:
+.byte 0
+
+_P_Random:
+    lda prnd
+    asl
+    asl
+    asl
+    clc
+    adc prnd
+    adc #193
+    sta prnd
+    rts 
+
+.endif

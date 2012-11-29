@@ -37,8 +37,6 @@
 
 #pragma staticlocals(on)
 
-extern char doorClosedAmount[200];
-
 #define fixed_t int
 #define boolean char
 #define false 0
@@ -616,7 +614,7 @@ signed char __fastcall__ try_move(int trydx, int trydy)
       {
 			  // check we're within the extents of the edge
 			  thatSector = getOtherSector(edgeGlobalIndex, curSector);
-			  if (thatSector != -1 && doorClosedAmount[edgeGlobalIndex] == 0)
+			  if (thatSector != -1 && !isDoorClosed(edgeGlobalIndex))
 			  {
 			    distance = px * ex + py * ey;
 			    if (distance > edgeLen && distance < (edgeLen*edgeLen - edgeLen))
@@ -944,7 +942,6 @@ void __fastcall__ A_Melee(void)
 }
 
 int cacodemonsDead = 0;
-extern char doorClosedAmount[200];
 
 void __fastcall__ A_Fall(void)
 {
@@ -961,7 +958,7 @@ void __fastcall__ A_Fall(void)
        if (cacodemonsDead == 2)
        {
          // edge 3 is the door to the final switch
-         doorClosedAmount[3] = 0;
+         basicOpenDoor(3);
          playSound(SOUND_DOROPN);
        }
      }

@@ -22,6 +22,12 @@
 .export _getEdgeTexture
 .export _setEdgeTexture
 
+.export _resetDoorClosedAmounts
+.export _isEdgeDoor
+.export _isDoorClosed
+.export _basicOpenDoor
+.export _basicCloseDoor
+
 .export getEdgeIndex
 .export getSectorVertexXY
 
@@ -82,10 +88,28 @@ xfvertYhi:
 .res 8, 0
 xfvertYlo:
 .res 8, 0
-xfvertScreenXhi:
+xfvertScreenX:
 .res 8, 0
-xfvertScreenXlo:
-.res 8, 0
+
+.if 0
+; vertex cache
+cachecount:
+.byte 0
+cachei:
+.res 16, 0
+cachexhi:
+.res 16, 0
+cachexlo:
+.res 16, 0
+cacheyhi:
+.res 16, 0
+cacheylo:
+.res 16, 0
+cachesxhi:
+.res 16, 0
+cachesxlo:
+.res 16, 0
+.endif
 
 NUMSEC = 64
 
@@ -101,9 +125,7 @@ yToTransform = $6A
 
 .proc _getScreenX: near
 tay
-lda xfvertScreenXhi,y
-tax
-lda xfvertScreenXlo,y
+lda xfvertScreenX,y
 rts
 .endproc
 
@@ -122,6 +144,37 @@ tax
 lda xfvertYlo,y
 rts
 .endproc
+
+clampIntToChar:
+
+; x high, a low
+tay
+txa
+bpl sxpos
+cmp #$ff
+beq :+
+lda #$80
+rts
+:
+tya
+cmp #$80
+bpl clipdone
+lda #$80
+rts
+
+sxpos:
+cmp #0
+beq :+
+lda #$7f
+rts
+:
+tya
+cmp #$7f
+bmi clipdone
+lda #$7f
+
+clipdone:
+rts
 
 .proc _transformSectorToScreenSpace: near
 
@@ -148,7 +201,7 @@ sta yToTransform
 
 stx vertexCounter
 modify:
-lda secVerts, x
+lda secVerts, x   ; A contains the global vertex index
 tay
 
 lda vertX, y
@@ -171,15 +224,13 @@ bne Ypos
 Yneg:
 lda xfvertXhi, y
 bpl Xpos
-lda #$FC
+lda #$80
 bmi over
 Xpos:
-lda #$04
+lda #$7f
 over:
-sta xfvertScreenXhi, y
-lda #0
-sta xfvertScreenXlo, y
-beq continue
+sta xfvertScreenX, y
+bne continue
 Ypos:
 lda xfvertXlo, y
 ldx xfvertXhi, y
@@ -188,10 +239,10 @@ ldy vertexCounter
 lda xfvertYlo, y
 ldx xfvertYhi, y
 jsr _leftShift4ThenDiv
+jsr clampIntToChar
+
 ldy vertexCounter
-sta xfvertScreenXlo, y
-txa
-sta xfvertScreenXhi, y
+sta xfvertScreenX, y
 
 continue:
 ldx vertexCounter
@@ -770,4 +821,52 @@ dex
 bpl secretLoop
 lda numVisitedSecrets
 ldx #0
+rts
+
+_resetDoorClosedAmounts:
+
+ldy #0
+resetDoorsLoop:
+ldx #1
+lda edgeTex,y
+and #$C0 ; EDGE_TYPE_MASK
+cmp #$40 ; EDGE_TYPE_DOOR
+beq :+
+dex
+:
+txa
+sta $9600,y
+iny
+cpy #200
+bne resetDoorsLoop
+rts
+
+_isEdgeDoor:
+tay
+ldx #0
+lda edgeTex,y
+and #$C0
+cmp #$40
+bne :+
+inx
+:
+txa
+rts
+
+_isDoorClosed:
+tay
+lda $9600,y
+and #$0f
+rts
+
+_basicOpenDoor:
+tay
+lda #0
+sta $9600,y
+rts
+
+_basicCloseDoor:
+tay
+lda #1
+sta $9600,y
 rts

@@ -162,7 +162,6 @@ char level;
 #define TYPE_SWITCH 3
 char typeAtCenterOfView;
 char itemAtCenterOfView;
-char doorClosedAmount[200];
 unsigned char openDoors[4];
 char doorOpenTime[4];
 char numOpenDoors = 0;
@@ -317,14 +316,13 @@ void __fastcall__ drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeInd
 signed char __fastcall__ drawDoor(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
 {
   char edgeGlobalIndex = getEdgeIndex(sectorIndex, curEdgeIndex);
-  char doorClosedAmount = doorClosedAmount[edgeGlobalIndex];
 
-  if (doorClosedAmount == 0)
+  if (isDoorClosed(edgeGlobalIndex))
   {
-    return x_L;
+    drawWall(sectorIndex, curEdgeIndex, nextEdgeIndex, x_L, x_R);
+    return x_R;
   }
-  drawWall(sectorIndex, curEdgeIndex, nextEdgeIndex, x_L, x_R);
-  return x_R;
+  return x_L;
 }
 
 void __fastcall__ drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R)
@@ -781,22 +779,24 @@ void __fastcall__ drawTransparentObjects(void)
 }
 
 // find first edge in sector
-signed char __fastcall__ ffeis(char curSec, char cameraOutsideSector, signed char x_L, signed char x_R)
+signed char __fastcall__ ffeis(char curSec, signed char x_L, signed char x_R)
 {
-   char numVerts = getNumVerts(curSec);
-   char i;
+   char i, numVerts;
+   numVerts = getNumVerts(curSec);
    for (i = 0; i < numVerts; ++i)
    {
-      int sx1, sx2, ty1, ty2;
-      char ni = (i + 1);
+     signed char sx1, sx2;
+      char ni;
+      ni = (i + 1);
       if (ni == numVerts) ni = 0;
       sx1 = getScreenX(i);
       sx2 = getScreenX(ni);
-      ty1 = getTransformedY(i);
-      ty2 = getTransformedY(ni);
       // preprocess
-      if (!cameraOutsideSector)
+      if (curSec == playerSector)
       {
+        int ty1, ty2;
+        ty1 = getTransformedY(i);
+        ty2 = getTransformedY(ni);
         // when inside the sector, adjust the edges clipping the camera plane
         // so that they are definitely facing the player
         if (ty1 <= 0 && ty2 > 0) sx1 = x_L;
@@ -812,8 +812,7 @@ signed char __fastcall__ ffeis(char curSec, char cameraOutsideSector, signed cha
 
 void __fastcall__ drawSpans(void)
 {
-  signed char stackTop = 0;
-  char cameraOutsideSector = 0;
+  signed char stackTop;
   char sectorIndex;
   signed char x_L, x_R;
   signed char firstEdge;
@@ -821,13 +820,14 @@ void __fastcall__ drawSpans(void)
   char edgeGlobalIndex;
   signed char curX;
   char nextEdge;
-  short nextX;
+  signed char nextX;
   signed char thatSector;
 
   clearFilled();
   numTransparent = 0;
   typeAtCenterOfView = 0;
 
+  stackTop = 0;
   spanStackSec[0] = playerSector;
   spanStackL[0] = -HALFSCREENWIDTH;
   spanStackR[0] = HALFSCREENWIDTH;
@@ -839,7 +839,7 @@ void __fastcall__ drawSpans(void)
      x_R = spanStackR[stackTop];
      --stackTop;
 
-     printIntAtXY(sectorIndex,0,0,1); 
+//     printIntAtXY(sectorIndex,0,0,1); 
 
      // STEP 1 - draw objects belonging to this sector!
      // fill in the table of written columns as we progress
@@ -849,9 +849,7 @@ void __fastcall__ drawSpans(void)
      transformSectorToScreenSpace(sectorIndex);
      //POKE(0x900f, 13);
 
-     firstEdge = ffeis(sectorIndex, cameraOutsideSector, x_L, x_R);
-     // any non-zero value means the camera is outside
-     cameraOutsideSector++;
+     firstEdge = ffeis(sectorIndex, x_L, x_R);
      // didn't find a first edge - must be behind
      if (firstEdge == -1)
      {
@@ -873,8 +871,7 @@ void __fastcall__ drawSpans(void)
         thatSector = getOtherSector(edgeGlobalIndex, sectorIndex);
         if (thatSector != -1)
         {
-           char tex = getEdgeTexture(edgeGlobalIndex);
-           if ((tex & EDGE_TYPE_MASK) == EDGE_TYPE_DOOR)
+           if (isEdgeDoor(edgeGlobalIndex))
            {
               curX = drawDoor(sectorIndex, curEdge, nextEdge, curX, nextX);
            }
@@ -904,7 +901,7 @@ void __fastcall__ drawSpans(void)
 void __fastcall__ openDoor(char edgeGlobalIndex)
 {
     char i;
-    if (doorClosedAmount[edgeGlobalIndex] != 0)
+    if (isDoorClosed(edgeGlobalIndex))
     {
         for (i = 0; i < 4; ++i)
         {
@@ -915,7 +912,7 @@ void __fastcall__ openDoor(char edgeGlobalIndex)
               break;
           }
         }
-        doorClosedAmount[edgeGlobalIndex] = 0;
+        basicOpenDoor(edgeGlobalIndex);
         playSound(SOUND_DOROPN);
     }
 }
@@ -944,10 +941,10 @@ void __fastcall__ doEdgeSpecial(char edgeGlobalIndex)
       else if (prop == SWITCH_TYPE_REMOVEDOOR)
       {
         ++edgeGlobalIndex;
-        if (doorClosedAmount[edgeGlobalIndex] != 0)
+        if (isDoorClosed(edgeGlobalIndex))
         {
           playSound(SOUND_DOROPN);
-          doorClosedAmount[edgeGlobalIndex] = 0;
+          basicOpenDoor(edgeGlobalIndex);
         }
       }
     }
@@ -1022,7 +1019,7 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
         if (dgz & dle)
         {
            thatSector = getOtherSector(edgeGlobalIndex, curSector);
-           if (thatSector != -1 && doorClosedAmount[edgeGlobalIndex] == 0)
+           if (thatSector != -1 && !isDoorClosed(edgeGlobalIndex))
            {
               if (height < 0)
               {
@@ -1150,7 +1147,7 @@ void __fastcall__ push_out(void)
     playerSector = nextSector;
   }
 
-  printIntAtXY(totalCheckedEdges, 0, 1, 2);
+  //printIntAtXY(totalCheckedEdges, 0, 1, 2);
 }
 
 char turnSpeed = 0;
@@ -1234,6 +1231,7 @@ int main()
   signed char ca, sa;
   char numObj;
   char *mapName;
+  char timeBefore;
 
   // clear screen
   putchar(147);
@@ -1279,18 +1277,7 @@ nextLevel:
   mapName = getMapName();
   numObj = getNumObjects();
 
-  for (i = 0; i < 200; ++i)
-  {
-    char tex = getEdgeTexture(i);
-    if ((tex & EDGE_TYPE_MASK) == EDGE_TYPE_DOOR)
-    {
-      doorClosedAmount[i] = 255;
-    }
-    else
-    {
-      doorClosedAmount[i] = 0;
-    }
-  }
+  resetDoorClosedAmounts();
   doorOpenTime[0] = 0;
   doorOpenTime[1] = 0;
   doorOpenTime[2] = 0;
@@ -1480,7 +1467,7 @@ nextLevel:
           if (--doorOpenTime[i] == 0)
           {
             // try to close the door - should just get pushed out, so go ahead
-            doorClosedAmount[openDoors[i]] = 255;
+            basicCloseDoor(openDoors[i]);
             playSound(SOUND_DORCLS);
           }
         }
@@ -1533,6 +1520,7 @@ nextLevel:
       updateAcid();
 
       {
+      setTickCount();
         push_out();
 //        printIntAtXY(playerSector, 0, 1, 2);
 //        printIntAtXY(playerx>>8, 0, 2, 3);
@@ -1540,6 +1528,7 @@ nextLevel:
 //        printIntAtXY(playery>>8, 0, 4, 3);
 //          printIntAtXY(playery&255, 1, 5, 3);
 //        printIntAtXY(playera, 0, 6, 3);
+        printIntAtXY(getTickCount(), 0, 0, 2);
       }
 
       setSectorVisited(playerSector);
@@ -1550,10 +1539,14 @@ nextLevel:
       p_enemy_startframe();
       clearSecondBuffer();
       // draw to second buffer
+      setTickCount();
       drawSpans();
+      printIntAtXY(getTickCount(), 0, 1, 2);
       // this takes about 30 raster lines
       copyToPrimaryBuffer();
+      setTickCount();
       p_enemy_think();
+      printIntAtXY(getTickCount(), 0, 2, 2);
       
       ++frame;
       frame &= 7;
@@ -1578,7 +1571,7 @@ nextLevel:
       
       {
         char tick = getTickCount();
-        //printIntAtXY(tick, 0, 0, 3);
+//        printIntAtXY(tick, 0, 0, 3);
         setTickCount(); 
       }
       

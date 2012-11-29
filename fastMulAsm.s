@@ -418,3 +418,55 @@ rts
 
 .endproc
 .endif
+
+
+
+
+;-----------------------------------------------------------
+; fast multiply with tables
+;-----------------------------------------------------------
+; in this case want 16bit signed * 8bit signed = 24bit signed
+; but we can drop the least significant byte so the result is
+; just 16bit
+; ABxC = AxC<<8 + BxC
+; need full AxC result but just high byte of BxC
+; also, need to convert to unsigned before multiply
+; and back again after
+
+; misc numeric work area and accum #1 (according to the PRG)
+; at $57-$66 on the ZP
+; safe to use $5b up (see usage above)
+
+_fast_multiply_16_x_8:
+; AX 16bit value
+; y 8bit value
+
+multabhi:
+;.res 512,0
+multablo:
+;.res 512,0
+
+_generateMulTab:
+
+      ldx #$00
+      txa
+      .db $c9
+lb1:  tya
+      adc #$00
+ml1:  sta multabhi,x
+      tay
+      cmp #$40
+      txa
+      ror
+ml9:  adc #$00
+      sta ml9+1
+      inx
+ml0:  sta multablo,x
+      bne lb1
+      inc ml0+2
+      inc ml1+2
+      clc
+      iny
+      bne lb1
+
+      rts

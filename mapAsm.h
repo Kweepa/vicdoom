@@ -25,7 +25,7 @@ enum EObjType
    kOT_ImpShot
 };
 
-int __fastcall__ getScreenX(char i);
+char __fastcall__ getScreenX(char i);
 int __fastcall__ getTransformedX(char i);
 int __fastcall__ getTransformedY(char i);
 
@@ -47,6 +47,12 @@ void __fastcall__ setEdgeTexture(char i, char texture);
 char __fastcall__ getEdgeLen(char i);
 char __fastcall__ getEdgeTexture(char i);
 char __fastcall__ getNextEdge(char sec, char i);
+
+void __fastcall__ resetDoorClosedAmounts(void);
+char __fastcall__ isEdgeDoor(char i);
+char __fastcall__ isDoorClosed(char i);
+void __fastcall__ basicOpenDoor(char i);
+void __fastcall__ basicCloseDoor(char i);
 
 char __fastcall__ getNumSectors(void);
 char __fastcall__ getVertexIndex(char sec, char i);
