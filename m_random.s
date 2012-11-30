@@ -60,6 +60,7 @@ prnd:
 .byte 0
 
 _P_Random:
+    ; R = (65*R + 73)%256
     lda prnd
     asl
     asl
@@ -68,7 +69,7 @@ _P_Random:
     asl
     clc
     adc prnd
-    adc #73
+    adc #169
     sta prnd
     rts 
 

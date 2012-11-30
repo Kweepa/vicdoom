@@ -403,7 +403,7 @@ void __fastcall__ drawHudArmor(void)
     textcolor(armorColor);
     cputsxy(5, 21, "^");
     setTextColor(armorColor);
-    printIntAtXY(armor, 6, 21, 3);
+    print3DigitNumToScreen(armor, 0x1000 + 22*21 + 6);
 }
 
 void __fastcall__ drawHudAmmo(void)
@@ -412,7 +412,7 @@ void __fastcall__ drawHudAmmo(void)
   textcolor(3);
   cputsxy(1, 21, "&");
   setTextColor(3);
-  printIntAtXY(shells, 2, 21, 2);
+  print2DigitNumToScreen(shells, 0x1000 + 22*21 + 2);
 }
 
 void __fastcall__ drawHudHealth(void)
@@ -421,7 +421,7 @@ void __fastcall__ drawHudHealth(void)
   textcolor(2);
   cputsxy(13, 21, "/");
   setTextColor(2);
-  printIntAtXY(health, 14, 21, 3);
+  print3DigitNumToScreen(health, 0x1000 + 22*21 + 14);
 }
 
 char keyCardColors[3] = { 2, 5, 6 };
@@ -835,8 +835,6 @@ void __fastcall__ drawSpans(void)
      x_R = spanStackR[stackTop];
      --stackTop;
 
-//     printIntAtXY(sectorIndex,0,0,1); 
-
      // STEP 1 - draw objects belonging to this sector!
      // fill in the table of written columns as we progress
      drawObjectsInSector(sectorIndex, x_L, x_R);
@@ -1142,8 +1140,6 @@ void __fastcall__ push_out(void)
   {
     playerSector = nextSector;
   }
-
-  //printIntAtXY(totalCheckedEdges, 0, 1, 2);
 }
 
 char turnSpeed = 0;
@@ -1516,15 +1512,10 @@ nextLevel:
       updateAcid();
 
       {
-      setTickCount();
+        print2DigitNumToScreen(getTickCount(), 0x1000);
+        setTickCount();
         push_out();
-//        printIntAtXY(playerSector, 0, 1, 2);
-//        printIntAtXY(playerx>>8, 0, 2, 3);
-//          printIntAtXY(playerx&255, 1, 3, 3);
-//        printIntAtXY(playery>>8, 0, 4, 3);
-//          printIntAtXY(playery&255, 1, 5, 3);
-//        printIntAtXY(playera, 0, 6, 3);
-        printIntAtXY(getTickCount(), 0, 0, 2);
+//        print2DigitNumToScreen(getTickCount(), 0x1000);
       }
 
       setSectorVisited(playerSector);
@@ -1535,14 +1526,14 @@ nextLevel:
       p_enemy_startframe();
       clearSecondBuffer();
       // draw to second buffer
-      setTickCount();
+//      setTickCount();
       drawSpans();
-      printIntAtXY(getTickCount(), 0, 1, 2);
+//      print2DigitNumToScreen(getTickCount(), 0x1016);
       // this takes about 30 raster lines
       copyToPrimaryBuffer();
-      setTickCount();
+//      setTickCount();
       p_enemy_think();
-      printIntAtXY(getTickCount(), 0, 2, 2);
+//      print2DigitNumToScreen(getTickCount(), 0x102C);
       
       ++frame;
       frame &= 7;

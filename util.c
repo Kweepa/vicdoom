@@ -6,6 +6,7 @@
 #include "util.h"
 #include "playSound.h"
 
+/*
 char textColor = 1;
 
 void __fastcall__ setTextColor(char c)
@@ -35,6 +36,7 @@ void __fastcall__ printIntAtXY(char i, char x, char y, char prec)
   POKE(screenloc, '0' + i);
   POKE(colorloc, textColor);
 }
+*/
 
 void __fastcall__ printCentered(char *str, char y)
 {

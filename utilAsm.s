@@ -10,7 +10,9 @@
 .export _waitForRaster
 .export _meltScreen
 .export _load_file
-
+.export _setTextColor
+.export _print3DigitNumToScreen
+.export _print2DigitNumToScreen
 
 _eraseMessage:
 
@@ -58,6 +60,8 @@ column:
 
 again:
     jsr _P_Random
+    lsr
+    lsr
     and #7
     sta column
    
@@ -91,6 +95,97 @@ sm: lda #0 ; health
     and #$80 ; KEY_RETURN
     beq again
     rts
+
+.endproc
+
+
+intToAsc:
+  ldy #$2f
+  ldx #$3a
+  sec
+:   iny
+    sbc #100
+    bcs :-
+:   dex
+    adc #10
+    bmi :-
+  adc #$2f
+  rts
+
+textcolor:
+.byte 1
+
+_setTextColor:
+  sta textcolor
+  rts
+
+.proc _print3DigitNumToScreen: near
+  ; AX pos
+  ; TOS num (char)
+
+  sta sm1+1
+  sta sm2+1
+  txa
+  sta sm1+2
+  clc
+  adc #$84
+  sta sm2+2
+
+  ldy #0
+  lda (sp),y
+  jsr intToAsc
+  pha
+  txa
+  pha
+  tya
+  pha
+
+  ldy #0
+  :
+  pla
+sm1: sta $1000,y
+  lda textcolor
+sm2: sta $9400,y
+  iny
+  cpy #3
+  bne :-
+
+  ldy #1
+  jmp addysp
+
+.endproc
+
+.proc _print2DigitNumToScreen: near
+  ; AX pos
+  ; TOS num (char)
+
+  sta sm1+1
+  sta sm2+1
+  txa
+  sta sm1+2
+  clc
+  adc #$84
+  sta sm2+2
+
+  ldy #0
+  lda (sp),y
+  jsr intToAsc
+  pha
+  txa
+  pha
+
+  ldy #0
+  :
+  pla
+sm1: sta $1000,y
+  lda textcolor
+sm2: sta $9400,y
+  iny
+  cpy #2
+  bne :-
+
+  ldy #1
+  jmp addysp
 
 .endproc
 

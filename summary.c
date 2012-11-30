@@ -31,7 +31,7 @@ void __fastcall__ rollInPercentage(char pc, char y)
   cputsxy(17, y, "%");
   do
   {
-    printIntAtXY(i, 14, y, 3);
+    print3DigitNumToScreen(i, 0x1000+22*y+14);
     playSound(SOUND_PISTOL);
     i++;
     if (PEEK(198) == 0)
@@ -49,12 +49,15 @@ void __fastcall__ rollInTime(int t, char y)
   cputsxy(15, y, ":");
   do
   {
+    int screenPos;
     i += 5;
     if (i > t) i = t;
     ih = i / 60;
     il = i % 60;
-    printIntAtXY(ih, 13, y, 2);
-    printIntAtXY(il, 16, y, 2);
+    screenPos = 0x1000 + 22*y + 13;
+    print2DigitNumToScreen(ih, screenPos);
+    screenPos += 3;
+    print2DigitNumToScreen(il, screenPos);
     playSound(SOUND_PISTOL);
     if (PEEK(198) == 0)
     {
