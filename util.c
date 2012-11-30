@@ -42,13 +42,6 @@ void __fastcall__ printCentered(char *str, char y)
   cputsxy(11 - len/2, y, str);
 }
 
-// use this to line up raster timing lines
-void __fastcall__ waitforraster(void)
-{
-    while (PEEK(0x9004) > 16) ;
-    while (PEEK(0x9004) <= 16) ;
-}
-
 unsigned int __fastcall__ sqrt(unsigned long x)
 {
   unsigned long m = 0x40000000;

@@ -20,7 +20,7 @@ mid2vic\debug\prepend_load_address e1m9mus b700
 mid2vic\debug\prepend_load_address intermus b700
 mid2vic\debug\prepend_load_address victormus b700
 mid2vic\debug\prepend_load_address sluts 400
-mid2vic\debug\prepend_load_address lowcode 800
+mid2vic\debug\prepend_load_address lowcode 640
 mid2vic\debug\prepend_load_address textures a000
 mid2vic\debug\prepend_load_address sounds ba20
 mid2vic\debug\prepend_load_address hicode bcc0

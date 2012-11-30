@@ -57,19 +57,15 @@
 #include "util.h"
 #include "summary.h"
 #include "victory.h"
+#include "fastmath.h"
 
 #pragma staticlocals(on)
 
-int __fastcall__ muladd88(int x, int y, int z);
-unsigned int __fastcall__ div88(unsigned int x, unsigned int y);
 void __fastcall__ setCameraAngle(unsigned char a);
 void __fastcall__ setCameraX(int x);
 void __fastcall__ setCameraY(int y);
 void __fastcall__ transformSectorToScreenSpace(char sectorIndex);
 signed char __fastcall__ findFirstEdgeInSpan(char cameraOutsideSector, signed char x_L, signed char x_R);
-int __fastcall__ transformxy_withParams(int x, int y);
-int __fastcall__ transformy(void);
-int __fastcall__ leftShift4ThenDiv(int p, unsigned int q);
 char __fastcall__ getObjectTexIndex(unsigned int halfWidth, unsigned int x);
 void __fastcall__ clearFilled(void);
 char __fastcall__ testFilled(signed char col);
@@ -1231,7 +1227,6 @@ int main()
   signed char ca, sa;
   char numObj;
   char *mapName;
-  char timeBefore;
 
   // clear screen
   putchar(147);
@@ -1243,6 +1238,7 @@ int main()
 
   playSoundInitialize();
 
+  generateMulTab();
   load_data_file("psluts");
   load_data_file("plowcode");
   load_data_file("phicode");
@@ -1569,12 +1565,6 @@ nextLevel:
           }
       }
       
-      {
-        char tick = getTickCount();
-//        printIntAtXY(tick, 0, 0, 3);
-        setTickCount(); 
-      }
-      
       if (eraseMessageAfter != 0)
       {
         --eraseMessageAfter;
@@ -1598,36 +1588,8 @@ nextLevel:
       playMusic("pintermus");
       ++level;
     }
-      
-    // screen melt
-    {
-        char meltCount = 180;
-        do
-        {
-          char x = 7 + (P_Random() & 7);
-          char y;
 
-          waitforraster();
-          
-          for (y = 9; y > 2; --y)
-          {
-             POKE(0x1000 + 22*y + x, PEEK(0x1000 + 22*(y-1) + x));
-          }
-          POKE(0x1000 + 44 + x, 32);
-          
-          if (health <= 0)
-          {
-            keys = readInput();
-            ctrlKeys = getControlKeys();
-            if (ctrlKeys & KEY_RETURN) break;
-          }
-          else
-          {
-            if (!--meltCount) break;
-          }
-        }
-        while (1);
-    }
+    meltScreen(health);
     
     if (health > 0)
     {

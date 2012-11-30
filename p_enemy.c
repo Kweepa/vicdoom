@@ -881,6 +881,7 @@ void __fastcall__ A_Shoot(void)
 //
 void __fastcall__ A_Missile(void)
 {
+  return;
 	// launch a missile
 	{
 	  mobj_t *miss = &mobjs[MAX_MOBJ-1];

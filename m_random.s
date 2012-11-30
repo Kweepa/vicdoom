@@ -64,9 +64,11 @@ _P_Random:
     asl
     asl
     asl
+    asl
+    asl
     clc
     adc prnd
-    adc #193
+    adc #73
     sta prnd
     rts 
 

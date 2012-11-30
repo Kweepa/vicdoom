@@ -79,6 +79,8 @@ objXlo:
 objYlo:
 .res 32, 0
 
+.segment "LOWCODE"
+
 ; r/w parts (48 bytes)
 xfvertXhi:
 .res 8, 0
@@ -510,6 +512,8 @@ jmp addysp
 .endproc
 
 
+.segment "CODE"
+
 .proc _getNumObjects : near
 
 lda numObj
@@ -852,6 +856,8 @@ inx
 :
 txa
 rts
+
+.import _fastMulTest
 
 _isDoorClosed:
 tay

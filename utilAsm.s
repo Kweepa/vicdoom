@@ -3,8 +3,14 @@
 
 .import addysp
 .importzp sp
+.import _P_Random
+.import _readInput
+.import _getControlKeys
 .export _eraseMessage
+.export _waitForRaster
+.export _meltScreen
 .export _load_file
+
 
 _eraseMessage:
 
@@ -17,6 +23,76 @@ dex
 bpl woop
 rts
 
+
+.proc _waitForRaster: near
+
+  tay
+  @loop:
+    :
+    lda $9004
+    cmp #16
+    bpl :-
+    :
+    lda $9004
+    cmp #16
+    bmi :-
+    dey
+    bne @loop
+  rts
+
+.endproc
+
+x22p7:
+.byte 51, 73, 95, 117, 139, 161, 183
+meltCount:
+.byte 0
+column:
+.byte 0
+
+.proc _meltScreen: near
+
+    sta sm+1
+   
+    lda #180
+    sta meltCount
+
+again:
+    jsr _P_Random
+    and #7
+    sta column
+   
+    lda #1
+    jsr _waitForRaster
+   
+    ; melt column
+    ldy #6
+:
+    lda x22p7,y
+    clc
+    adc column
+    tax
+    lda $1000,x
+    sta $1000+22,x
+    dey
+    bpl :-
+    ldx column
+    lda #32
+    sta $1000+51,x
+   
+sm: lda #0 ; health
+    beq :+
+   
+    dec meltCount
+    bne again
+    rts
+:
+    jsr _readInput
+    jsr _getControlKeys
+    and #$80 ; KEY_RETURN
+    beq again
+    rts
+
+.endproc
 
 ; params: filename, length of filename
 ; A - length of fname

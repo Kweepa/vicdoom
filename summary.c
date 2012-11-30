@@ -18,7 +18,7 @@ void __fastcall__ waitASecond(void)
   {
 	  if (PEEK(198) == 0)
 	  {
-		waitforraster();
+		  waitForRaster(1);
 	  }
 	--i;
   }
@@ -36,8 +36,7 @@ void __fastcall__ rollInPercentage(char pc, char y)
     i++;
     if (PEEK(198) == 0)
     {
-		waitforraster();
-		waitforraster();
+		  waitForRaster(2);
     }
   }
   while (i <= pc);
@@ -59,8 +58,7 @@ void __fastcall__ rollInTime(int t, char y)
     playSound(SOUND_PISTOL);
     if (PEEK(198) == 0)
     {
-		waitforraster();
-		waitforraster();
+		  waitForRaster(2);
     }
   }
   while (i < t);

@@ -43,10 +43,7 @@ void __fastcall__ victoryScreen(void)
 
       if (x != 32)
       {
-        waitforraster();
-        waitforraster();
-        waitforraster();
-        waitforraster();
+        waitForRaster(4);
       }
     }
   

@@ -16,6 +16,10 @@
 .export _get_cos
 .export _getSinOf
 .export _getCosOf
+
+.export _generateMulTab
+.export _fastMulTest
+
 .importzp sp
 
 .segment "LUTS"
@@ -792,3 +796,169 @@ lda sintab,y
 rts
 
 
+;-----------------------------------------------------------
+; fast multiply with tables
+;-----------------------------------------------------------
+; in this case want 16bit signed * 8bit signed = 24bit signed
+; but we can drop the least significant byte so the result is
+; just 16bit
+; ABxC = AxC<<8 + BxC
+; need full AxC result but just high byte of BxC
+; also, need to convert to unsigned before multiply
+; and back again after
+
+.segment "HILUTS"
+
+multablo:
+square1_lo:
+.res $200, 0
+multabhi:
+square1_hi:
+.res $200, 0
+multab2lo:
+square2_lo:
+.res $200, 0
+multab2hi:
+square2_hi:
+.res $200, 0
+
+.segment "CODE"
+
+; misc numeric work area and accum #1 (according to the PRG)
+; at $57-$66 on the ZP
+; safe to use $5b up (see usage above)
+
+T1 = $5b
+T2 = $5c
+PRODUCT = $5e
+
+_fastMultiplySetup8:
+
+  sta T1
+  sta sm1a+1                                             
+  sta sm3a+1                                             
+  sta sm3b+1
+  eor #$ff                                              
+  sta sm2a+1                                             
+  sta sm4a+1                                             
+  sta sm4b+1
+  rts
+
+_fastMultiply16x8:
+; AX 16bit value
+; y 8bit value
+
+; A * y = AAaa                                        
+; X * y = BBbb                                        
+
+;       AAaa                                              
+;  +  BBbb                                                
+; ----------                                              
+;   PRODUCT!                                              
+; since we are just using the upper 16 bits, we can ignore aa
+
+                sta T2
+                stx T2+1
+                ; Perform X * y = BBbb
+                sec                       
+sm1a:           lda square1_lo,x          
+sm2a:           sbc square2_lo,x          
+                sta _bb+1
+sm3a:           lda square1_hi,x          
+sm4a:           sbc square2_hi,x
+                sta PRODUCT+1
+
+                ; Perform A * y = AAaa
+                ldx T2
+                sec                          
+.if 0
+sm1b:           lda square1_lo,x  ; only need this for one bit of extra accuracy           
+sm2b:           sbc square2_lo,x             
+                sta _aa+1        ; don't need this                  
+.endif
+sm3b:           lda square1_hi,x             
+sm4b:           sbc square2_hi,x             
+                sta _AA+1                    
+
+        clc
+_AA:    lda #0
+_bb:    adc #0
+        sta PRODUCT
+        bcc :+
+        inc PRODUCT+1
+:
+
+; fix for sign - see CHacking16
+
+        lda T1
+        bpl :+
+        ; sub 16bit number
+        sec
+        lda PRODUCT
+        sbc T2
+        sta PRODUCT
+        lda PRODUCT+1
+        sbc T2+1
+        sta PRODUCT
+        :
+        lda T2+1
+        bpl :+
+        ; sub 8bit number
+        sec
+        lda PRODUCT+1
+        sbc T1
+        sta PRODUCT+1
+        :
+
+        lda PRODUCT
+        ldx PRODUCT+1
+
+rts
+
+_generateMulTab:
+
+      ldx #$00
+      txa
+      .byte $c9
+lb1:  tya
+      adc #$00
+ml1:  sta multabhi,x
+      tay
+      cmp #$40
+      txa
+      ror
+ml9:  adc #$00
+      sta ml9+1
+      inx
+ml0:  sta multablo,x
+      bne lb1
+      inc ml0+2
+      inc ml1+2
+      clc
+      iny
+      bne lb1
+
+ldx #$00
+ldy #$ff
+:
+   lda multabhi+1,x
+   sta multab2hi+$100,x
+   lda multabhi,x
+   sta multab2hi,y
+   lda multablo+1,x
+   sta multab2lo+$100,x
+   lda multablo,x
+   sta multab2lo,y
+   dey
+   inx
+bne :-
+
+   rts
+
+_fastMulTest:
+
+  lda #$41
+  jsr _fastMultiplySetup8
+  lda #$77
+  ldx #$FE
+  jmp _fastMultiply16x8
