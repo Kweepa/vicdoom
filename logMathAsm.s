@@ -19,6 +19,10 @@
 
 .export _generateMulTab
 .export _fastMulTest
+.export _fastMultiplySetup8x8
+.export _fastMultiply8x8
+.export _fastMultiplySetup16x8
+.export _fastMultiply16x8
 
 .importzp sp
 
@@ -832,7 +836,56 @@ T1 = $5b
 T2 = $5c
 PRODUCT = $5e
 
-_fastMultiplySetup8:
+; only touches A
+_fastMultiplySetup8x8:
+
+  sta T1
+  sta sm1d+1
+  sta sm3d+1
+  sta sm5d+1
+  sta sm6d+1
+  eor #$ff
+  sta sm2d+1
+  sta sm4d+1
+  rts
+
+; only touches A and X
+_fastMultiply8x8:
+                sta T2
+                tax
+                sec                       
+sm1d:           lda square1_lo,x          
+sm2d:           sbc square2_lo,x          
+                sta PRODUCT
+sm3d:           lda square1_hi,x          
+sm4d:           sbc square2_hi,x
+
+        ; fix for sign (CHacking16)
+        ; since this is fixed, the setup could obliterate the code
+        ; best to do something like BIT $1000 or CMP $1000 (3 bytes, 4 cycles) as the NOP
+        ; way too expensive setup (20 cycles extra vs saving 5 per multiply)
+sm5d:   ldx #0 ; T1
+        bpl :+
+        ; sub 8bit number
+        sec
+        sbc T2
+        :
+
+        ldx T2
+        bpl :+
+        sec
+sm6d:   sbc #0 ; T1
+        :
+
+        sta PRODUCT+1
+        lda PRODUCT
+        ; make sure N is set based on MSB on return
+        ldx PRODUCT+1
+        ; return value in AX, but also in PRODUCT/PRODUCT+1 for max flexibility
+        rts
+
+
+_fastMultiplySetup16x8:
 
   sta T1
   sta sm1a+1                                             
@@ -899,7 +952,7 @@ _bb:    adc #0
         sta PRODUCT
         lda PRODUCT+1
         sbc T2+1
-        sta PRODUCT
+        sta PRODUCT+1
         :
         lda T2+1
         bpl :+
@@ -958,7 +1011,7 @@ bne :-
 _fastMulTest:
 
   lda #$41
-  jsr _fastMultiplySetup8
+  jsr _fastMultiplySetup16x8
   lda #$77
   ldx #$FE
   jmp _fastMultiply16x8

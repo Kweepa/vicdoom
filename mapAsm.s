@@ -1,6 +1,7 @@
 .setcpu	"6502"
 .autoimport	on
 .importzp sp
+.export _preTransformSectors
 .export _transformSectorToScreenSpace
 .export _getTransformedX
 .export _getTransformedY
@@ -93,26 +94,6 @@ xfvertYlo:
 xfvertScreenX:
 .res 8, 0
 
-.if 0
-; vertex cache
-cachecount:
-.byte 0
-cachei:
-.res 16, 0
-cachexhi:
-.res 16, 0
-cachexlo:
-.res 16, 0
-cacheyhi:
-.res 16, 0
-cacheylo:
-.res 16, 0
-cachesxhi:
-.res 16, 0
-cachesxlo:
-.res 16, 0
-.endif
-
 NUMSEC = 64
 
 vertexCount = $60
@@ -124,6 +105,11 @@ outsideSector = $67
 ; see logMathAsm (keep in sync)
 xToTransform = $68
 yToTransform = $6A
+cosa = $51
+sina = $52
+cameraX = $57
+cameraY = $59
+PRODUCT = $5e
 
 .proc _getScreenX: near
 tay
@@ -177,82 +163,6 @@ lda #$7f
 
 clipdone:
 rts
-
-.proc _transformSectorToScreenSpace: near
-
-; sectorIndex in A
-tay
-asl
-asl
-asl
-sta modify+1 ; point to the correct sector verts - requires page alignment
-lda #0
-adc #>secVerts
-sta modify+2
-lda secNumVerts,y
-sta vertexCount
-tax
-dex ; vertex counter (7..0) in x
-
-anotherVertToTransform:
-
-; set the lo bytes
-lda #0
-sta xToTransform
-sta yToTransform
-
-stx vertexCounter
-modify:
-lda secVerts, x   ; A contains the global vertex index
-tay
-
-lda vertX, y
-sta xToTransform+1
-lda vertY, y
-sta yToTransform+1
-jsr _transformxy
-ldy vertexCounter
-sta xfvertXlo, y
-txa
-sta xfvertXhi, y
-jsr _transformy
-sta xfvertYlo, y
-txa
-sta xfvertYhi, y
-bmi Yneg
-bne Ypos
-lda xfvertYlo, y
-bne Ypos
-Yneg:
-lda xfvertXhi, y
-bpl Xpos
-lda #$80
-bmi over
-Xpos:
-lda #$7f
-over:
-sta xfvertScreenX, y
-bne continue
-Ypos:
-lda xfvertXlo, y
-ldx xfvertXhi, y
-jsr pushax
-ldy vertexCounter
-lda xfvertYlo, y
-ldx xfvertYhi, y
-jsr _leftShift4ThenDiv
-jsr clampIntToChar
-
-ldy vertexCounter
-sta xfvertScreenX, y
-
-continue:
-ldx vertexCounter
-dex
-bpl anotherVertToTransform
-rts
-
-.endproc
 
 
 edgeIndex = $80
@@ -876,3 +786,242 @@ tay
 lda #1
 sta $9600,y
 rts
+
+
+.if 1
+; ----------------------------
+; transform sector
+; ----------------------------
+
+; x = vx - px
+; y = vy - py
+
+; x = x*cosa - y*sina
+; y = y*cosa + x*sina
+; (4 16.8 multiplies)
+
+; x = (vx-px)*cosa - (vy-py)*sina
+;   = vx*cosa - vy*sina - px*cosa + py*sina
+; y = (vy-py)*cosa + (vx-px)*sina
+;   = vy*cosa + vx*sina - py*cosa - px*sina
+; (4 8.8 multiplies per vert + 4 16.8 multiplies per screen!)
+; requires a little more summing
+; ah, but we know vx and vy are always positive
+; balls, we do not know that at all
+
+; pre-transform
+
+pxcosa:
+.word 0
+pysina:
+.word 0
+pycosa:
+.word 0
+pxsina:
+.word 0
+pysina_minus_pxcosa:
+.word 0
+pycosa_plus_pxsina:
+.word 0
+
+.proc _preTransformSectors: near
+
+lda cosa
+jsr _fastMultiplySetup16x8
+lda cameraX
+ldx cameraX+1
+jsr _fastMultiply16x8
+sta pxcosa
+stx pxcosa+1
+lda cameraY
+ldx cameraY+1
+jsr _fastMultiply16x8
+sta pycosa
+stx pycosa+1
+
+lda sina
+jsr _fastMultiplySetup16x8
+lda cameraX
+ldx cameraX+1
+jsr _fastMultiply16x8
+sta pxsina
+stx pxsina+1
+lda cameraY
+ldx cameraY+1
+jsr _fastMultiply16x8
+sta pysina
+stx pysina+1
+
+sec
+lda pysina
+sbc pxcosa
+sta pysina_minus_pxcosa
+lda pysina+1
+sbc pxcosa+1
+sta pysina_minus_pxcosa+1
+
+clc
+lda pycosa
+adc pxsina
+sta pycosa_plus_pxsina
+lda pycosa+1
+adc pxsina+1
+sta pycosa_plus_pxsina+1
+
+rts
+
+.endproc ; _preTransformSectors
+
+.proc _transformSectorToScreenSpace: near
+
+; A is the sector index
+
+tax
+lda secNumVerts,x
+tay
+dey
+sty vertexCount
+
+; loop and transform
+
+; see getVertexIndex
+txa
+asl
+asl
+asl
+sta modify1+1
+sta modify2+1
+lda #>secVerts
+adc #0
+sta modify1+2
+sta modify2+2
+
+lda cosa
+jsr _fastMultiplySetup8x8
+
+ldy vertexCount
+
+loop1:
+
+modify1:
+  lda secVerts,y
+  tax
+  stx modify1a+1
+  lda vertX,x
+  jsr _fastMultiply8x8
+  sta xfvertXlo,y
+  txa
+  sta xfvertXhi,y
+
+modify1a:
+  ldx #0 ; global vertex index
+  lda vertY,x
+  jsr _fastMultiply8x8
+  sta xfvertYlo,y
+  txa
+  sta xfvertYhi,y
+
+  dey
+  bpl loop1
+
+lda sina
+jsr _fastMultiplySetup8x8
+
+ldy vertexCount
+
+loop2:
+
+modify2:
+  ldx secVerts,y
+  stx modify2a+1
+  lda vertX,x
+  jsr _fastMultiply8x8
+  ; y = vy*cosa + vx*sina - py*cosa - px*sina
+  clc
+  lda xfvertYlo,y
+  adc PRODUCT
+  sta PRODUCT
+  lda xfvertYhi,y
+  adc PRODUCT+1
+  sta PRODUCT+1
+  sec
+  lda PRODUCT
+  sbc pycosa_plus_pxsina
+  sta PRODUCT
+  lda PRODUCT+1
+  sbc pycosa_plus_pxsina+1
+
+  asl PRODUCT
+  rol
+  sta xfvertYhi,y
+  lda PRODUCT
+  sta xfvertYlo,y
+
+modify2a:
+  ldx #0 ; global vertex index
+  lda vertY,x
+  jsr _fastMultiply8x8
+  ; x = vx*cosa - vy*sina - px*cosa + py*sina
+  sec
+  lda xfvertXlo,y
+  sbc PRODUCT
+  sta PRODUCT
+  lda xfvertXhi,y
+  sbc PRODUCT+1
+  sta PRODUCT+1
+  clc
+  lda PRODUCT
+  adc pysina_minus_pxcosa
+  sta PRODUCT
+  lda PRODUCT+1
+  adc pysina_minus_pxcosa+1
+
+  asl PRODUCT
+  rol
+  sta xfvertXhi,y
+  lda PRODUCT
+  sta xfvertXlo,y
+
+  ; to finish, need to do the division
+
+lda xfvertYhi, y
+bmi Yneg
+bne Ypos
+lda xfvertYlo, y
+bne Ypos
+Yneg:
+lda xfvertXhi, y
+bpl Xpos
+lda #$80
+bmi over
+Xpos:
+lda #$7f
+over:
+sta xfvertScreenX, y
+bne continue
+Ypos:
+sty vertexCounter
+lda xfvertXlo, y
+ldx xfvertXhi, y
+jsr pushax
+ldy vertexCounter
+lda xfvertYlo, y
+ldx xfvertYhi, y
+jsr _leftShift4ThenDiv
+jsr clampIntToChar
+
+ldy vertexCounter
+sta xfvertScreenX, y
+
+continue:
+
+  dey
+  bmi :+
+  jmp loop2
+  :
+
+rts
+
+.endproc
+
+.endif

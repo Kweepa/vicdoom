@@ -64,6 +64,7 @@
 void __fastcall__ setCameraAngle(unsigned char a);
 void __fastcall__ setCameraX(int x);
 void __fastcall__ setCameraY(int y);
+void __fastcall__ preTransformSectors(void);
 void __fastcall__ transformSectorToScreenSpace(char sectorIndex);
 signed char __fastcall__ findFirstEdgeInSpan(char cameraOutsideSector, signed char x_L, signed char x_R);
 char __fastcall__ getObjectTexIndex(unsigned int halfWidth, unsigned int x);
@@ -828,6 +829,8 @@ void __fastcall__ drawSpans(void)
   spanStackL[0] = -HALFSCREENWIDTH;
   spanStackR[0] = HALFSCREENWIDTH;
 
+  preTransformSectors();
+
   while (stackTop >= 0)
   {
      sectorIndex = spanStackSec[stackTop];
@@ -876,7 +879,7 @@ void __fastcall__ drawSpans(void)
                spanStackSec[stackTop] = thatSector;
                spanStackL[stackTop] = curX;
                spanStackR[stackTop] = nextX;
-           }           
+           }
         }
         else
         {
@@ -1425,6 +1428,9 @@ nextLevel:
         // pressed fire
         if (shells > 0 && shotgunStage == 0)
         {
+//          useTransformSectorToScreenSpaceOld = !useTransformSectorToScreenSpaceOld;
+//          setTextColor(1);
+//          print3DigitNumToScreen(useTransformSectorToScreenSpaceOld, 0x1013);
           shells--;
           drawHudAmmo();
           POKE(0x900F, 8+1);
