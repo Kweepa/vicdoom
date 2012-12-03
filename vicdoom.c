@@ -219,7 +219,7 @@ void __fastcall__ drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeInd
   //int y3 = 0;
   //int y4 = 256*1;
 
-  int x4;
+  signed char x4;
   int denom;
   signed char curX;
   int numer;
@@ -239,31 +239,33 @@ void __fastcall__ drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeInd
   
   // add 128 to correct for sampling in the center of the column
   //x4 = (256*x_L + 128)/HALFSCREENWIDTH;
-  x4 = 16*x_L + 8;
+  x4 = 2*x_L + 1; // need to multiply by 8 later
   for (curX = x_L; curX < x_R; ++curX)
   {
      //x4 = (256*curX + 128)/HALFSCREENWIDTH;
-     x4 += 16;
+     x4 += 2;
      if (testFilled(curX) == 0x7f)
      {
         // denom = dx - x4 * dy / 256;
-        denom = muladd88(-x4, dy, dx);
+         fastMultiplySetup16x8(x4);
+         denom = dx - (fastMultiply16x8(dy)<<3); // here's the x8
         if (denom > 0)
         {
            // numer = x4 * ((long)y1) / 256 - x1;
-           numer = muladd88(x4, y1, -x1);
+           numer = (fastMultiply16x8(y1)<<3) - x1; // and x8 here
            if (numer > 0)
            {
-               // t = 256 * numer / denom;
-               t = div88(numer, denom);
+              // t = 256 * numer / denom;
+              t = div88(numer, denom);
            }
            else
            {
               t = 0;
            }
-           if (t > 256) t = 256;
+           if (t > 255) t = 255;
            // curY = y1 + t * dy / 256;
-           curY = muladd88(t, dy, y1);
+           fastMultiplySetup16x8(t>>1);
+           curY = (fastMultiply16x8(dy)<<1) + y1;
            setFilled(curX, curY);
            if (curY > 0)
            {
@@ -280,7 +282,9 @@ void __fastcall__ drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeInd
                }
                else if (!fit)
                {
-                   texI = (t * edgeLen) >> 6; // 256/PIXELSPERMETER
+                  //texI = (t * edgeLen) >> 6; // 256/PIXELSPERMETER
+                  fastMultiplySetup8x8(t>>1);
+                  texI = fastMultiply8x8(edgeLen)>>5;
                }
                else
                {
@@ -322,12 +326,18 @@ signed char __fastcall__ drawDoor(char sectorIndex, char curEdgeIndex, char next
   return x_L;
 }
 
-void __fastcall__ drawObjectInSector(char o, int vx, int vy, signed char x_L, signed char x_R)
+char objO[8];
+int objX[8];
+int objY[8];
+
+void __fastcall__ drawObjectInSector(char objIndex, signed char x_L, signed char x_R)
 {
   // perspective transform (see elsewhere for optimization)
   //int h = (SCREENHEIGHT/16) * 512 / (vy/16);
+  int vy = objY[objIndex];
   unsigned int h = div88(128, vy);
 
+  char o = objO[objIndex];
   char objectType = getObjectType(o);
   char animate = 0;
   char textureIndex;
@@ -357,6 +367,7 @@ void __fastcall__ drawObjectInSector(char o, int vx, int vy, signed char x_L, si
   if (w > 0)
   {
      //sx = vx / (vy / HALFSCREENWIDTH);
+     int vx = objX[objIndex];
      sx = leftShift4ThenDiv(vx, vy);
      leftX = sx - w;
      rightX = sx + w;
@@ -496,11 +507,19 @@ char __fastcall__ getItemPercentage(void)
   return (100*numItemsGot)/getNumItems();
 }
 
-void __fastcall__ drawTransparentObject(char o, int vx, int vy, signed char x_L, signed char x_R)
+char transO[12];
+int transX[12];
+int transY[12];
+signed char transSXL[12];
+signed char transSXR[12];
+
+void __fastcall__ drawTransparentObject(char transIndex)
 {
   // perspective transform (see elsewhere for optimization)
   //int h = (SCREENHEIGHT/16) * 512 / (vy/16);
+  int vy = transY[transIndex];
   unsigned int h = div88(128, vy);
+  char o = transO[transIndex];
   char objectType = getObjectType(o);
   unsigned int w = h/texFrames[objectType].widthScale;
   char textureIndex;
@@ -516,6 +535,7 @@ void __fastcall__ drawTransparentObject(char o, int vx, int vy, signed char x_L,
   if (w > 0)
   {
      //sx = vx / (vy / HALFSCREENWIDTH);
+    int vx = transX[transIndex];
      sx = leftShift4ThenDiv(vx, vy);
      leftX = sx - w;
      rightX = sx + w;
@@ -523,7 +543,7 @@ void __fastcall__ drawTransparentObject(char o, int vx, int vy, signed char x_L,
      endX = rightX;
      if (startX < -16) startX = -16;
      if (endX > 16) endX = 16;
-     if (startX < x_R && endX > x_L)
+     if (startX < transSXR[transIndex] && endX > transSXL[transIndex])
      {
         textureIndex = texFrames[objectType].texture;
         startY = texFrames[objectType].startY;
@@ -668,27 +688,13 @@ void __fastcall__ updateAcid(void)
   }
 }
 
-typedef struct
-{
-  char o;
-  char dummy;
-  int x;
-  unsigned int y;
-  signed char x_L;
-  signed char x_R;
-}
-objxy;
-
-objxy unsorted[8];
 char sorted[8];
 char numSorted;
 char numTransparent;
-objxy transparent[12];
 
 void __fastcall__ drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 {
   int vx, vy;
-  objxy *objInst;
   char o, i, j;
   numSorted = 0;
   
@@ -696,17 +702,16 @@ void __fastcall__ drawObjectsInSector(char sectorIndex, signed char x_L, signed 
   for (o = getFirstObjectInSector(sectorIndex); o != 0xff; o = getNextObjectInSector(o))
   {
     // inverse transform
-    vx = transformxy_withParams(getObjectX(o), getObjectY(o));
-    vy = transformy();
+    vy = transformxy(getObjectX(o), getObjectY(o));
     
     if (vy > 256)
     {
+       vx = transformx();
        sorted[numSorted] = numSorted;
 
-       objInst = &unsorted[numSorted];
-       objInst->x = vx;
-       objInst->y = vy;
-       objInst->o = o;
+       objO[numSorted] = o;
+       objX[numSorted] = vx;
+       objY[numSorted] = vy;
 
        ++numSorted;
     }
@@ -719,7 +724,7 @@ void __fastcall__ drawObjectsInSector(char sectorIndex, signed char x_L, signed 
       {
          for (j = i + 1; j < numSorted; ++j)
          {
-            if (unsorted[sorted[i]].y > unsorted[sorted[j]].y)
+            if (objY[sorted[i]] > objY[sorted[j]])
             {
                o = sorted[j];
                sorted[j] = sorted[i];
@@ -732,12 +737,13 @@ void __fastcall__ drawObjectsInSector(char sectorIndex, signed char x_L, signed 
       for (i = 0; i < numSorted; ++i)
       {
          char type;
-         objInst = &unsorted[sorted[i]];
-         type = getObjectType(objInst->o);
+         char index;
+         index = sorted[i];
+         type = getObjectType(objO[index]);
          if (texFrames[type].solid)
          {
-           drawObjectInSector(objInst->o, objInst->x, objInst->y, x_L, x_R);
-             p_enemy_add_thinker(objInst->o);
+           drawObjectInSector(index, x_L, x_R);
+           p_enemy_add_thinker(objO[index]);
          }
       }
     }
@@ -745,34 +751,31 @@ void __fastcall__ drawObjectsInSector(char sectorIndex, signed char x_L, signed 
 
 void __fastcall__ queueTransparentObjects(signed char x_L, signed char x_R)
 {
-   char i, type;
-   objxy *objInst, *transp;
-   for (i = 0; i < numSorted; ++i)
-   {
-        objInst = &unsorted[sorted[i]];
-        type = getObjectType(objInst->o);
-        if (!texFrames[type].solid)
-        {
-           transp = &transparent[numTransparent];
-           transp->o = objInst->o;
-           transp->x = objInst->x;
-           transp->y = objInst->y;
-           transp->x_L = x_L;
-           transp->x_R = x_R;
-           ++numTransparent;
-        }
+  char i, type;
+  for (i = 0; i < numSorted; ++i)
+  {
+    char objIndex = sorted[i];
+    type = getObjectType(objO[objIndex]);
+    if (!texFrames[type].solid)
+    {
+      transO[numTransparent] = objO[objIndex];
+      transX[numTransparent] = objX[objIndex];
+      transY[numTransparent] = objY[objIndex];
+      transSXL[numTransparent] = x_L;
+      transSXR[numTransparent] = x_R;
+      ++numTransparent;
     }
+  }
 }
 
 void __fastcall__ drawTransparentObjects(void)
 {
-   int i;
-   objxy *objInst;
-   for (i = numTransparent-1; i >= 0; --i)
-   {
-        objInst = &transparent[i];
-        drawTransparentObject(objInst->o, objInst->x, objInst->y, objInst->x_L, objInst->x_R);
-   }
+  signed char i;
+  // draw back to front
+  for (i = numTransparent-1; i >= 0; --i)
+  {
+    drawTransparentObject(i);
+  }
 }
 
 // find first edge in sector
@@ -840,7 +843,9 @@ void __fastcall__ drawSpans(void)
 
      // STEP 1 - draw objects belonging to this sector!
      // fill in the table of written columns as we progress
+     //POKE(0x900f, 11);
      drawObjectsInSector(sectorIndex, x_L, x_R);
+     //POKE(0x900f, 13);
 
      //POKE(0x900f, 11);
      transformSectorToScreenSpace(sectorIndex);
@@ -1518,10 +1523,9 @@ nextLevel:
       updateAcid();
 
       {
-        print2DigitNumToScreen(getTickCount(), 0x1000);
         setTickCount();
         push_out();
-//        print2DigitNumToScreen(getTickCount(), 0x1000);
+        print2DigitNumToScreen(getTickCount(), 0x1000);
       }
 
       setSectorVisited(playerSector);
@@ -1532,14 +1536,14 @@ nextLevel:
       p_enemy_startframe();
       clearSecondBuffer();
       // draw to second buffer
-//      setTickCount();
+      setTickCount();
       drawSpans();
-//      print2DigitNumToScreen(getTickCount(), 0x1016);
+      print2DigitNumToScreen(getTickCount(), 0x1016);
       // this takes about 30 raster lines
       copyToPrimaryBuffer();
-//      setTickCount();
+      setTickCount();
       p_enemy_think();
-//      print2DigitNumToScreen(getTickCount(), 0x102C);
+      print2DigitNumToScreen(getTickCount(), 0x102C);
       
       ++frame;
       frame &= 7;

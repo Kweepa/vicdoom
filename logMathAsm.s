@@ -2,11 +2,9 @@
 .autoimport	on
 .export log2
 .export exp2
-.export _muladd88
 .export _div88
 .export _transformxy
-.export _transformxy_withParams
-.export _transformy
+.export _transformx
 .export _leftShift4ThenDiv
 .export _getObjectTexIndex
 .export _setCameraAngle
@@ -18,7 +16,6 @@
 .export _getCosOf
 
 .export _generateMulTab
-.export _fastMulTest
 .export _fastMultiplySetup8x8
 .export _fastMultiply8x8
 .export _fastMultiplySetup16x8
@@ -81,7 +78,7 @@ sintab:
 tmple = $40
 tmps = $41
 tmp = $42
-savey = $4C
+savex = $4C
 angle = $50
 cosa = $51
 sina = $52
@@ -220,100 +217,6 @@ rts
 .endproc
 
 ; ---------------------------------------------------------------
-; int __near__ __fastcall__ _muladd88(int p, int q, int r)
-; ---------------------------------------------------------------
-
-; multiply two 8.8 numbers and add a third
-; p*q + r
-; first pass, try using logs - see if it's accurate enough
-
-.proc _muladd88:near
-
-; save off r
-sta tmp
-stx tmp+1
-
-; convert p and q to log
-; first p
-
-loadaxfromstack 1
-cmp #0
-bne pnotzero
-cpx #0
-bne pnotzero
-jmp returnr
-
-pnotzero:
-stx tmps
-cpx #0
-bpl ppos
-
-negate_ax
-
-ppos:
-jsr log2
-sta tmp+2
-stx tmp+3
-
-; load x and check for zero
-loadaxfromstack 3
-cmp #0
-bne xnotzero
-cpx #0
-bne xnotzero
-jmp returnr
-
-xnotzero:
-tay
-txa
-eor tmps
-sta tmps
-tya
-cpx #0
-bpl qpos
-
-negate_ax
-
-qpos:
-jsr log2
-stx tmp+5
-
-clc
-adc tmp+2
-sta tmp+4
-lda tmp+5
-adc tmp+3
-tax
-lda tmp+4
-jsr exp2
-
-ldy tmps
-bpl pqpos
-
-negate_ax
-
-pqpos:
-stx tmp+3
-clc
-adc tmp
-tay
-lda tmp+3
-adc tmp+1
-tax
-tya
-
-ldy #4
-jmp addysp
-
-returnr:
-lda tmp
-ldx tmp+1
-add_to_stack 4
-rts
-
-.endproc
-
-; ---------------------------------------------------------------
 ; unsigned int __near__ __fastcall__ _div88(unsigned int x, unsigned int y)
 ; ---------------------------------------------------------------
 
@@ -339,21 +242,6 @@ rts
 .endproc
 
 ; ---------------------------------------------------------------
-; int __near__ __fastcall__ _transformxy_withParams(int x, int y)
-; int __near__ __fastcall__ _transformxy(void)
-; int __near__ __fastcall__ _transformy(void)
-; ---------------------------------------------------------------
-;
-; x = x*cosa - y*sina
-; y = x*sina + y*cosa
-
-.proc _transformy:near
-
-lda savey
-ldx savey+1
-rts
-
-.endproc
 
 ; int __fastcall__ _mul88(int p, int q)
 ; p in ax
@@ -407,179 +295,90 @@ rts
 .endproc
 
 ; ---------------------------------------------------------------
+; int __near__ __fastcall__ _transformxy(void)
+; int __near__ __fastcall__ _transformy(void)
+; ---------------------------------------------------------------
+;
+; x = x*cosa - y*sina
+; y = x*sina + y*cosa
 
 ; zero page vars (see mapAsm - keep in sync)
 xToTransform = $68
 yToTransform = $6A
 
-.proc _transformxy_withParams: near
-
-sta yToTransform
-stx yToTransform+1
-loadaxfromstack 1
-sta xToTransform
-stx xToTransform+1
-ldy #2
-jsr addysp
-
-; let it fall into the next routine
-
-.endproc
-
-.proc _transformxy:near
+.proc _transformxy: near
 
 sec
-lda xToTransform
-sbc cameraX
-sta xToTransform
-lda xToTransform+1
-sbc cameraX+1
-sta xToTransform+1
-
-sec
-lda yToTransform
 sbc cameraY
 sta yToTransform
-lda yToTransform+1
+txa
 sbc cameraY+1
 sta yToTransform+1
 
-lda angle
-and #15
-bne nonaxis
-
-lda angle
-cmp #0
-bne notrot0
-
-; norot
-lda yToTransform
-ldx yToTransform+1
-sta savey
-stx savey+1
-lda xToTransform
-ldx xToTransform+1
-rts
-
-notrot0:
-cmp #16
-bne notrot90
-
-; rot90
-; x <- -y
-; y <- x
-lda xToTransform
-ldx xToTransform+1
-sta savey
-stx savey+1
-lda yToTransform
-ldx yToTransform+1
-jsr negax
-rts
-
-notrot90:
-cmp #32
-bne notrot180
-
-; rot180
-; x <- -x
-; y <- -y
-lda yToTransform
-ldx yToTransform+1
-jsr negax
-sta savey
-stx savey+1
-lda xToTransform
-ldx xToTransform+1
-jsr negax
-rts
-
-notrot180:
-
-; rot270
-; x <- y
-; y <- -x
-lda xToTransform
-ldx xToTransform+1
-jsr negax
-sta savey
-stx savey+1
-lda yToTransform
-ldx yToTransform+1
-rts
-
-nonaxis:
-
-; y = x*sina + y*cosa
-
-; load up cosa
-lda logcosa
-sta tmp
-lda logcosa+1
-sta tmp+1
-lda cosa
-sta tmps
-; y into AX
-lda yToTransform
-ldx yToTransform+1
-jsr _mul88
-sta savey
-stx savey+1
-
-; load up sina
-lda logsina
-sta tmp
-lda logsina+1
-sta tmp+1
-lda sina
-sta tmps
-; get x into AX
-lda xToTransform
-ldx xToTransform+1
-jsr _mul88
-
-clc
-adc savey
-sta savey
-txa
-adc savey+1
-sta savey+1
-
-; got y, now x
-; x = x*cosa - y*sina
-
-; load sina
-lda logsina
-sta tmp
-lda logsina+1
-sta tmp+1
-lda sina
-sta tmps
-; multiply by y
-lda yToTransform
-ldx yToTransform+1
-jsr _mul88
-sta tmp+4
-stx tmp+5
-
-lda logcosa
-sta tmp
-lda logcosa+1
-sta tmp+1
-lda cosa
-sta tmps
-; multiply by x
-lda xToTransform
-ldx xToTransform+1
-jsr _mul88
-
+loadaxfromstack 1
 sec
-sbc tmp+4
+sbc cameraX
+sta xToTransform
+txa
+sbc cameraX+1
+sta xToTransform+1
+
+lda sina
+jsr _fastMultiplySetup16x8
+
+lda xToTransform
+ldx xToTransform+1
+jsr _fastMultiply16x8
+sta tmp
+stx tmps
+
+lda yToTransform
+ldx yToTransform+1
+jsr _fastMultiply16x8
+sta savex
+stx savex+1
+
+lda cosa
+jsr _fastMultiplySetup16x8
+
+lda yToTransform
+ldx yToTransform+1
+jsr _fastMultiply16x8
+clc
+adc tmp
 tay
 txa
-sbc tmp+5
-tax
+adc tmps
+sta tmps
+
+; multiply by two
 tya
+asl
+rol tmps
+ldx tmps
+
+ldy #2
+jmp addysp
+
+.endproc
+
+.proc _transformx: near
+
+lda xToTransform
+ldx xToTransform+1
+jsr _fastMultiply16x8
+sec
+sbc savex
+tay
+txa
+sbc savex+1
+sta savex+1
+
+; multiply by two
+tya
+asl
+rol savex+1
+ldx savex+1
 
 rts
 
@@ -840,13 +639,13 @@ PRODUCT = $5e
 _fastMultiplySetup8x8:
 
   sta T1
-  sta sm1d+1
-  sta sm3d+1
-  sta sm5d+1
-  sta sm6d+1
+  sta qsm1d+1
+  sta qsm3d+1
+  sta qsm5d+1
+  sta qsm6d+1
   eor #$ff
-  sta sm2d+1
-  sta sm4d+1
+  sta qsm2d+1
+  sta qsm4d+1
   rts
 
 ; only touches A and X
@@ -854,17 +653,17 @@ _fastMultiply8x8:
                 sta T2
                 tax
                 sec                       
-sm1d:           lda square1_lo,x          
-sm2d:           sbc square2_lo,x          
+qsm1d:           lda square1_lo,x          
+qsm2d:           sbc square2_lo,x          
                 sta PRODUCT
-sm3d:           lda square1_hi,x          
-sm4d:           sbc square2_hi,x
+qsm3d:           lda square1_hi,x          
+qsm4d:           sbc square2_hi,x
 
         ; fix for sign (CHacking16)
         ; since this is fixed, the setup could obliterate the code
         ; best to do something like BIT $1000 or CMP $1000 (3 bytes, 4 cycles) as the NOP
         ; way too expensive setup (20 cycles extra vs saving 5 per multiply)
-sm5d:   ldx #0 ; T1
+qsm5d:   ldx #0 ; T1
         bpl :+
         ; sub 8bit number
         sec
@@ -874,7 +673,7 @@ sm5d:   ldx #0 ; T1
         ldx T2
         bpl :+
         sec
-sm6d:   sbc #0 ; T1
+qsm6d:   sbc #0 ; T1
         :
 
         sta PRODUCT+1
@@ -888,13 +687,13 @@ sm6d:   sbc #0 ; T1
 _fastMultiplySetup16x8:
 
   sta T1
-  sta sm1a+1                                             
-  sta sm3a+1                                             
-  sta sm3b+1
+  sta hsm1a+1                                             
+  sta hsm3a+1                                             
+  sta hsm3b+1
   eor #$ff                                              
-  sta sm2a+1                                             
-  sta sm4a+1                                             
-  sta sm4b+1
+  sta hsm2a+1                                             
+  sta hsm4a+1                                             
+  sta hsm4b+1
   rts
 
 _fastMultiply16x8:
@@ -914,28 +713,28 @@ _fastMultiply16x8:
                 stx T2+1
                 ; Perform X * y = BBbb
                 sec                       
-sm1a:           lda square1_lo,x          
-sm2a:           sbc square2_lo,x          
-                sta _bb+1
-sm3a:           lda square1_hi,x          
-sm4a:           sbc square2_hi,x
+hsm1a:           lda square1_lo,x          
+hsm2a:           sbc square2_lo,x          
+                sta _hbb+1
+hsm3a:           lda square1_hi,x          
+hsm4a:           sbc square2_hi,x
                 sta PRODUCT+1
 
                 ; Perform A * y = AAaa
                 ldx T2
                 sec                          
 .if 0
-sm1b:           lda square1_lo,x  ; only need this for one bit of extra accuracy           
-sm2b:           sbc square2_lo,x             
-                sta _aa+1        ; don't need this                  
+hsm1b:           lda square1_lo,x  ; only need this for one bit of extra accuracy           
+hsm2b:           sbc square2_lo,x             
+                sta _haa+1        ; don't need this                  
 .endif
-sm3b:           lda square1_hi,x             
-sm4b:           sbc square2_hi,x             
-                sta _AA+1                    
+hsm3b:           lda square1_hi,x             
+hsm4b:           sbc square2_hi,x             
+                sta _hAA+1                    
 
         clc
-_AA:    lda #0
-_bb:    adc #0
+_hAA:    lda #0
+_hbb:    adc #0
         sta PRODUCT
         bcc :+
         inc PRODUCT+1
@@ -1008,10 +807,158 @@ bne :-
 
    rts
 
-_fastMulTest:
+.if 0
 
-  lda #$41
-  jsr _fastMultiplySetup16x8
-  lda #$77
-  ldx #$FE
-  jmp _fastMultiply16x8
+.export _fastMultiplySetup16x16
+.export _fastMultiply16x16
+
+; Description: Unsigned 16-bit multiplication with unsigned 32-bit result.
+;                                                                         
+; Input: 16-bit unsigned value in T1                                      
+;        16-bit unsigned value in T2                                      
+;        Carry=0: Re-use T1 from previous multiplication (faster)         
+;        Carry=1: Set T1 (slower)                                         
+;                                                                         
+; Output: 32-bit unsigned value in PRODUCT                                
+;                                                                         
+; Clobbered: PRODUCT, X, A, C                                             
+;                                                                         
+; Allocation setup: T1,T2 and PRODUCT preferably on Zero-page.            
+;                   square1_lo, square1_hi, square2_lo, square2_hi must be
+;                   page aligned. Each table are 512 bytes. Total 2kb.    
+;                                                                         
+; Table generation: I:0..511                                              
+;                   square1_lo = <((I*I)/4)                               
+;                   square1_hi = >((I*I)/4)                               
+;                   square2_lo = <(((I-255)*(I-255))/4)                   
+;                   square2_hi = >(((I-255)*(I-255))/4)                   
+
+
+TT1 = $80
+
+_fastMultiplySetup16x16:
+
+    sta TT1         
+    sta sm1a+1       
+    sta sm3a+1       
+    sta sm5a+1       
+    sta sm7a+1       
+    eor #$ff         
+    sta sm2a+1       
+    sta sm4a+1       
+    sta sm6a+1       
+    sta sm8a+1       
+    txa
+    sta TT1+1
+    sta sm1b+1       
+    sta sm3b+1       
+    sta sm5b+1       
+    sta sm7b+1       
+    eor #$ff         
+    sta sm2b+1       
+    sta sm4b+1       
+    sta sm6b+1       
+    sta sm8b+1       
+    rts
+
+_fastMultiply16x16:
+                sta T2
+                stx T2+1
+
+                ; <T1 * <T2 = AAaa                                        
+                ; <T1 * >T2 = BBbb                                        
+                ; >T1 * <T2 = CCcc                                        
+                ; >T1 * >T2 = DDdd                                        
+                ;                                                         
+                ;       AAaa                                              
+                ;     BBbb                                                
+                ;     CCcc                                                
+                ; + DDdd                                                  
+                ; ----------                                              
+                ;   PRODUCT!                                              
+
+                ; Perform <T1 * <T2 = AAaa
+
+                ldx T2
+                sec                       
+sm1a:           lda square1_lo,x          
+sm2a:           sbc square2_lo,x          
+                sta PRODUCT
+sm3a:           lda square1_hi,x          
+sm4a:           sbc square2_hi,x          
+                sta _AA+1                 
+
+                ; Perform >T1_hi * <T2 = CCcc
+                sec                          
+sm1b:           lda square1_lo,x             
+sm2b:           sbc square2_lo,x             
+                sta _cc+1                    
+sm3b:           lda square1_hi,x             
+sm4b:           sbc square2_hi,x             
+                sta _CC+1                    
+
+                ; Perform <T1 * >T2 = BBbb
+                ldx T2+1                  
+                sec                       
+sm5a:           lda square1_lo,x          
+sm6a:           sbc square2_lo,x          
+                sta _bb+1                 
+sm7a:           lda square1_hi,x          
+sm8a:           sbc square2_hi,x          
+                sta _BB+1                 
+
+                ; Perform >T1 * >T2 = DDdd
+                sec                       
+sm5b:           lda square1_lo,x          
+sm6b:           sbc square2_lo,x          
+                sta _dd+1                 
+sm7b:           lda square1_hi,x          
+sm8b:           sbc square2_hi,x          
+                sta PRODUCT+3             
+
+                ; Add the separate multiplications together
+                clc                                        
+_AA:            lda #0                                     
+_bb:            adc #0                                     
+                sta PRODUCT+1                              
+_BB:            lda #0                                     
+_CC:            adc #0                                     
+                sta PRODUCT+2                              
+                bcc :+                                     
+                  inc PRODUCT+3                          
+                  clc                                    
+                :                                          
+_cc:            lda #0                                     
+                adc PRODUCT+1                              
+                sta PRODUCT+1                              
+_dd:            lda #0                                     
+                adc PRODUCT+2                              
+                sta PRODUCT+2                              
+                bcc :+                                     
+                  inc PRODUCT+3                          
+                :                                          
+
+                ; Apply sign (See C=Hacking16 for details).
+                lda TT1+1
+                bpl :+
+                    sec
+                    lda PRODUCT+2
+                    sbc T2+0
+                    sta PRODUCT+2
+                    lda PRODUCT+3
+                    sbc T2+1
+                    sta PRODUCT+3
+                :
+                lda T2+1
+                bpl :+
+                    sec
+                    lda PRODUCT+2
+                    sbc TT1+0
+                    sta PRODUCT+2
+                    lda PRODUCT+3
+                    sbc TT1+1
+                    sta PRODUCT+3
+                :
+
+                rts
+.endif
