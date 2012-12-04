@@ -111,7 +111,7 @@ texFrame texFrames[] =
   { 23, 0, 0, 8, 16, 8, 0, 8 }, // green keycard
   { 23, 0, 0, 8, 16, 8, 8, 8 }, // blue keycard
   { 24, 0, 0, 8, 16, 16, 0, 16 }, // barrel
-  { 21, 0, 1, 5 }, // pillar
+  { 21, 0, 1, 5 }, // pillar (was width 5)
   { 24, 0, 0, 8, 0, 16, 0, 16 }, // skullpile
   { 22, 0, 0, 2, 16, 4, 0, 16 }, // acid
   { 20, 0, 0, 4, 0, 8, 0, 16 }, // possessed corpse (with bullets)
@@ -197,8 +197,9 @@ char eraseMessageAfter = 0;
 
 unsigned char frame = 0;
 
-void __fastcall__ drawColumn(char textureIndex, char texI, signed char curX, short curY, unsigned short h);
-void __fastcall__ drawColumnTransparent(char textureIndex, char texYStart, char texYEnd, char texI, signed char curX, short curY, unsigned short h);
+void __fastcall__ drawColumn(char textureIndex, char texI, signed char curX, short curY, unsigned char h);
+void __fastcall__ drawColumnSameY(char textureIndex, char texI, signed char curX, short curY, unsigned char h);
+void __fastcall__ drawColumnTransparent(char textureIndex, char texYStart, char texYEnd, char texI, signed char curX, short curY, unsigned char h);
 
 void __fastcall__ drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeIndex, signed char x_L, signed char x_R)
 {
@@ -253,14 +254,14 @@ void __fastcall__ drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeInd
         {
            // numer = x4 * ((long)y1) / 256 - x1;
            numer = (fastMultiply16x8(y1)<<3) - x1; // and x8 here
-           if (numer > 0)
+//           if (numer > 0)
            {
               // t = 256 * numer / denom;
               t = div88(numer, denom);
            }
-           else
+//           else
            {
-              t = 0;
+//              t = 0;
            }
            if (t > 255) t = 255;
            // curY = y1 + t * dy / 256;
@@ -326,6 +327,30 @@ signed char __fastcall__ drawDoor(char sectorIndex, char curEdgeIndex, char next
   return x_L;
 }
 
+unsigned char getWidthFromHeight(char ws, unsigned char h)
+{
+  unsigned char w;
+  switch (ws)
+  {
+  case 2:
+    w = h>>1;
+    break;
+  case 3:
+    w = (h + (h>>2))>>2;
+    break;
+  case 4:
+    w = h>>2;
+    break;
+  case 5:
+    w = (h + (h>>1))>>3;
+    break;
+  case 8:
+    w = h>>3;
+    break;
+  }
+  return w;
+}
+
 char objO[8];
 int objX[8];
 int objY[8];
@@ -336,17 +361,18 @@ void __fastcall__ drawObjectInSector(char objIndex, signed char x_L, signed char
   //int h = (SCREENHEIGHT/16) * 512 / (vy/16);
   int vy = objY[objIndex];
   unsigned int h = div88(128, vy);
+  unsigned char hc;
 
   char o = objO[objIndex];
   char objectType = getObjectType(o);
   char animate = 0;
   char textureIndex;
-  unsigned int w;
+  unsigned char w;
   int sx;
-  int leftX;
-  int rightX;
-  int startX;
-  int endX;
+  signed char leftX;
+  signed char rightX;
+  signed char startX;
+  signed char endX;
   signed char curX;
   char texI;
 
@@ -363,45 +389,66 @@ void __fastcall__ drawObjectInSector(char objIndex, signed char x_L, signed char
   {
     textureIndex = texFrames[objectType].texture;
   }
-  w = h/texFrames[objectType].widthScale;
+  //w = h/texFrames[objectType].widthScale;
+  if (h < 128)
+  {
+    hc = h;
+  }
+  else
+  {
+    hc = 127;
+  }
+  w = getWidthFromHeight(texFrames[objectType].widthScale, hc);
   if (w > 0)
   {
      //sx = vx / (vy / HALFSCREENWIDTH);
      int vx = objX[objIndex];
      sx = leftShift4ThenDiv(vx, vy);
-     leftX = sx - w;
-     rightX = sx + w;
-     startX = leftX;
-     endX = rightX;
-     if (startX < -16) startX = -16;
-     if (endX > 16) endX = 16;
-     if (startX < x_R && endX > x_L)
+     if (sx > -64 && sx < 64)
      {
-        if (startX < endX)
-        {
-          p_enemy_wasseenthisframe(o);
-        }
-        for (curX = startX; curX < endX; ++curX)
-        {
-           if (testFilledWithY(curX, vy) >= 0)
-           {
-              setFilled(curX, vy);
-              if (curX == 0)
-              {
-                typeAtCenterOfView = TYPE_OBJECT;
-                itemAtCenterOfView = o;
-              }
-              // compensate for pixel samples being mid column
-              //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
-              texI = getObjectTexIndex(w, curX - leftX);
-              if (animate)
-              {
-                // change the animation speed?
-                if ((frame & 2) != 0) texI = (TEXWIDTH - 1) - texI;
-              }
-              drawColumn(textureIndex, texI, curX, vy, h);
-           }
-        }
+       leftX = sx - w;
+       rightX = sx + w;
+       startX = leftX;
+       endX = rightX;
+       if (startX < -16) startX = -16;
+       if (endX > 16) endX = 16;
+       if (startX < x_R && endX > x_L)
+       {
+         char first = 1;
+          if (startX < endX)
+          {
+            p_enemy_wasseenthisframe(o);
+          }
+          for (curX = startX; curX < endX; ++curX)
+          {
+             if (testFilledWithY(curX, vy) >= 0)
+             {
+                setFilled(curX, vy);
+                if (curX == 0)
+                {
+                  typeAtCenterOfView = TYPE_OBJECT;
+                  itemAtCenterOfView = o;
+                }
+                // compensate for pixel samples being mid column
+                //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
+                texI = getObjectTexIndex(w, curX - leftX);
+                if (animate)
+                {
+                  // change the animation speed?
+                  if ((frame & 2) != 0) texI = (TEXWIDTH - 1) - texI;
+                }
+                if (first)
+                {
+                  first = 0;
+                  drawColumn(textureIndex, texI, curX, vy, hc);
+                }
+                else
+                {
+                  drawColumnSameY(textureIndex, texI, curX, vy, hc);
+                }
+             }
+          }
+       }
      }
   }
 }
@@ -519,137 +566,151 @@ void __fastcall__ drawTransparentObject(char transIndex)
   //int h = (SCREENHEIGHT/16) * 512 / (vy/16);
   int vy = transY[transIndex];
   unsigned int h = div88(128, vy);
+  unsigned char hc;
   char o = transO[transIndex];
   char objectType = getObjectType(o);
-  unsigned int w = h/texFrames[objectType].widthScale;
   char textureIndex;
   int sx;
-  int leftX;
-  int rightX;
-  int startX;
-  int endX;
+  signed char leftX;
+  signed char rightX;
+  signed char startX;
+  signed char endX;
   signed char curX;
   char texI;
   char startY, height;
+  unsigned char w;
 
+  //w = h/texFrames[objectType].widthScale;
+  if (h < 128)
+  {
+    hc = h;
+  }
+  else
+  {
+    hc = 127;
+  }
+  w = getWidthFromHeight(texFrames[objectType].widthScale, hc);
   if (w > 0)
   {
      //sx = vx / (vy / HALFSCREENWIDTH);
-    int vx = transX[transIndex];
+     int vx = transX[transIndex];
      sx = leftShift4ThenDiv(vx, vy);
-     leftX = sx - w;
-     rightX = sx + w;
-     startX = leftX;
-     endX = rightX;
-     if (startX < -16) startX = -16;
-     if (endX > 16) endX = 16;
-     if (startX < transSXR[transIndex] && endX > transSXL[transIndex])
+     if (sx > -64 && sx < 64)
      {
-        textureIndex = texFrames[objectType].texture;
-        startY = texFrames[objectType].startY;
-        height = texFrames[objectType].height;
-        for (curX = startX; curX < endX; ++curX)
-        {
-           if (testFilledWithY(curX, vy) > 0)
-           {
-              if (curX == 0 && (vy/256) < 3)
-              {
-                char pickupType = objectType;
-                char remove = 1;
-                if (objectType == kOT_PossessedCorpseWithAmmo)
+       leftX = sx - w;
+       rightX = sx + w;
+       startX = leftX;
+       endX = rightX;
+       if (startX < -16) startX = -16;
+       if (endX > 16) endX = 16;
+       if (startX < transSXR[transIndex] && endX > transSXL[transIndex])
+       {
+          textureIndex = texFrames[objectType].texture;
+          startY = texFrames[objectType].startY;
+          height = texFrames[objectType].height;
+          for (curX = startX; curX < endX; ++curX)
+          {
+             if (testFilledWithY(curX, vy) > 0)
+             {
+                if (curX == 0 && (vy/256) < 3)
                 {
-                  setObjectType(o, kOT_PossessedCorpse);
-                  remove = 0;
-                  pickupType = kOT_Bullets;
-                }
+                  char pickupType = objectType;
+                  char remove = 1;
+                  if (objectType == kOT_PossessedCorpseWithAmmo)
+                  {
+                    setObjectType(o, kOT_PossessedCorpse);
+                    remove = 0;
+                    pickupType = kOT_Bullets;
+                  }
 
-                 if (pickupType >= kOT_GreenArmor && pickupType <= kOT_BlueKeycard)
-                 {
-                   char pickedUp = 0;
-
-                   switch (pickupType)
+                   if (pickupType >= kOT_GreenArmor && pickupType <= kOT_BlueKeycard)
                    {
-                   case kOT_GreenArmor:
-                      if (armor < 100)
-                      {
-                         armor = 100;
-                         combatArmor = 0;
-                         drawHudArmor();
-                         pickedUp = 1;
-                      }
-                      break;
-                   case kOT_BlueArmor:
-                      if (armor < 200)
-                      {
-                         armor = 200;
-                         combatArmor = 1;
-                         drawHudArmor();
-                         pickedUp = 1;
-                      }
-                      break;
-                   case kOT_Bullets:
-                      if (shells < 80)
-                      {
-                         shells += 4;
-                         if (shells > 80) shells = 80;
-                         drawHudAmmo();
-                         pickedUp = 1;
-                      }
-                      break;
-                   case kOT_Medkit:
-                      if (health < 100)
-                      {
-                        health += 25;
-                        if (health > 100) health = 100;
-                        drawHudHealth();
-                        pickedUp = 1;
-                      }  
-                      break;
-                   case kOT_RedKeycard:
-                      keyCards[1] = 1;
-                      drawHudKeys();
-                      pickedUp = 1;
-                      break;
-                   case kOT_GreenKeycard:
-                      keyCards[2] = 1;
-                      drawHudKeys();
-                      pickedUp = 1;
-                      break;
-                   case kOT_BlueKeycard:
-                      keyCards[3] = 1;
-                      drawHudKeys();
-                      pickedUp = 1;
-                      break;
-                   }
-                    if (pickedUp)
-                    {
-                      playSound(SOUND_ITEMUP);
-                      if (remove)
-                      {
-                        setObjectSector(o, -1);
-                        ++numItemsGot;
-                      }
-                      // flash border cyan
-                      flashBorderTime = 1;
-                      POKE(0x900F, 8 + 3);
+                     char pickedUp = 0;
 
-                      eraseMessage();
-                      textcolor(7);
-                      printCentered("you got the", 14);
-                      printCentered(pickupNames[pickupType - kOT_GreenArmor], 15);
-                      eraseMessageAfter = 8;
-                    }
-                 }
-              }
-              // compensate for pixel samples being mid column
-              //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
-              texI = getObjectTexIndex(w, curX - leftX);
-              if (texFrames[objectType].width != 16)
-              {
-                 texI = texFrames[objectType].startX + (texI>>1);
-              }
-              drawColumnTransparent(textureIndex, startY, height, texI, curX, vy, h);
-           }
+                     switch (pickupType)
+                     {
+                     case kOT_GreenArmor:
+                        if (armor < 100)
+                        {
+                           armor = 100;
+                           combatArmor = 0;
+                           drawHudArmor();
+                           pickedUp = 1;
+                        }
+                        break;
+                     case kOT_BlueArmor:
+                        if (armor < 200)
+                        {
+                           armor = 200;
+                           combatArmor = 1;
+                           drawHudArmor();
+                           pickedUp = 1;
+                        }
+                        break;
+                     case kOT_Bullets:
+                        if (shells < 80)
+                        {
+                           shells += 4;
+                           if (shells > 80) shells = 80;
+                           drawHudAmmo();
+                           pickedUp = 1;
+                        }
+                        break;
+                     case kOT_Medkit:
+                        if (health < 100)
+                        {
+                          health += 25;
+                          if (health > 100) health = 100;
+                          drawHudHealth();
+                          pickedUp = 1;
+                        }  
+                        break;
+                     case kOT_RedKeycard:
+                        keyCards[1] = 1;
+                        drawHudKeys();
+                        pickedUp = 1;
+                        break;
+                     case kOT_GreenKeycard:
+                        keyCards[2] = 1;
+                        drawHudKeys();
+                        pickedUp = 1;
+                        break;
+                     case kOT_BlueKeycard:
+                        keyCards[3] = 1;
+                        drawHudKeys();
+                        pickedUp = 1;
+                        break;
+                     }
+                      if (pickedUp)
+                      {
+                        playSound(SOUND_ITEMUP);
+                        if (remove)
+                        {
+                          setObjectSector(o, -1);
+                          ++numItemsGot;
+                        }
+                        // flash border cyan
+                        flashBorderTime = 1;
+                        POKE(0x900F, 8 + 3);
+
+                        eraseMessage();
+                        textcolor(7);
+                        printCentered("you got the", 14);
+                        printCentered(pickupNames[pickupType - kOT_GreenArmor], 15);
+                        eraseMessageAfter = 8;
+                      }
+                   }
+                }
+                // compensate for pixel samples being mid column
+                //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
+                texI = getObjectTexIndex(w, curX - leftX);
+                if (texFrames[objectType].width != 16)
+                {
+                   texI = texFrames[objectType].startX + (texI>>1);
+                }
+                drawColumnTransparent(textureIndex, startY, height, texI, curX, vy, hc);
+             }
+          }
         }
      }
   }
@@ -983,91 +1044,117 @@ char totalCheckedEdges;
 EPushOutResult __fastcall__ push_out_from_edge(char i)
 {
   totalCheckedEdges++;
-     ni = getNextEdge(curSector, i);
-     vertGlobalIndex = getVertexIndex(curSector, i);
-     vert2GlobalIndex = getVertexIndex(curSector, ni);
+  ni = getNextEdge(curSector, i);
+  vertGlobalIndex = getVertexIndex(curSector, i);
+  vert2GlobalIndex = getVertexIndex(curSector, ni);
 
-     reversedEdge = 0;
-     if (vertGlobalIndex > vert2GlobalIndex)
-     {
-       edgeGlobalIndex = vertGlobalIndex;
-       vertGlobalIndex = vert2GlobalIndex;
-       vert2GlobalIndex = edgeGlobalIndex;
-       reversedEdge = 1;
-     }
+  reversedEdge = 0;
+  if (vertGlobalIndex > vert2GlobalIndex)
+  {
+    edgeGlobalIndex = vertGlobalIndex;
+    vertGlobalIndex = vert2GlobalIndex;
+    vert2GlobalIndex = edgeGlobalIndex;
+    reversedEdge = 1;
+  }
 
-     v1x = getVertexX(vertGlobalIndex);
-     v1y = getVertexY(vertGlobalIndex);
-     v2x = getVertexX(vert2GlobalIndex);
-     v2y = getVertexY(vert2GlobalIndex);
-     ex = v2x - v1x;
-     ey = v2y - v1y;
-     px = playerx - 256*v1x;
-     py = playery - 256*v1y;
-     // need to precalc 65536/edge.len
-     edgeGlobalIndex = getEdgeIndex(curSector, i);
-     edgeLen = getEdgeLen(edgeGlobalIndex);
-     height = px * ey - py * ex;
-     if (reversedEdge)
-     {
-       height = -height;
-     }
-     if (height < INNERCOLLISIONRADIUS*edgeLen)
-     {
-        // check we're within the extents of the edge
-        dist = px * ex + py * ey;
-        dgz = (dist >= 0);
-        dle = (dist < 256*edgeLen*edgeLen);
-        if (dgz & dle)
+  v1x = getVertexX(vertGlobalIndex);
+  v1y = getVertexY(vertGlobalIndex);
+  v2x = getVertexX(vert2GlobalIndex);
+  v2y = getVertexY(vert2GlobalIndex);
+  ex = v2x - v1x;
+  ey = v2y - v1y;
+  px = playerx - (((short)v1x)<<8);
+  py = playery - (((short)v1y)<<8);
+  // need to precalc 65536/edge.len
+  edgeGlobalIndex = getEdgeIndex(curSector, i);
+  edgeLen = getEdgeLen(edgeGlobalIndex);
+
+  //height = px * ey - py * ex;
+  {
+    long p1, p2;
+    fastMultiplySetup16x8e24(ey);
+    p1 = fastMultiply16x8e24(px);
+    fastMultiplySetup16x8e24(ex);
+    p2 = fastMultiply16x8e24(py);
+    if (reversedEdge)
+    {
+      height = p2 - p1;
+    }
+    else
+    {
+      height = p1 - p2;
+    }
+  }
+
+  if (height < INNERCOLLISIONRADIUS*edgeLen)
+  {
+    // check we're within the extents of the edge
+    //dist = px * ex + py * ey;
+    {
+      long p1, p2;
+      p2 = fastMultiply16x8e24(px);
+      fastMultiplySetup16x8e24(ey);
+      p1 = fastMultiply16x8e24(py);
+      dist = p1 + p2;
+    }
+    dgz = (dist >= 0);
+    //dle = (dist < 256*edgeLen*edgeLen);
+    {
+      long len2 = 0;
+      fastMultiplySetup8x8(edgeLen);
+      len2 = ((long)fastMultiply8x8(edgeLen))<<8;
+      dle = dist < len2;
+    }
+    if (dgz & dle)
+    {
+        thatSector = getOtherSector(edgeGlobalIndex, curSector);
+        if (thatSector != -1 && !isDoorClosed(edgeGlobalIndex))
         {
-           thatSector = getOtherSector(edgeGlobalIndex, curSector);
-           if (thatSector != -1 && !isDoorClosed(edgeGlobalIndex))
-           {
-              if (height < 0)
-              {
-                 nextSector = thatSector;
-                 
-                 // crossed a line, so check for special
-                 doEdgeSpecial(edgeGlobalIndex);
-              }
-              return kPOR_Sector;
-           }
-           else
-           {
-              // try just pushing out
-              distanceToPush = OUTERCOLLISIONRADIUS*edgeLen - height;
-              if (reversedEdge)
-              {
-                ex = -ex;
-                ey = -ey;
-              }
-              playerx += distanceToPush * ey / (edgeLen*edgeLen);
-              playery -= distanceToPush * ex / (edgeLen*edgeLen);
-              return kPOR_Wall;
-           }
-        }
-        else if (!dgz && (dist > -INNERCOLLISIONRADIUS*edgeLen)
-          || (!dle && dist < (256*edgeLen + INNERCOLLISIONRADIUS)*edgeLen))
-        {
-          // check against the end
-          if (dgz)
+          if (height < 0)
           {
-            // check the far end
-            px = playerx - 256*v2x;
-            py = playery - 256*v2y;
+              nextSector = thatSector;
+                 
+              // crossed a line, so check for special
+              doEdgeSpecial(edgeGlobalIndex);
           }
-           height = px * px + py * py;
-           if (height < INNERCOLLISIONRADIUS*INNERCOLLISIONRADIUS)
-           {
-              height = sqrt(height);
-              distanceToPush = OUTERCOLLISIONRADIUS - height;
-              playerx += distanceToPush * px / height;
-              playery += distanceToPush * py / height;
-              return kPOR_Wall;
-           }
+          return kPOR_Sector;
         }
-     }
-     return kPOR_Nada;
+        else
+        {
+          // try just pushing out
+          distanceToPush = OUTERCOLLISIONRADIUS*edgeLen - height;
+          if (reversedEdge)
+          {
+            ex = -ex;
+            ey = -ey;
+          }
+          playerx += distanceToPush * ey / (edgeLen*edgeLen);
+          playery -= distanceToPush * ex / (edgeLen*edgeLen);
+          return kPOR_Wall;
+        }
+    }
+    else if (!dgz && (dist > -INNERCOLLISIONRADIUS*edgeLen)
+      || (!dle && dist < (256*edgeLen + INNERCOLLISIONRADIUS)*edgeLen))
+    {
+      // check against the end
+      if (dgz)
+      {
+        // check the far end
+        px = playerx - 256*v2x;
+        py = playery - 256*v2y;
+      }
+        height = px * px + py * py;
+        if (height < INNERCOLLISIONRADIUS*INNERCOLLISIONRADIUS)
+        {
+          height = sqrt(height);
+          distanceToPush = OUTERCOLLISIONRADIUS - height;
+          playerx += distanceToPush * px / height;
+          playery += distanceToPush * py / height;
+          return kPOR_Wall;
+        }
+    }
+  }
+  return kPOR_Nada;
 }
 
 char touchedSector;
@@ -1148,6 +1235,8 @@ void __fastcall__ push_out(void)
   {
     playerSector = nextSector;
   }
+
+//  print3DigitNumToScreen(totalCheckedEdges, 0x1000 + 110);
 }
 
 char turnSpeed = 0;

@@ -9,6 +9,7 @@
 	.debuginfo	off
 	.importzp	sp
 	.export     _drawColumn
+  .export     _drawColumnSameY
 	.export     _drawColumnTransparent
 	.export     _clearSecondBuffer
 	.export     _copyToPrimaryBuffer
@@ -179,20 +180,7 @@ jmp addysp
 ;     // draw a column
 ;     curX += HALFSCREENWIDTH;
 
-.proc _drawColumn: near
-
-; clamp h to 255
-cpx #0
-beq hlessthan256
-lda #255
-hlessthan256:
-
-; if (h > 0)
-cmp #0
-bne hnotzero
-ldy #5
-jmp addysp
-hnotzero:
+_drawColumn:
 
 sta height
 
@@ -251,6 +239,11 @@ tax
 tya
 
 noadjust:
+
+; this is the entrance point for edges with the same h as the last time
+; for example, drawing an object
+
+_drawColumnSameY:
 
 ldy #2
 lda (sp),y
@@ -414,13 +407,12 @@ end:
 ldy #5
 jmp addysp
 
-.endproc
 
 
 ; ---------------------------------------------------------------
-; void __near__ __fastcall__ drawColumnTransparent(char textureIndex, char texYStart, char texYEnd, char texI, signed char curX, short curY, unsigned short h)
+; void __near__ __fastcall__ drawColumnTransparent(char textureIndex, char texYStart, char texYEnd, char texI, signed char curX, short curY, unsigned char h)
 ; ---------------------------------------------------------------
-; param order is texIndex, texI, curX, curY (2), h (in AX)
+; param order is texIndex, texI, curX, curY (2), h (in A)
 
 ;  if (h > 0)
 ;  {
@@ -439,19 +431,6 @@ jmp addysp
 ;     curX += HALFSCREENWIDTH;
 
 .proc _drawColumnTransparent: near
-
-; clamp h to 255
-cpx #0
-beq hlessthan256
-lda #255
-hlessthan256:
-
-; if (h > 0)
-cmp #0
-bne hnotzero
-ldy #7
-jmp addysp
-hnotzero:
 
 sta height
 

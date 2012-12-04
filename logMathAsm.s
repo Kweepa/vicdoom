@@ -20,8 +20,11 @@
 .export _fastMultiply8x8
 .export _fastMultiplySetup16x8
 .export _fastMultiply16x8
+.export _fastMultiplySetup16x8e24
+.export _fastMultiply16x8e24
 
 .importzp sp
+.importzp sreg
 
 .segment "LUTS"
 
@@ -761,6 +764,96 @@ _hbb:    adc #0
         sbc T1
         sta PRODUCT+1
         :
+
+        lda PRODUCT
+        ldx PRODUCT+1
+
+rts
+
+_fastMultiplySetup16x8e24:
+
+  sta T1
+  sta fsm1a+1                                             
+  sta fsm3a+1                                             
+  sta fsm1b+1
+  sta fsm3b+1
+  eor #$ff                                              
+  sta fsm2a+1                                             
+  sta fsm4a+1                                             
+  sta fsm2b+1                                             
+  sta fsm4b+1
+  rts
+
+_fastMultiply16x8e24:
+; AX 16bit value
+; y 8bit value
+
+; A * y = AAaa                                        
+; X * y = BBbb                                        
+
+;       AAaa                                              
+;  +  BBbb                                                
+; ----------                                              
+;   PRODUCT!                                              
+
+                sta T2
+                stx T2+1
+                ; Perform X * y = BBbb
+                sec                       
+fsm1a:           lda square1_lo,x          
+fsm2a:           sbc square2_lo,x          
+                sta _fbb+1
+fsm3a:           lda square1_hi,x          
+fsm4a:           sbc square2_hi,x
+                sta sreg
+
+                ; Perform A * y = AAaa
+                ldx T2
+                sec                          
+fsm1b:           lda square1_lo,x
+fsm2b:           sbc square2_lo,x             
+                sta PRODUCT                  
+fsm3b:           lda square1_hi,x             
+fsm4b:           sbc square2_hi,x             
+                sta _fAA+1                    
+
+        clc
+_fAA:    lda #0
+_fbb:    adc #0
+        sta PRODUCT+1
+        bcc :+
+        inc sreg
+:
+
+; fix for sign - see CHacking16
+
+        lda T1
+        bpl :+
+        ; sub 16bit number
+        sec
+        lda PRODUCT+1
+        sbc T2
+        sta PRODUCT+1
+        lda sreg
+        sbc T2+1
+        sta sreg
+        :
+        lda T2+1
+        bpl :+
+        ; sub 8bit number
+        sec
+        lda sreg
+        sbc T1
+        sta sreg
+        :
+
+        ; sign extend product
+        ldx #0
+        lda sreg
+        bpl :+
+        ldx #255
+        :
+        stx sreg+1
 
         lda PRODUCT
         ldx PRODUCT+1
