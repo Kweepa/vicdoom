@@ -66,7 +66,6 @@ void __fastcall__ setCameraX(int x);
 void __fastcall__ setCameraY(int y);
 void __fastcall__ preTransformSectors(void);
 void __fastcall__ transformSectorToScreenSpace(char sectorIndex);
-signed char __fastcall__ findFirstEdgeInSpan(char cameraOutsideSector, signed char x_L, signed char x_R);
 char __fastcall__ getObjectTexIndex(unsigned int halfWidth, unsigned int x);
 void __fastcall__ clearFilled(void);
 char __fastcall__ testFilled(signed char col);
@@ -172,9 +171,6 @@ char eraseMessageAfter = 0;
 #define PIXELSPERMETER 4
 #define TEXWIDTH 16
 #define TEXHEIGHT 32
-#define INNERCOLLISIONRADIUS 512
-#define OUTERCOLLISIONRADIUS 528
-#define COLLISIONDELTA (OUTERCOLLISIONRADIUS - INNERCOLLISIONRADIUS)
 
 #define EDGE_TYPE_MASK 0xC0
 #define EDGE_PROP_MASK 0x38
@@ -847,25 +843,33 @@ signed char __fastcall__ ffeis(char curSec, signed char x_L, signed char x_R)
    for (i = 0; i < numVerts; ++i)
    {
      signed char sx1, sx2;
+      int ty1, ty2;
       char ni;
       ni = (i + 1);
       if (ni == numVerts) ni = 0;
       sx1 = getScreenX(i);
       sx2 = getScreenX(ni);
+      ty1 = getTransformedY(i);
+      ty2 = getTransformedY(ni);
       // preprocess
       if (curSec == playerSector)
       {
-        int ty1, ty2;
-        ty1 = getTransformedY(i);
-        ty2 = getTransformedY(ni);
         // when inside the sector, adjust the edges clipping the camera plane
         // so that they are definitely facing the player
         if (ty1 <= 0 && ty2 > 0) sx1 = x_L;
         if (ty1 > 0 && ty2 <= 0) sx2 = x_R;
+        if (sx1 <= x_L && sx2 > x_L)
+        {
+          return i;
+        }
       }
-      if (sx1 <= x_L && sx2 > x_L)
+      else
       {
-        return i;
+        char firstVertex = getVertexIndex(curSec, i);
+        if (sx1 <= x_L && sx2 > x_L && (ty1 >= 0 || ty2 >= 0))
+        {
+          return i;
+        }
       }
    }
    return -1;
@@ -941,10 +945,17 @@ void __fastcall__ drawSpans(void)
            if (curX < nextX)
            {
                // come back to this
-               ++stackTop;
-               spanStackSec[stackTop] = thatSector;
-               spanStackL[stackTop] = curX;
-               spanStackR[stackTop] = nextX;
+               if (stackTop < 10)
+               {
+                 ++stackTop;
+                 spanStackSec[stackTop] = thatSector;
+                 spanStackL[stackTop] = curX;
+                 spanStackR[stackTop] = nextX;
+               }
+               else
+               {
+                 print2DigitNumToScreen(thatSector, 0x1000 + 5*22);
+               }
            }
         }
         else
@@ -1041,6 +1052,10 @@ EPushOutResult;
 
 char totalCheckedEdges;
 
+#define INNERCOLLISIONRADIUS 512
+#define OUTERCOLLISIONRADIUS 528
+#define COLLISIONDELTA (OUTERCOLLISIONRADIUS - INNERCOLLISIONRADIUS)
+
 EPushOutResult __fastcall__ push_out_from_edge(char i)
 {
   totalCheckedEdges++;
@@ -1086,7 +1101,8 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
     }
   }
 
-  if (height < INNERCOLLISIONRADIUS*edgeLen)
+  // height < INNERCOLLISIONRADIUS*edgeLen
+  if (height < 0 || (height>>9) < edgeLen)
   {
     // check we're within the extents of the edge
     //dist = px * ex + py * ey;
@@ -1122,36 +1138,67 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
         else
         {
           // try just pushing out
-          distanceToPush = OUTERCOLLISIONRADIUS*edgeLen - height;
+          //distanceToPush = OUTERCOLLISIONRADIUS*edgeLen - height;
+          fastMultiplySetup16x8e24(edgeLen);
+          distanceToPush = fastMultiply16x8e24(OUTERCOLLISIONRADIUS) - height;
           if (reversedEdge)
           {
             ex = -ex;
             ey = -ey;
           }
-          playerx += distanceToPush * ey / (edgeLen*edgeLen);
-          playery -= distanceToPush * ex / (edgeLen*edgeLen);
+          //playerx += distanceToPush * ey / (edgeLen*edgeLen);
+          //playery -= distanceToPush * ex / (edgeLen*edgeLen);
+          {
+            int edgeLen2;
+            fastMultiplySetup8x8(edgeLen);
+            edgeLen2 = fastMultiply8x8(edgeLen);
+            fastMultiplySetup16x8e24(ey);
+            playerx += fastMultiply16x8e24(distanceToPush) / edgeLen2;
+            fastMultiplySetup16x8e24(ex);
+            playery -= fastMultiply16x8e24(distanceToPush) / edgeLen2;
+          }
           return kPOR_Wall;
         }
     }
-    else if (!dgz && (dist > -INNERCOLLISIONRADIUS*edgeLen)
-      || (!dle && dist < (256*edgeLen + INNERCOLLISIONRADIUS)*edgeLen))
+    else
     {
-      // check against the end
-      if (dgz)
+      char checkVert = 0;
+      // if (!dgz && (dist > -INNERCOLLISIONRADIUS*edgeLen))
+      if (!dgz && ((dist>>9) > -edgeLen))
       {
-        // check the far end
-        px = playerx - 256*v2x;
-        py = playery - 256*v2y;
+        checkVert = 1;
       }
-        height = px * px + py * py;
-        if (height < INNERCOLLISIONRADIUS*INNERCOLLISIONRADIUS)
+      else
+      {
+        if (!dle)
         {
-          height = sqrt(height);
-          distanceToPush = OUTERCOLLISIONRADIUS - height;
-          playerx += distanceToPush * px / height;
-          playery += distanceToPush * py / height;
-          return kPOR_Wall;
+          //if (dist < (256*edgeLen + INNERCOLLISIONRADIUS)*edgeLen))
+          int paddedEdgeLen = ((int)(edgeLen+2))<<8;
+          fastMultiplySetup16x8e24(edgeLen);
+          if (dist < fastMultiply16x8e24(paddedEdgeLen))
+          {
+            checkVert = 1;
+            // check the far end
+            px = playerx - (((int)v2x)<<8);
+            py = playery - (((int)v2y)<<8);
+          }
         }
+      }
+      if (checkVert)
+      {
+        //POKE(0x900f, 11);
+          height = px * px + py * py;
+        //POKE(0x900f, 13);
+          //if (height < INNERCOLLISIONRADIUS*INNERCOLLISIONRADIUS)
+          if ((height>>18) == 0)
+          {
+            height = sqrt24(height);
+            distanceToPush = OUTERCOLLISIONRADIUS - height;
+            playerx += distanceToPush * px / height;
+            playery += distanceToPush * py / height;
+            return kPOR_Wall;
+          }
+      }
     }
   }
   return kPOR_Nada;

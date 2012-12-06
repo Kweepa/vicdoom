@@ -133,6 +133,7 @@ lda xfvertYlo,y
 rts
 .endproc
 
+.export clampIntToChar
 clampIntToChar:
 
 ; x high, a low
@@ -141,25 +142,25 @@ txa
 bpl sxpos
 cmp #$ff
 beq :+
-lda #$80
+lda #$c0
 rts
 :
 tya
-cmp #$80
-bpl clipdone
-lda #$80
+cmp #$c0
+bcs clipdone
+lda #$c0
 rts
 
 sxpos:
 cmp #0
 beq :+
-lda #$7f
+lda #$3f
 rts
 :
 tya
-cmp #$7f
-bmi clipdone
-lda #$7f
+cmp #$3f
+bcc clipdone
+lda #$3f
 
 clipdone:
 rts
@@ -992,10 +993,10 @@ bne Ypos
 Yneg:
 lda xfvertXhi, y
 bpl Xpos
-lda #$80
+lda #$c0
 bmi over
 Xpos:
-lda #$7f
+lda #$3f
 over:
 sta xfvertScreenX, y
 bne continue
