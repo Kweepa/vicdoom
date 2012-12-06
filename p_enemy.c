@@ -881,7 +881,6 @@ void __fastcall__ A_Shoot(void)
 //
 void __fastcall__ A_Missile(void)
 {
-  return;
 	// launch a missile
 	{
 	  mobj_t *miss = &mobjs[MAX_MOBJ-1];
@@ -889,7 +888,7 @@ void __fastcall__ A_Missile(void)
 	  {
 	    long dx = playerx - actor->x;
 	    long dy = playery - actor->y;
-	    int distance = sqrt(dx*dx + dy*dy)/128;
+	    int distance = sqrt(dx*dx + dy*dy)/64;
 	    dx /= distance;
 	    dy /= distance;
 
@@ -902,8 +901,7 @@ void __fastcall__ A_Missile(void)
 	    miss->infoType = MOBJINFO_IMPSHOT;
 	    miss->stateIndex = STATE_IMPSHOTFLY;
 	    miss->mobjIndex = MAX_MOBJ - 1;
-      info = &mobjinfo[actor->infoType];
-      miss->health = info->missiledamage;
+      miss->health = mobjinfo[actor->infoType].missiledamage;
 
 #if 0
 	    gotoxy(1,1);
@@ -926,20 +924,20 @@ void __fastcall__ A_Missile(void)
 //
 void __fastcall__ A_Melee(void)
 {
-    if (actor->movecount == 0)
-    {
-		int damage = ((P_Random()&7)+1)*3;
+  if (actor->movecount == 0)
+  {
+    int damage = ((P_Random()&7)+1)*3;
 		
-		if (info->meleesound != 0xff)
-			S_StartSound(info->meleesound);
-		damagePlayer(damage);
+    if (info->meleesound != 0xff)
+	    S_StartSound(info->meleesound);
+    damagePlayer(damage);
 		
-		++actor->movecount;
-    }
-    else
-    {
-       P_SetMobjState(info->chasestate);
-    }
+    ++actor->movecount;
+  }
+  else
+  {
+    P_SetMobjState(info->chasestate);
+  }
 }
 
 int cacodemonsDead = 0;
@@ -971,7 +969,7 @@ void __fastcall__ A_Flinch(void)
 {
   if (--actor->movecount == 0)
   {
-	P_SetMobjState(info->chasestate);
+    P_SetMobjState(info->chasestate);
   }
 }
 
@@ -990,8 +988,8 @@ void __fastcall__ A_Fly(void)
    }
    else
    {
-	   int trydx = 4*actor->momx;
-	   int trydy = 4*actor->momy;
+	   int trydx = ((int)actor->momx)<<2;
+	   int trydy = ((int)actor->momy)<<2;
 	   if (!P_TryMove(trydx, trydy))
 	   {
 	      die = true;

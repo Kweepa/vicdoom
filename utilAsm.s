@@ -13,6 +13,7 @@
 .export _setTextColor
 .export _print3DigitNumToScreen
 .export _print2DigitNumToScreen
+.export _clearScreen
 
 _eraseMessage:
 
@@ -25,6 +26,75 @@ dex
 bpl woop
 rts
 
+yyy:
+.byte 0
+yyyx22:
+.byte 0
+xxx:
+.byte 0
+
+_clearScreen:
+
+ldy #0
+:
+  lda #32
+  sta $1000,y ; clear screen
+  sta $1100,y
+  lda #0
+  sta $1600,y ; clear bitmap
+  sta $1700,y
+  iny
+  bne :-
+
+; write an 8x8 block for the graphics
+; into the middle of the screen
+
+lda #0
+sta xxx
+
+outerloop:
+
+ldy #0
+sty yyy
+
+lda #51
+sta yyyx22
+
+innerloop:
+
+lda yyyx22
+clc
+adc xxx
+tax
+
+lda xxx
+asl
+asl
+asl
+clc
+adc yyy
+adc #64
+
+sta $1000,x
+lda #10
+sta $9400,x
+
+lda yyyx22
+clc
+adc #22
+sta yyyx22
+
+inc yyy
+lda yyy
+cmp #8
+bne innerloop
+
+inc xxx
+lda xxx
+cmp #8
+bne outerloop
+
+rts
 
 .proc _waitForRaster: near
 

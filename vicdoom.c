@@ -1295,27 +1295,12 @@ char soundToPlay = 0;
 
 void __fastcall__ setUpScreenForBitmap(void)
 {
-  int i, x, y;
-  // clear the screen
-  for (i = 0; i < 22*23; ++i)
-  {
-    POKE(0x1000 + i, 32);
-  }
-  // write an 8x8 block for the graphics
-  // into the middle of the screen
-  for (x = 0; x < 8; ++x)
-  {
-    for (y = 0; y < 8; ++y)
-    {
-      POKE(0x1000 + (x + 7) + 22*(y + 2), 64 + 8*x + y);
-      POKE(0x9400 + (x + 7) + 22*(y + 2), 8 + 2);
-    }
-  }
+  clearScreen();
 }
 
 void __fastcall__ setUpScreenForMenu(void)
 {
-  int i;
+  char i;
   cputsxy(6, 1, "          ");
   cputsxy(6, 10, "          ");
   for (i = 2; i < 10; ++i)

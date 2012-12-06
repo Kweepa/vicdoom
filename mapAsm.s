@@ -75,10 +75,10 @@
 .segment "CODE"
 
 objXlo:
-.res 32, 0
+.res 48, 0
 
 objYlo:
-.res 32, 0
+.res 48, 0
 
 .segment "LOWCODE"
 

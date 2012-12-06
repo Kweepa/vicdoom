@@ -4,6 +4,7 @@
 void __fastcall__ eraseMessage(void);
 void __fastcall__ waitForRaster(char count);
 void __fastcall__ meltScreen(char health);
+void __fastcall__ clearScreen(void);
 
 void __fastcall__ setTextColor(char c);
 //void __fastcall__ printIntAtXY(char i, char x, char y, char prec);
