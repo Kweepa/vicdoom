@@ -14,6 +14,11 @@
 .export _print3DigitNumToScreen
 .export _print2DigitNumToScreen
 .export _clearScreen
+.export _setupBitmap
+.export _clearMenuArea
+.export _drawBorders
+
+.autoimport on
 
 _eraseMessage:
 
@@ -40,11 +45,13 @@ ldy #0
   lda #32
   sta $1000,y ; clear screen
   sta $1100,y
-  lda #0
-  sta $1600,y ; clear bitmap
-  sta $1700,y
   iny
   bne :-
+
+_setupBitmap:
+
+  jsr _clearSecondBuffer
+  jsr _copyToPrimaryBuffer
 
 ; write an 8x8 block for the graphics
 ; into the middle of the screen
@@ -93,6 +100,60 @@ inc xxx
 lda xxx
 cmp #8
 bne outerloop
+
+rts
+
+_clearMenuArea:
+
+lda #32
+ldx #109
+:
+sta $10f2,x
+dex
+bpl :-
+rts
+
+_drawBorders:
+
+; borders at the bottom
+ldx #21
+:
+lda #29
+sta $1176,x
+sta $11a2,x
+lda #6
+sta $9576,x
+sta $95a2,x
+dex
+bpl :-
+
+; top and bottom of bitmap
+
+ldx #9
+:
+lda #29
+sta $101c,x
+sta $10e2,x
+lda #6
+sta $941c,x
+sta $94e2,x
+dex
+bpl :-
+
+; left and right of bitmap
+ldx #154
+:
+lda #29
+sta $1032,x
+sta $103b,x
+lda #6
+sta $9432,x
+sta $943b,x
+txa
+sec
+sbc #22
+tax
+bcs :-
 
 rts
 

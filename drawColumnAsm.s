@@ -703,16 +703,24 @@ clearLoop:
 
 .proc	_copyToPrimaryBuffer: near
 
-	ldx #127
+	ldx #63
 copyLoop:
 	lda buffer,x
 	sta bitmap,x
+	lda buffer + $40,x
+	sta bitmap + $40,x
 	lda buffer + $80,x
 	sta bitmap + $80,x
+	lda buffer + $c0,x
+	sta bitmap + $c0,x
 	lda buffer + $100,x
 	sta bitmap + $100,x
+	lda buffer + $140,x
+	sta bitmap + $140,x
 	lda buffer + $180,x
 	sta bitmap + $180,x
+	lda buffer + $1c0,x
+	sta bitmap + $1c0,x
 	dex
 	bpl copyLoop
 	rts	

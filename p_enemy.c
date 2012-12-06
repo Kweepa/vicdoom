@@ -266,7 +266,11 @@ char __fastcall__ getTexture(mobj_t *obj)
 }
 
 char numMobj = 0;
-#define MAX_MOBJ 20
+// this needs to be one more than the value in the editor
+// so that the imps can throw projectiles
+#define MAX_MOBJ 21
+// if you change this change the values in mapAsm.s
+// for the object low bytes
 #define MAX_OBJ 48
 
 mobj_t mobjs[MAX_MOBJ];

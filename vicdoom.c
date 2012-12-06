@@ -1312,30 +1312,10 @@ void __fastcall__ setUpScreenForMenu(void)
 
 void __fastcall__ setUpScreenForGameplay(void)
 {
-  char i;
-  char x;
-  for (i = 0; i < 110; ++i)
-  {
-     POKE(0x1000 + 11*22 + i, 32);
-  }
-  clearSecondBuffer();
-  copyToPrimaryBuffer();
-  textcolor(6);
-  cputsxy(0, 17, "]]]]]]]]]]]]]]]]]]]]]]");
-  cputsxy(0, 19, "]]]]]]]]]]]]]]]]]]]]]]");
-  cputsxy(6, 1, "]]]]]]]]]]");
-  cputsxy(6, 10, "]]]]]]]]]]");
-  for (i = 2; i < 10; ++i)
-  {
-    cputsxy(6, i, "]");
-    cputsxy(15, i, "]");
-    for (x = 0; x < 8; ++x)
-    {
-      // multicolor red
-      POKE(0x9400 + 22*i + 7 + x, 8 + 2);
-    }
-  }
+  clearMenuArea();
+  setupBitmap();
   POKE(0x900F, 8 + 5); // green border, and black screen
+  drawBorders();
   playMapTimer();
 }
 
@@ -1676,14 +1656,14 @@ nextLevel:
         if (lookDir == 0)
         {
             changeLookTime = 12;
-            POKE(0x1000 + 10 + 22*21, 35);
-            POKE(0x1000 + 11 + 22*21, 36);
+            POKE(0x11D8, 35); // 10,22
+            POKE(0x11D9, 36); // 11,22
           }
           else
           {
             changeLookTime = 6;
-            POKE(0x1000 + 10 + 22*21, 40);
-            POKE(0x1000 + 11 + 22*21, 41);
+            POKE(0x11D8, 40); // 10,22
+            POKE(0x11D9, 41); // 11,22
           }
       }
       
