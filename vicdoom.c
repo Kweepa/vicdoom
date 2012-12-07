@@ -120,6 +120,7 @@ texFrame texFrames[] =
   { 19, 0, 0, 3, 0, 16, 0, 16 }, // caco corpse
   { 20, 0, 0, 3, 24, 8, 0, 16 }, // baron corpse
   { 19, 0, 0, 4, 16, 16, 0, 16 }, // imp shot
+  { 25, 0, 0, 2, 0, 32, 0, 16 }, // exploding barrel
 };
 
 char *pickupNames[] =
@@ -550,6 +551,108 @@ char __fastcall__ getItemPercentage(void)
   return (100*numItemsGot)/getNumItems();
 }
 
+char barrelAtCenterOfScreen = -1;
+
+void processTransparentObjectAtCenterOfScreen(char o, char vyhi)
+{
+  char objectType = getObjectType(o);
+
+  if (objectType == kOT_Barrel)
+  {
+    barrelAtCenterOfScreen = o;
+  }
+
+  if (vyhi < 3)
+  {
+    char pickupType = objectType;
+    char remove = 1;
+    if (objectType == kOT_PossessedCorpseWithAmmo)
+    {
+      setObjectType(o, kOT_PossessedCorpse);
+      remove = 0;
+      pickupType = kOT_Bullets;
+    }
+
+    if (pickupType >= kOT_GreenArmor && pickupType <= kOT_BlueKeycard)
+    {
+      char pickedUp = 0;
+
+      switch (pickupType)
+      {
+      case kOT_GreenArmor:
+        if (armor < 100)
+        {
+            armor = 100;
+            combatArmor = 0;
+            drawHudArmor();
+            pickedUp = 1;
+        }
+        break;
+      case kOT_BlueArmor:
+        if (armor < 200)
+        {
+            armor = 200;
+            combatArmor = 1;
+            drawHudArmor();
+            pickedUp = 1;
+        }
+        break;
+      case kOT_Bullets:
+        if (shells < 80)
+        {
+            shells += 4;
+            if (shells > 80) shells = 80;
+            drawHudAmmo();
+            pickedUp = 1;
+        }
+        break;
+      case kOT_Medkit:
+        if (health < 100)
+        {
+          health += 25;
+          if (health > 100) health = 100;
+          drawHudHealth();
+          pickedUp = 1;
+        }  
+        break;
+      case kOT_RedKeycard:
+        keyCards[1] = 1;
+        drawHudKeys();
+        pickedUp = 1;
+        break;
+      case kOT_GreenKeycard:
+        keyCards[2] = 1;
+        drawHudKeys();
+        pickedUp = 1;
+        break;
+      case kOT_BlueKeycard:
+        keyCards[3] = 1;
+        drawHudKeys();
+        pickedUp = 1;
+        break;
+      }
+      if (pickedUp)
+      {
+        playSound(SOUND_ITEMUP);
+        if (remove)
+        {
+          setObjectSector(o, -1);
+          ++numItemsGot;
+        }
+        // flash border cyan
+        flashBorderTime = 1;
+        POKE(0x900F, 8 + 3);
+
+        eraseMessage();
+        textcolor(7);
+        printCentered("you got the", 14);
+        printCentered(pickupNames[pickupType - kOT_GreenArmor], 15);
+        eraseMessageAfter = 8;
+      }
+    }
+  }
+}
+
 char transO[12];
 int transX[12];
 int transY[12];
@@ -608,95 +711,10 @@ void __fastcall__ drawTransparentObject(char transIndex)
           {
              if (testFilledWithY(curX, vy) > 0)
              {
-                if (curX == 0 && (vy/256) < 3)
-                {
-                  char pickupType = objectType;
-                  char remove = 1;
-                  if (objectType == kOT_PossessedCorpseWithAmmo)
-                  {
-                    setObjectType(o, kOT_PossessedCorpse);
-                    remove = 0;
-                    pickupType = kOT_Bullets;
-                  }
-
-                   if (pickupType >= kOT_GreenArmor && pickupType <= kOT_BlueKeycard)
-                   {
-                     char pickedUp = 0;
-
-                     switch (pickupType)
-                     {
-                     case kOT_GreenArmor:
-                        if (armor < 100)
-                        {
-                           armor = 100;
-                           combatArmor = 0;
-                           drawHudArmor();
-                           pickedUp = 1;
-                        }
-                        break;
-                     case kOT_BlueArmor:
-                        if (armor < 200)
-                        {
-                           armor = 200;
-                           combatArmor = 1;
-                           drawHudArmor();
-                           pickedUp = 1;
-                        }
-                        break;
-                     case kOT_Bullets:
-                        if (shells < 80)
-                        {
-                           shells += 4;
-                           if (shells > 80) shells = 80;
-                           drawHudAmmo();
-                           pickedUp = 1;
-                        }
-                        break;
-                     case kOT_Medkit:
-                        if (health < 100)
-                        {
-                          health += 25;
-                          if (health > 100) health = 100;
-                          drawHudHealth();
-                          pickedUp = 1;
-                        }  
-                        break;
-                     case kOT_RedKeycard:
-                        keyCards[1] = 1;
-                        drawHudKeys();
-                        pickedUp = 1;
-                        break;
-                     case kOT_GreenKeycard:
-                        keyCards[2] = 1;
-                        drawHudKeys();
-                        pickedUp = 1;
-                        break;
-                     case kOT_BlueKeycard:
-                        keyCards[3] = 1;
-                        drawHudKeys();
-                        pickedUp = 1;
-                        break;
-                     }
-                      if (pickedUp)
-                      {
-                        playSound(SOUND_ITEMUP);
-                        if (remove)
-                        {
-                          setObjectSector(o, -1);
-                          ++numItemsGot;
-                        }
-                        // flash border cyan
-                        flashBorderTime = 1;
-                        POKE(0x900F, 8 + 3);
-
-                        eraseMessage();
-                        textcolor(7);
-                        printCentered("you got the", 14);
-                        printCentered(pickupNames[pickupType - kOT_GreenArmor], 15);
-                        eraseMessageAfter = 8;
-                      }
-                   }
-                }
+               if (curX == 0)
+               {
+                 processTransparentObjectAtCenterOfScreen(o, vy>>8);
+               }
                 // compensate for pixel samples being mid column
                 //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
                 texI = getObjectTexIndex(w, curX - leftX);
@@ -828,6 +846,7 @@ void __fastcall__ queueTransparentObjects(signed char x_L, signed char x_R)
 void __fastcall__ drawTransparentObjects(void)
 {
   signed char i;
+  barrelAtCenterOfScreen = -1;
   // draw back to front
   for (i = numTransparent-1; i >= 0; --i)
   {
@@ -1286,6 +1305,72 @@ void __fastcall__ push_out(void)
 //  print3DigitNumToScreen(totalCheckedEdges, 0x1000 + 110);
 }
 
+char explodingBarrelsObject[4];
+char explodingBarrelsTime[4];
+
+void addExplodingBarrel(char o)
+{
+  char i;
+  setObjectType(o, kOT_ExplodingBarrel);
+  for (i = 0; i < 4; ++i)
+  {
+    if (explodingBarrelsObject[i] == -1)
+    {
+      explodingBarrelsObject[i] = o;
+      explodingBarrelsTime[i] = 3;
+      break;
+    }
+  }
+  playSound(SOUND_SHOTGN);
+}
+
+void updateBarrels(void)
+{
+  char i, t, o, k, d;
+  int dx, dy;
+  for (i = 0; i < 4; ++i)
+  {
+    o = explodingBarrelsObject[i];
+    if (o != -1)
+    {
+      explodingBarrelsTime[i]--;
+      t = explodingBarrelsTime[i];
+      if (t == 2)
+      {
+        // damage stuff around
+        for (k = 0; k < getNumObjects(); ++k)
+        {
+          char ot = getObjectType(k);
+          if (ot < 5 || ot == kOT_Barrel)
+          {
+            dx = getObjectX(k) - getObjectX(o);
+            dy = getObjectY(k) - getObjectY(o);
+
+            d = P_ApproxDistance(dx, dy);
+
+            if (d < 7)
+            {
+              if (ot == kOT_Barrel)
+              {
+                addExplodingBarrel(k);
+              }
+              else
+              {
+                p_enemy_damage(k, 30);
+              }
+            }
+          }
+        }
+      }
+      else if (t == 0)
+      {
+        setObjectSector(o, -1);
+        explodingBarrelsObject[i] = -1;
+      }
+    }
+  }
+}
+
 char turnSpeed = 0;
 char shotgunStage = 0;
 char changeLookTime = 7;
@@ -1368,7 +1453,6 @@ nextLevel:
 
   caMusic[4] = '0' + level;
   playMusic(caMusic);
-//  playMusic("pe1m1mus");
 
   setUpScreenForBitmap();
   setUpScreenForGameplay();
@@ -1418,6 +1502,11 @@ nextLevel:
   playera = getPlayerSpawnAngle();
   playerSector = getPlayerSpawnSector();
   endLevel = 0;
+  barrelAtCenterOfScreen = -1;
+  explodingBarrelsObject[0] = -1;
+  explodingBarrelsObject[1] = -1;
+  explodingBarrelsObject[2] = -1;
+  explodingBarrelsObject[3] = -1;
 
   // name of level
   textcolor(2);
@@ -1447,6 +1536,8 @@ nextLevel:
       {
         --flashBorderTime;
       }
+
+      updateBarrels();
 
       keys = readInput();
       ctrlKeys = getControlKeys();
@@ -1534,16 +1625,17 @@ nextLevel:
         // pressed fire
         if (shells > 0 && shotgunStage == 0)
         {
-//          useTransformSectorToScreenSpaceOld = !useTransformSectorToScreenSpaceOld;
-//          setTextColor(1);
-//          print3DigitNumToScreen(useTransformSectorToScreenSpaceOld, 0x1013);
           shells--;
           drawHudAmmo();
           POKE(0x900F, 8+1);
           shotgunStage = 7;
           
           playSound(SOUND_PISTOL);
-          if (typeAtCenterOfView == TYPE_OBJECT)
+          if (barrelAtCenterOfScreen != -1)
+          {
+            addExplodingBarrel(barrelAtCenterOfScreen);
+          }
+          else if (typeAtCenterOfView == TYPE_OBJECT)
           {
             char damage = 2 + (P_Random()&7);
             if (difficulty == 0)

@@ -22,7 +22,8 @@ enum EObjType
    kOT_DemonCorpse,
    kOT_CacodemonCorpse,
    kOT_BaronCorpse,
-   kOT_ImpShot
+   kOT_ImpShot,
+   kOT_ExplodingBarrel
 };
 
 char __fastcall__ getScreenX(char i);
