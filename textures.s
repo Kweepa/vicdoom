@@ -27,3 +27,4 @@
 .include "ARMOR.S"
 .include "ITEMS.S"
 .include "BARRELSKULLS.S"
+.include "BARXPLD.S"
