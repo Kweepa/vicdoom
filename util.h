@@ -5,7 +5,7 @@ void __fastcall__ eraseMessage(void);
 void __fastcall__ waitForRaster(char count);
 void __fastcall__ meltScreen(char health);
 void __fastcall__ clearScreen(void);
-void __fastcall__ setupBitmap(void);
+void __fastcall__ setupBitmap(char color);
 void __fastcall__ clearMenuArea(void);
 void __fastcall__ drawBorders(void);
 

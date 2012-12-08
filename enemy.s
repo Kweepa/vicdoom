@@ -2,6 +2,8 @@
 .autoimport	on
 .importzp sp
 
+.segment "LOWCODE"
+
 ;
 ; P_ApproxDistance
 ; Gives an estimation of distance (not exact)

@@ -3,6 +3,7 @@
 #include "updateInput.h"
 #include "drawColumn.h"
 #include "playSound.h"
+#include "util.h"
 
 #include "automap.h"
 
@@ -28,17 +29,8 @@ void __fastcall__ automap_reset(void)
 void __fastcall__ automap_enter(void)
 {
   // write white/mono to the colour memory
-  char x, y;
-  clearSecondBuffer();
-  copyToPrimaryBuffer();
   POKE(0x900F, 8 + 3);
-  for (x = 0; x < 8; ++x)
-  {
-    for (y = 0; y < 8; ++y)
-    {
-      POKE(0x9400 + 22*(y+2) + (x+7), 1);
-    }
-  }
+  setupBitmap(1); // mono, white
   // reset offset
   offsetX = 0;
   offsetY = 0;

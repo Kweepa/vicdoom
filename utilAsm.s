@@ -37,6 +37,8 @@ yyyx22:
 .byte 0
 xxx:
 .byte 0
+charColor:
+.byte 0
 
 _clearScreen:
 
@@ -47,8 +49,11 @@ ldy #0
   sta $1100,y
   iny
   bne :-
+  rts
 
 _setupBitmap:
+
+sta charColor
 
   jsr _clearSecondBuffer
   jsr _copyToPrimaryBuffer
@@ -83,7 +88,7 @@ adc yyy
 adc #64
 
 sta $1000,x
-lda #10
+lda charColor
 sta $9400,x
 
 lda yyyx22

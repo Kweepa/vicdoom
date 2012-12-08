@@ -4,7 +4,7 @@
 .export _readInput
 .export _getControlKeys
 
-.segment "CODE"
+.segment "HICODE"
 
 ; bits reversed from normal understanding
 ; so lowest at the left
@@ -119,6 +119,8 @@ lda storedKeys
 rts
 
 .endproc
+
+.segment "LOWCODE"
 
 .proc _getControlKeys : near
 

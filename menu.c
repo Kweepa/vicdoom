@@ -101,7 +101,7 @@ void __fastcall__ waitForEscReleased(void)
 #define HILITE_COLOR 7
 #define MENU_Y 11
 
-void __fastcall__ drawMenuItem(int i)
+void __fastcall__ drawMenuItem(char i)
 {
   char y = MENU_Y + (i<<1);
   char *itemStr = caMenus[menu][i];
@@ -165,8 +165,8 @@ void __fastcall__ addToMusicVolume(char add)
   char musicVolume = getMusicVolume() + add;
   if (musicVolume < 16)
   {
-	enterNumberInMenuItem(caMenus[menu][1] + 13, musicVolume);
-	drawMenuItem(item);
+	  enterNumberInMenuItem(caMenus[menu][1] + 13, musicVolume);
+	  drawMenuItem(item);
     setMusicVolume(musicVolume);
   }
 }
@@ -174,9 +174,6 @@ void __fastcall__ addToMusicVolume(char add)
 // returns 1 if should restart
 char __fastcall__ runMenu(char canReturn)
 {
-#if 0
-   return 0;
-#else
    if (canReturn)
    {
      playSound(SOUND_STNMOV);
@@ -298,6 +295,4 @@ char __fastcall__ runMenu(char canReturn)
   		}
 	  }
 	}
-
-#endif
 }

@@ -11,6 +11,8 @@
 #include "p_enemy.h"
 #include "vicdoom.h"
 
+#pragma staticlocals(on)
+
 void __fastcall__ waitASecond(void)
 {
   char i = 60;
@@ -86,8 +88,7 @@ void __fastcall__ summaryScreen(void)
   int par = getParTime();
 
   // clear screen
-  putchar(147);
-  putchar(13);
+  clearScreen();
   
   textcolor(1);
   printCentered(getMapName(), 1);
@@ -116,6 +117,5 @@ void __fastcall__ summaryScreen(void)
   while (PEEK(198) == 0) ;
 
   // clear screen
-  putchar(147);
-  putchar(13);
+  clearScreen();
 }

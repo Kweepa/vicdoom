@@ -1381,6 +1381,7 @@ char soundToPlay = 0;
 void __fastcall__ setUpScreenForBitmap(void)
 {
   clearScreen();
+  setupBitmap(8 + 2); // multicolor red
 }
 
 void __fastcall__ setUpScreenForMenu(void)
@@ -1398,7 +1399,7 @@ void __fastcall__ setUpScreenForMenu(void)
 void __fastcall__ setUpScreenForGameplay(void)
 {
   clearMenuArea();
-  setupBitmap();
+  setupBitmap(8 + 2); // multicolor red
   POKE(0x900F, 8 + 5); // green border, and black screen
   drawBorders();
   playMapTimer();
@@ -1419,19 +1420,18 @@ int main()
   char *mapName;
 
   // clear screen
-  putchar(147);
-  putchar(13);
+  clearScreen();
   cputsxy(0, 1, "R_Init: Init DOOM");
   cputsxy(0, 2, "refresh daemon...");
 
   load_data_file("psounds");
+  load_data_file("plowcode");
+  load_data_file("phicode");
 
   playSoundInitialize();
 
   generateMulTab();
   load_data_file("psluts");
-  load_data_file("plowcode");
-  load_data_file("phicode");
   load_data_file("ptextures");
 
   POKE(0x900E, (6<<4) + (PEEK(0x900E)&0x0f)); // blue aux color

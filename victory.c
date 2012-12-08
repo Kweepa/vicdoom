@@ -22,8 +22,7 @@ void __fastcall__ victoryScreen(void)
   for (j = 0; j < 2; ++j)
   {
     // clear screen
-    putchar(147);
-    putchar(13);
+    clearScreen();
     for (i = 0; i < 506; ++i)
     {
       POKE(0x9400+i, 0);
@@ -52,7 +51,6 @@ void __fastcall__ victoryScreen(void)
   }
 
   // clear screen
-  putchar(147);
-  putchar(13);
+  clearScreen();
   stopMusic();
 }
