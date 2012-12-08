@@ -23,6 +23,10 @@
 //	that are associated with states/frames. 
 //
 //-----------------------------------------------------------------------------
+//
+// Ported to the VIC-20 and cc65 in 2010-2012 by Steve McCrea
+//
+//-----------------------------------------------------------------------------
 
 #include <stdlib.h>
 #include <conio.h>
@@ -96,10 +100,8 @@ mobjInfo_t;
 #define MOBJINFO_IMP 1
 #define MOBJINFO_DEMON 2
 #define MOBJINFO_CACODEMON 3
-#define MOBJINFO_IMPSHOT 4 // 5
-#define MOBJINFO_BARON 4
+#define MOBJINFO_IMPSHOT 4
 
-// TODO: fill out
 mobjInfo_t mobjinfo[] =
 {
   { 3, -1, SOUND_GURGLE, SOUND_POPAIN, -1, SOUND_PISTOL, 0, 10, 2,
@@ -110,7 +112,6 @@ mobjInfo_t mobjinfo[] =
     STATE_DMNCHASE, STATE_DMNPAIN, STATE_DMNBITE, -1, STATE_DMNFALL, kOT_DemonCorpse },
   { 5, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, SOUND_CLAW, 30, 99, 5,
     STATE_CACCHASE, STATE_CACPAIN, STATE_CACCLAW, STATE_CACMISSILE, STATE_CACFALL, kOT_CacodemonCorpse },
-  { }
 };
 
 typedef struct
@@ -135,10 +136,14 @@ mobj_t;
 void __fastcall__ A_Chase(void);
 void __fastcall__ A_Flinch(void);
 void __fastcall__ A_Melee(void);
-void __fastcall__ A_Missile(void);
 void __fastcall__ A_Shoot(void);
+void __fastcall__ A_Missile(void);
 void __fastcall__ A_Fall(void);
 void __fastcall__ A_Fly(void);
+
+typedef void (*ActionFn)(void);
+
+ActionFn actions[] = { A_Chase, A_Flinch, A_Melee, A_Shoot, A_Missile, A_Fall, A_Fly };
 
 // actions are global
 #define ACTION_CHASE 0
@@ -223,43 +228,6 @@ void __fastcall__ printAction(void)
 }
 #endif
 
-void __fastcall__ callAction(void)
-{
-  #ifdef PRINT_ACTION
-  printAction();
-  #endif
-   switch (state->actionIndex)
-   {
-   case ACTION_CHASE:
-     A_Chase();
-     break;
-   case ACTION_FLINCH:
-     A_Flinch();
-     break;
-   case ACTION_MELEE:
-     A_Melee();
-     break;
-   case ACTION_SHOOT:
-     A_Shoot();
-     break;
-   case ACTION_MISSILE:
-     A_Missile();
-     break;
-   case ACTION_FALL:
-     A_Fall();
-     break;
-   case ACTION_FLY:
-     A_Fly();
-     break;
-   }
-   #if 0
-   gotoxy(0,1);
-   cprintf("s %d x %d y %d. ", actor->sector, actor->x, actor->y);
-   gotoxy(0,2);
-   cprintf("dir %d rt %d mc %d. ", actor->movedir, actor->reactiontime, actor->movecount);
-   #endif
-}
-
 char __fastcall__ getTexture(mobj_t *obj)
 {
    return states[obj->stateIndex].texture;
@@ -296,7 +264,7 @@ void __fastcall__ p_enemy_resetMap(void)
   numKills = 0;
 }
 
-int allocated = 0;
+char allocated = 0;
 char firstTime = 1;
 
 char __fastcall__ allocMobj(char o)
@@ -343,14 +311,22 @@ char __fastcall__ allocMobj(char o)
 char thinkercap;
 char thinkers[MAX_MOBJ];
 
+void __fastcall__ p_enemy_add_thinker(char o);
+
 void __fastcall__ p_enemy_startframe(void)
 {
    char i;
+   thinkercap = 0;
    for (i = 0; i < MAX_MOBJ; ++i)
    {
-      mobjs[i].flags &= ~(MF_WASSEENTHISFRAME|MF_THOUGHTTHISFRAME);
+     actor = &mobjs[i];
+     actor->flags &= ~(MF_WASSEENTHISFRAME|MF_THOUGHTTHISFRAME);
+     // think dying dudes and projectiles
+     if (actor->health <= 0 || i == MAX_MOBJ-1)
+     {
+       p_enemy_add_thinker(objForMobj[i]);
+     }
    }
-   thinkercap = 0;
    
    newChaseDirThisFrame = 0;
 }
@@ -401,11 +377,14 @@ void __fastcall__ p_enemy_damage(char o, char damage)
 
 void __fastcall__ p_enemy_single_think(char mobjIndex)
 {
-    actor = &mobjs[mobjIndex];
-    info = &mobjinfo[actor->infoType];
-    state = &states[actor->stateIndex];
-    distanceFromPlayer = P_ApproxDistance(playerx - actor->x, playery - actor->y);
-    callAction();
+  actor = &mobjs[mobjIndex];
+  info = &mobjinfo[actor->infoType];
+  state = &states[actor->stateIndex];
+  distanceFromPlayer = P_ApproxDistance(playerx - actor->x, playery - actor->y);
+#ifdef PRINT_ACTION
+  printAction();
+#endif
+  actions[state->actionIndex]();
 }  
 
 void __fastcall__ p_enemy_think(void)
@@ -425,7 +404,7 @@ void __fastcall__ p_enemy_think(void)
 
 char P_Random(void);
 
-typedef enum
+enum EDirType
 {
     DI_EAST,
     DI_NORTHEAST,
@@ -437,9 +416,9 @@ typedef enum
     DI_SOUTHEAST,
     DI_NODIR,
     NUMDIRS
-}
-dirtype_t;
-
+};
+// enums are 16 bit, so don't use
+#define dirtype_t char
 
 //
 // P_NewChaseDir related LUT.
@@ -671,8 +650,8 @@ boolean __fastcall__ P_TryMove(fixed_t trydx, fixed_t trydy)
      // and, update the sector!
      if (actor->sector != nextSector)
      {
-         actor->sector = nextSector;
-		 setObjectSector(o, nextSector);
+        actor->sector = nextSector;
+        setObjectSector(o, nextSector);
      }
      
      return true;
@@ -866,7 +845,7 @@ nomissile:
 //
 void __fastcall__ A_Shoot(void)
 {
-  int	damage;
+  char	damage;
   char dist = distanceFromPlayer;
 	
   S_StartSound(info->missilesound);
@@ -930,7 +909,7 @@ void __fastcall__ A_Melee(void)
 {
   if (actor->movecount == 0)
   {
-    int damage = ((P_Random()&7)+1)*3;
+    char damage = ((P_Random()&7)+1)*3;
 		
     if (info->meleesound != 0xff)
 	    S_StartSound(info->meleesound);
@@ -944,7 +923,7 @@ void __fastcall__ A_Melee(void)
   }
 }
 
-int cacodemonsDead = 0;
+char cacodemonsDead = 0;
 
 void __fastcall__ A_Fall(void)
 {
