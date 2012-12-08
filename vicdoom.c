@@ -1393,7 +1393,8 @@ void checkForPickups(void)
   }
 }
 
-char turnSpeed = 0;
+char turnLeftSpeed = 0;
+char turnRightSpeed = 0;
 char shotgunStage = 0;
 char changeLookTime = 7;
 char lookDir = 0;
@@ -1587,23 +1588,26 @@ nextLevel:
 
       if (keys & KEY_TURNLEFT)
       {
-        if (turnSpeed < 2)
+        turnRightSpeed = 0;
+        if (turnLeftSpeed < 3)
         {
-            turnSpeed++;
+            turnLeftSpeed++;
         }
-        playera -= turnSpeed;
+        playera -= turnLeftSpeed;
       }
       else if (keys & KEY_TURNRIGHT)
       {
-        if (turnSpeed < 2)
+        turnLeftSpeed = 0;
+        if (turnRightSpeed < 3)
         {
-            turnSpeed++;
+            turnRightSpeed++;
         }
-        playera += turnSpeed;
+        playera += turnRightSpeed;
       }
       else
       {
-        turnSpeed = 0;
+        turnLeftSpeed = 0;
+        turnRightSpeed = 0;
       }
       playera &= 63;
       setCameraAngle(playera);
