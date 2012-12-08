@@ -1250,26 +1250,41 @@ void updateBarrels(void)
         // damage stuff around
         for (k = 0; k < getNumObjects(); ++k)
         {
-          char ot = getObjectType(k);
-          if (ot < 5 || ot == kOT_Barrel)
+          if (getObjectSector(k) != -1)
           {
-            dx = getObjectX(k) - getObjectX(o);
-            dy = getObjectY(k) - getObjectY(o);
-
-            d = P_ApproxDistance(dx, dy);
-
-            if (d < 7)
+            char ot = getObjectType(k);
+            if (ot < 5 || ot == kOT_Barrel)
             {
-              if (ot == kOT_Barrel)
+              dx = getObjectX(k) - getObjectX(o);
+              dy = getObjectY(k) - getObjectY(o);
+
+              d = P_ApproxDistance(dx, dy);
+
+              if (d < 7)
               {
-                addExplodingBarrel(k);
-              }
-              else
-              {
-                p_enemy_damage(k, 30);
+                if (ot == kOT_Barrel)
+                {
+                  addExplodingBarrel(k);
+                }
+                else
+                {
+                  p_enemy_damage(k, 30);
+                }
               }
             }
           }
+        }
+
+        // also damage player
+        dx = getObjectX(o) - playerx;
+        dy = getObjectY(o) - playery;
+
+        d = P_ApproxDistance(dx, dy);
+
+        // be more lenient for the player
+        if (d < 5)
+        {
+          damagePlayer(30);
         }
       }
       else if (t == 0)
@@ -1283,12 +1298,11 @@ void updateBarrels(void)
 
 void checkForPickups(void)
 {
-  char o, s, objectType, d;
+  char o, objectType, d;
   int dx, dy;
   for (o = 0; o < getNumObjects(); ++o)
   {
-    s = getObjectSector(o);
-    if (s != -1)
+    if (getObjectSector(o) != -1)
     {
       objectType = getObjectType(o);
       if ((objectType >= kOT_GreenArmor && objectType <= kOT_BlueKeycard)
