@@ -21,22 +21,24 @@
 // todo
 // 2.5. fix push_out code some more
 // 7.5. and weapons (maybe?)
-// 10. more optimization?
-// 12. optimize push_out code and more importantly the ai try_move code
-// 12.1. any walls that can be collided with should be straight or 45 degree diagonal
-// 12.2. then the push out code can be done in 16 bit, asm
+// X 10. more optimization?
+// X 12. optimize push_out code
+// 12.5 and the ai try_move code
 // 15. scale x on map (see drawLine.s (*0.75)) - also need to scale the input position
-// 16. make acid do damage
+// X 16. make acid do damage
 
 // memory map:
 // see the .cfg file for how to do this
 // startup code is $82 bytes long - fix with fill = yes
+// 0400-0FFF look up tables and code
 // 1000-11FF screen
 // 1200-13FF startup + random data
 // 1400-15FF character font
 // 1600-17FF 8x8 bitmapped display character ram
-// 1800-7FFF code/data
-// A000-BDFF texture data, level data, music, sound
+// 1800-76FF code/data
+// 7700-77FF C stack
+// 7800-7FFF fast multiply tables
+// A000-BDFF texture data, level data, music, sound, code
 // BE00-BFFF back buffer
 
 #define IDDQD 0
@@ -1455,6 +1457,9 @@ int main()
   signed char ca, sa;
   char numObj;
   char *mapName;
+
+  // needed for clearScreen
+  load_data_file("pmidcode");
 
   // clear screen
   clearScreen();

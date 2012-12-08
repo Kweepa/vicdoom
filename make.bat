@@ -24,6 +24,7 @@ mid2vic\debug\prepend_load_address sluts 400
 mid2vic\debug\prepend_load_address lowcode 640
 mid2vic\debug\prepend_load_address textures a000
 mid2vic\debug\prepend_load_address sounds ba20
+mid2vic\debug\prepend_load_address midcode 1200
 mid2vic\debug\prepend_load_address hicode bcc0
 mid2vic\debug\prepend_load_address cred.pt 10f2
 mid2vic\debug\prepend_load_address keys.pt 10f2
@@ -33,5 +34,5 @@ mid2vic\debug\prepend_load_address keys.co 94f2
 mid2vic\debug\prepend_load_address buy.co 94f2
 mid2vic\debug\prepend_load_address victory1.txt 1000
 mid2vic\debug\prepend_load_address victory2.txt 1000
-c:\app\vice\c1541 -format doom,id d64 doom.d64 -write doom.prg -write ptextures -write pe1m1 -write pe1m2 -write pe1m3 -write pe1m4 -write pe1m5 -write pe1m6 -write pe1m7 -write pe1m8 -write pe1m9 -write pe1m1mus -write pe1m2mus -write pe1m3mus -write pe1m4mus -write pe1m5mus -write pe1m6mus -write pe1m7mus -write pe1m8mus -write pe1m9mus -write pintermus -write pvictormus -write psluts -write psounds -write plowcode -write phicode -write pkeys.pt -write pkeys.co -write pcred.pt -write pcred.co -write pbuy.pt -write pbuy.co -write pvictory1.txt -write pvictory2.txt
+c:\app\vice\c1541 -format doom,id d64 doom.d64 -write doom.prg -write ptextures -write pe1m1 -write pe1m2 -write pe1m3 -write pe1m4 -write pe1m5 -write pe1m6 -write pe1m7 -write pe1m8 -write pe1m9 -write pe1m1mus -write pe1m2mus -write pe1m3mus -write pe1m4mus -write pe1m5mus -write pe1m6mus -write pe1m7mus -write pe1m8mus -write pe1m9mus -write pintermus -write pvictormus -write psluts -write psounds -write plowcode -write pmidcode -write phicode -write pkeys.pt -write pkeys.co -write pcred.pt -write pcred.co -write pbuy.pt -write pbuy.co -write pvictory1.txt -write pvictory2.txt
 c:\app\vice\xvic doom.d64

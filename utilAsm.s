@@ -20,6 +20,8 @@
 
 .autoimport on
 
+.segment "MIDCODE"
+
 _eraseMessage:
 
 ldx #21
@@ -324,6 +326,8 @@ sm2: sta $9400,y
   jmp addysp
 
 .endproc
+
+.segment "CODE"
 
 ; params: filename, length of filename
 ; A - length of fname
