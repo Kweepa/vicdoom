@@ -553,103 +553,13 @@ char __fastcall__ getItemPercentage(void)
 
 char barrelAtCenterOfScreen = -1;
 
-void processTransparentObjectAtCenterOfScreen(char o, char vyhi)
+void processTransparentObjectAtCenterOfScreen(char o)
 {
   char objectType = getObjectType(o);
 
   if (objectType == kOT_Barrel)
   {
     barrelAtCenterOfScreen = o;
-  }
-
-  if (vyhi < 3)
-  {
-    char pickupType = objectType;
-    char remove = 1;
-    if (objectType == kOT_PossessedCorpseWithAmmo)
-    {
-      setObjectType(o, kOT_PossessedCorpse);
-      remove = 0;
-      pickupType = kOT_Bullets;
-    }
-
-    if (pickupType >= kOT_GreenArmor && pickupType <= kOT_BlueKeycard)
-    {
-      char pickedUp = 0;
-
-      switch (pickupType)
-      {
-      case kOT_GreenArmor:
-        if (armor < 100)
-        {
-            armor = 100;
-            combatArmor = 0;
-            drawHudArmor();
-            pickedUp = 1;
-        }
-        break;
-      case kOT_BlueArmor:
-        if (armor < 200)
-        {
-            armor = 200;
-            combatArmor = 1;
-            drawHudArmor();
-            pickedUp = 1;
-        }
-        break;
-      case kOT_Bullets:
-        if (shells < 80)
-        {
-            shells += 4;
-            if (shells > 80) shells = 80;
-            drawHudAmmo();
-            pickedUp = 1;
-        }
-        break;
-      case kOT_Medkit:
-        if (health < 100)
-        {
-          health += 25;
-          if (health > 100) health = 100;
-          drawHudHealth();
-          pickedUp = 1;
-        }  
-        break;
-      case kOT_RedKeycard:
-        keyCards[1] = 1;
-        drawHudKeys();
-        pickedUp = 1;
-        break;
-      case kOT_GreenKeycard:
-        keyCards[2] = 1;
-        drawHudKeys();
-        pickedUp = 1;
-        break;
-      case kOT_BlueKeycard:
-        keyCards[3] = 1;
-        drawHudKeys();
-        pickedUp = 1;
-        break;
-      }
-      if (pickedUp)
-      {
-        playSound(SOUND_ITEMUP);
-        if (remove)
-        {
-          setObjectSector(o, -1);
-          ++numItemsGot;
-        }
-        // flash border cyan
-        flashBorderTime = 1;
-        POKE(0x900F, 8 + 3);
-
-        eraseMessage();
-        textcolor(7);
-        printCentered("you got the", 14);
-        printCentered(pickupNames[pickupType - kOT_GreenArmor], 15);
-        eraseMessageAfter = 8;
-      }
-    }
   }
 }
 
@@ -713,7 +623,7 @@ void __fastcall__ drawTransparentObject(char transIndex)
              {
                if (curX == 0)
                {
-                 processTransparentObjectAtCenterOfScreen(o, vy>>8);
+                 processTransparentObjectAtCenterOfScreen(o);
                }
                 // compensate for pixel samples being mid column
                 //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
@@ -1371,6 +1281,118 @@ void updateBarrels(void)
   }
 }
 
+void checkForPickups(void)
+{
+  char o, s, objectType, d;
+  int dx, dy;
+  for (o = 0; o < getNumObjects(); ++o)
+  {
+    s = getObjectSector(o);
+    if (s != -1)
+    {
+      objectType = getObjectType(o);
+      if ((objectType >= kOT_GreenArmor && objectType <= kOT_BlueKeycard)
+        || objectType == kOT_PossessedCorpseWithAmmo)
+      {
+        dx = getObjectX(o) - playerx;
+        dy = getObjectY(o) - playery;
+
+        d = P_ApproxDistance(dx, dy);
+
+        if (d < 2)
+        {
+          char pickupType = objectType;
+          char remove = 1;
+          if (objectType == kOT_PossessedCorpseWithAmmo)
+          {
+            setObjectType(o, kOT_PossessedCorpse);
+            remove = 0;
+            pickupType = kOT_Bullets;
+          }
+
+          if (pickupType >= kOT_GreenArmor && pickupType <= kOT_BlueKeycard)
+          {
+            char pickedUp = 0;
+
+            switch (pickupType)
+            {
+            case kOT_GreenArmor:
+              if (armor < 100)
+              {
+                  armor = 100;
+                  combatArmor = 0;
+                  drawHudArmor();
+                  pickedUp = 1;
+              }
+              break;
+            case kOT_BlueArmor:
+              if (armor < 200)
+              {
+                  armor = 200;
+                  combatArmor = 1;
+                  drawHudArmor();
+                  pickedUp = 1;
+              }
+              break;
+            case kOT_Bullets:
+              if (shells < 80)
+              {
+                  shells += 4;
+                  if (shells > 80) shells = 80;
+                  drawHudAmmo();
+                  pickedUp = 1;
+              }
+              break;
+            case kOT_Medkit:
+              if (health < 100)
+              {
+                health += 25;
+                if (health > 100) health = 100;
+                drawHudHealth();
+                pickedUp = 1;
+              }  
+              break;
+            case kOT_RedKeycard:
+              keyCards[1] = 1;
+              drawHudKeys();
+              pickedUp = 1;
+              break;
+            case kOT_GreenKeycard:
+              keyCards[2] = 1;
+              drawHudKeys();
+              pickedUp = 1;
+              break;
+            case kOT_BlueKeycard:
+              keyCards[3] = 1;
+              drawHudKeys();
+              pickedUp = 1;
+              break;
+            }
+            if (pickedUp)
+            {
+              playSound(SOUND_ITEMUP);
+              if (remove)
+              {
+                setObjectSector(o, -1);
+                ++numItemsGot;
+              }
+              // flash border cyan
+              flashBorderTime = 1;
+              POKE(0x900F, 8 + 3);
+
+              eraseMessage();
+              textcolor(7);
+              printCentered("you got the", 14);
+              printCentered(pickupNames[pickupType - kOT_GreenArmor], 15);
+              eraseMessageAfter = 8;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 char turnSpeed = 0;
 char shotgunStage = 0;
 char changeLookTime = 7;
@@ -1538,6 +1560,7 @@ nextLevel:
       }
 
       updateBarrels();
+      checkForPickups();
 
       keys = readInput();
       ctrlKeys = getControlKeys();
