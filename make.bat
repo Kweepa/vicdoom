@@ -1,4 +1,4 @@
-cl65 -t vic20 -C doom_cc65.cfg -O vicdoom.c menu.c automap.c p_enemy.c summary.c victory.c util.c utilAsm.s enemy.s m_random.s doomlogo.s drawLine.s updateInput.s doomfont.s textures.s dpsounds.s playSound.s drawColumnAsm.s logMathAsm.s mapAsm.s -vm -m map.txt -o doom.prg
+cl65 -t vic20 -C doom_cc65.cfg -O vicdoom.c menu.c automap.c p_enemy.c summary.c victory.c util.c cheatsAsm.s utilAsm.s enemy.s m_random.s doomlogo.s drawLine.s updateInput.s doomfont.s textures.s dpsounds.s playSound.s drawColumnAsm.s logMathAsm.s mapAsm.s -vm -m map.txt -o doom.prg
 @echo off
 mid2vic\debug\prepend_load_address e1m1 ad00
 mid2vic\debug\prepend_load_address e1m2 ad00

@@ -19,12 +19,6 @@ int offsetX, offsetY;
 char zoom;
 
 void __fastcall__ automap_draw(int offsetX, int offsetY, char zoom, char player_x, char player_y, char player_a);
-void __fastcall__ automap_resetEdges(void);
-
-void __fastcall__ automap_reset(void)
-{
-  automap_resetEdges();
-}
 
 void __fastcall__ automap_enter(void)
 {

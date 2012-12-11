@@ -6,6 +6,7 @@
 .export _drawLine
 .export _automap_sawEdge
 .export _automap_resetEdges
+.export _automap_setEdges
 .import _getSinOf
 .import _getCosOf
 
@@ -41,6 +42,15 @@ edgesSeen:
 _automap_resetEdges:
 ldx #31
 lda #0
+:
+sta edgesSeen,x
+dex
+bpl :-
+rts
+
+_automap_setEdges:
+ldx #31
+lda #$FF
 :
 sta edgesSeen,x
 dex

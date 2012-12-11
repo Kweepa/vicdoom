@@ -38,6 +38,7 @@
 #include "player.h"
 #include "mapAsm.h"
 #include "util.h"
+#include "fastmath.h"
 
 #pragma staticlocals(on)
 
@@ -559,19 +560,20 @@ signed char __fastcall__ try_move(int trydx, int trydy)
   char thatSector;
   char i, ni;
   signed char v1x, v1y, v2x, v2y;
-  int ex, ey;
+  signed char ex, ey;
   int px, py;
-  int dot;
-  int height;
+  long dot;
+  long height;
   int edgeLen;
+  int edgeLen2;
   int distance;
   char edgeGlobalIndex;
   char vertGlobalIndex, vert2GlobalIndex;
   char curSector = actor->sector;
   char sectorToReturn = curSector;
   char secNumVerts = getNumVerts(curSector);
-  int tx = (actor->x + trydx)/256;
-  int ty = (actor->y + trydy)/256;
+  int tx = actor->x + trydx;
+  int ty = actor->y + trydy;
   
   // see which edge the new coordinate is behind
   for (i = 0; i < secNumVerts; ++i)
@@ -585,22 +587,39 @@ signed char __fastcall__ try_move(int trydx, int trydy)
     v2y = getVertexY(vert2GlobalIndex);
     ex = v2x - v1x;
     ey = v2y - v1y;
-    dot = trydx*ey - trydy*ex;
+    // check if moving towards edge
+    // dot = trydx*ey - trydy*ex;
+    fastMultiplySetup16x8e24(ey);
+    dot = fastMultiply16x8e24(trydx);
+    fastMultiplySetup16x8e24(ex);
+    dot -= fastMultiply16x8e24(trydy);
     if (dot <= 0)
     {
-      px = tx - v1x;
-      py = ty - v1y;
+      px = tx - (((short)v1x)<<8);
+      py = ty - (((short)v1y)<<8);
       edgeGlobalIndex = getEdgeIndex(curSector, i);
       edgeLen = getEdgeLen(edgeGlobalIndex);
-      height = px * ey - py * ex;
-      if (height < 2*edgeLen)
+      //height = px * ey - py * ex;
+      fastMultiplySetup16x8e24(ey);
+      height = fastMultiply16x8e24(px);
+      fastMultiplySetup16x8e24(ex);
+      height -= fastMultiply16x8e24(py);
+
+      fastMultiplySetup8x8(edgeLen);
+      edgeLen2 = fastMultiply8x8(edgeLen);
+
+      if (height < (edgeLen2<<1))
       {
 			  // check we're within the extents of the edge
 			  thatSector = getOtherSector(edgeGlobalIndex, curSector);
 			  if (thatSector != -1 && !isDoorClosed(edgeGlobalIndex))
 			  {
-			    distance = px * ex + py * ey;
-			    if (distance > edgeLen && distance < (edgeLen*edgeLen - edgeLen))
+			    //distance = px * ex + py * ey;
+          fastMultiplySetup16x8e24(ex);
+          distance = fastMultiply16x8e24(px);
+          fastMultiplySetup16x8e24(ey);
+          distance += fastMultiply16x8e24(py);
+			    if (distance > edgeLen2 && distance < (edgeLen2*edgeLen - edgeLen2))
 			    {
             #if 0
             gotoxy(0,16);
@@ -618,8 +637,8 @@ signed char __fastcall__ try_move(int trydx, int trydy)
           }
           else
           {
-          // hit a wall
-          sectorToReturn = -1;
+            // hit a wall
+            sectorToReturn = -1;
           }
 			  }
 			  else
