@@ -505,45 +505,48 @@ void drawHudKeys(void)
 
 extern char difficulty;
 
+char godMode = 0;
+
 void __fastcall__ damagePlayer(char damage)
 {
-  if (difficulty == 0)
+  if (!godMode)
   {
-    damage = damage/2;
-  }
-#if IDDQD == 0
-  if (armor > 0)
-  {
-    char armorDamage = 0;
-    if (combatArmor == 1)
+    if (difficulty == 0)
     {
-      armorDamage = damage/2;
+      damage = damage/2;
     }
-    else
+    if (armor > 0)
     {
-      // approximation for /3
-      armorDamage = damage/4 + damage/16;
+      char armorDamage = 0;
+      if (combatArmor == 1)
+      {
+        armorDamage = damage/2;
+      }
+      else
+      {
+        // approximation for /3
+        armorDamage = damage/4 + damage/16;
+      }
+      damage = damage - armorDamage;
+      armor -= armorDamage;
+      if (armor > 200)
+      {
+        armor = 0;
+        combatArmor = 0;
+      }
+      drawHudArmor();
     }
-    damage = damage - armorDamage;
-    armor -= armorDamage;
-    if (armor > 200)
+    health -= damage;
+    if (health < 0)
     {
-      armor = 0;
-      combatArmor = 0;
+       health = 0;
     }
-    drawHudArmor();
-  }
-  health -= damage;
-#endif
-  if (health < 0)
-  {
-     health = 0;
-  }
-  drawHudHealth();
+    drawHudHealth();
   
-  // flash border red
-  flashBorderTime = 1;
-  POKE(0x900F, 8+2);
+    // flash border red
+    flashBorderTime = 1;
+    POKE(0x900F, 8+2);
+  }
 }
 
 char numItemsGot;
@@ -553,7 +556,7 @@ char __fastcall__ getItemPercentage(void)
   return (100*numItemsGot)/getNumItems();
 }
 
-char barrelAtCenterOfScreen = -1;
+signed char barrelAtCenterOfScreen = -1;
 
 void processTransparentObjectAtCenterOfScreen(char o)
 {
@@ -957,9 +960,9 @@ void __fastcall__ doEdgeSpecial(char edgeGlobalIndex)
 
 // THIS IS THE NEXT TARGET OF FIXING & OPTIMIZATION!
 
-char curSector;
-char thatSector;
-char nextSector;
+signed char curSector;
+signed char thatSector;
+signed char nextSector;
 
 char ni;
 signed char v1x, v1y, v2x, v2y, ex, ey;
@@ -1209,7 +1212,7 @@ void __fastcall__ push_out(void)
       push_out_from_edge(possibleWallsToTouch[i]);
     }
   }
-  if (nextSector != 0xff)
+  if (nextSector != -1)
   {
     playerSector = nextSector;
   }
@@ -1217,7 +1220,7 @@ void __fastcall__ push_out(void)
 //  print3DigitNumToScreen(totalCheckedEdges, 0x1000 + 110);
 }
 
-char explodingBarrelsObject[4];
+signed char explodingBarrelsObject[4];
 char explodingBarrelsTime[4];
 
 void addExplodingBarrel(char o)
@@ -1238,7 +1241,8 @@ void addExplodingBarrel(char o)
 
 void updateBarrels(void)
 {
-  char i, t, o, k, d;
+  char i, t, k, d;
+  signed char o;
   int dx, dy;
   for (i = 0; i < 4; ++i)
   {
@@ -1252,7 +1256,7 @@ void updateBarrels(void)
         // damage stuff around
         for (k = 0; k < getNumObjects(); ++k)
         {
-          if (getObjectSector(k) != -1)
+          if (getObjectSector(k) != 255)
           {
             char ot = getObjectType(k);
             if (ot < 5 || ot == kOT_Barrel)
@@ -1298,13 +1302,23 @@ void updateBarrels(void)
   }
 }
 
+void preparePickupMessage(void)
+{
+  playSound(SOUND_ITEMUP);
+  POKE(0x900F, 8 + 3); // cyan border
+  flashBorderTime = 1;
+  eraseMessage();
+  textcolor(7);
+  eraseMessageAfter = 8;
+}
+
 void checkForPickups(void)
 {
   char o, objectType, d;
   int dx, dy;
   for (o = 0; o < getNumObjects(); ++o)
   {
-    if (getObjectSector(o) != -1)
+    if (getObjectSector(o) != 255)
     {
       objectType = getObjectType(o);
       if ((objectType >= kOT_GreenArmor && objectType <= kOT_BlueKeycard)
@@ -1315,7 +1329,7 @@ void checkForPickups(void)
 
         d = P_ApproxDistance(dx, dy);
 
-        if (d < 2)
+        if (d < 3)
         {
           char pickupType = objectType;
           char remove = 1;
@@ -1386,21 +1400,15 @@ void checkForPickups(void)
             }
             if (pickedUp)
             {
-              playSound(SOUND_ITEMUP);
+              preparePickupMessage();
+              printCentered("you got the", 14);
+              printCentered(pickupNames[pickupType - kOT_GreenArmor], 15);
+
               if (remove)
               {
                 setObjectSector(o, -1);
                 ++numItemsGot;
               }
-              // flash border cyan
-              flashBorderTime = 1;
-              POKE(0x900F, 8 + 3);
-
-              eraseMessage();
-              textcolor(7);
-              printCentered("you got the", 14);
-              printCentered(pickupNames[pickupType - kOT_GreenArmor], 15);
-              eraseMessageAfter = 8;
             }
           }
         }
@@ -1442,6 +1450,59 @@ void __fastcall__ setUpScreenForGameplay(void)
   POKE(0x900F, 8 + 5); // green border, and black screen
   drawBorders();
   playMapTimer();
+}
+
+signed char updateCheatCodes(void);
+char *cheatText[] =
+{
+  "god mode",
+  "keys, full ammo",
+  "change level",
+  "reveal map",
+};
+
+void handleCheatCodes(void)
+{
+  signed char i = updateCheatCodes();
+  if (i != -1)
+  {
+    preparePickupMessage();
+    printCentered(cheatText[i], 15);
+    if (i == 0)
+    {
+      char col;
+      godMode = !godMode;
+      health = 100;
+      drawHudHealth();
+      // yellow or cyan
+      col = godMode ? 3 : 7;
+      POKE(0x95C2, col);
+      POKE(0x95C3, col);
+      POKE(0x95D8, col);
+      POKE(0x95D9, col);
+      POKE(0x95EE, col);
+      POKE(0x95EF, col);
+    }
+    else if (i == 1)
+    {
+      keyCards[1] = 1;
+      keyCards[2] = 1;
+      keyCards[3] = 1;
+      drawHudKeys();
+      shells = 80;
+      drawHudAmmo();
+      armor = 200;
+      drawHudArmor();
+    }
+    else if (i == 2)
+    {
+      endLevel = 1;
+    }
+    else if (i == 3)
+    {
+      automap_setEdges();
+    }
+  }
 }
 
 char __fastcall__ runMenu(char canReturn);
@@ -1490,6 +1551,7 @@ start:
 
   runMenu(0);
   level = 1;
+  godMode = 0;
   
 nextLevel:
 
@@ -1511,7 +1573,7 @@ nextLevel:
   doorOpenTime[3] = 0;
   
   p_enemy_resetMap();
-  automap_reset();
+  automap_resetEdges();
   for (i = 0; i < numObj; ++i)
   {
     if (getObjectType(i) < 5)
@@ -1813,6 +1875,8 @@ nextLevel:
           eraseMessage();
         }
       }
+
+      handleCheatCodes();
     }
     pauseMapTimer();
     

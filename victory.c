@@ -19,6 +19,8 @@ void __fastcall__ victoryScreen(void)
 
   playMusic("pvictormus");
 
+  POKE(0x900f,8); //black border
+
   for (j = 0; j < 2; ++j)
   {
     // clear screen
@@ -42,7 +44,10 @@ void __fastcall__ victoryScreen(void)
 
       if (x != 32)
       {
-        waitForRaster(4);
+        char wait = 4;
+        if (x == '.' || x == '?' || x == '!') wait = 48;
+        if (x == ',') wait = 16;
+        waitForRaster(wait);
       }
     }
   

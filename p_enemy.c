@@ -38,6 +38,7 @@
 #include "player.h"
 #include "mapAsm.h"
 #include "util.h"
+#include "fastmath.h"
 
 #pragma staticlocals(on)
 
@@ -76,21 +77,21 @@
 typedef struct
 {
    char speed;
-   char seesound;
-   char activesound;
-   char painsound;
-   char meleesound;
-   char missilesound;
+   signed char seesound;
+   signed char activesound;
+   signed char painsound;
+   signed char meleesound;
+   signed char missilesound;
 
    char missiledamage;
    char spawnhealth;
    char painchance;
 
-   char chasestate;
-   char painstate;
-   char meleestate;
-   char shootstate;
-   char deathstate;
+   signed char chasestate;
+   signed char painstate;
+   signed char meleestate;
+   signed char shootstate;
+   signed char deathstate;
    
    char deathObjectType;
 }
@@ -556,22 +557,23 @@ signed char __fastcall__ try_move(int trydx, int trydy)
   // check the edges we can cross first
   // if any of them teleport us, move
   
-  char thatSector;
+  signed char thatSector;
   char i, ni;
   signed char v1x, v1y, v2x, v2y;
-  int ex, ey;
+  signed char ex, ey;
   int px, py;
-  int dot;
-  int height;
+  long dot;
+  long height;
   int edgeLen;
+  int edgeLen2;
   int distance;
   char edgeGlobalIndex;
   char vertGlobalIndex, vert2GlobalIndex;
   char curSector = actor->sector;
   char sectorToReturn = curSector;
   char secNumVerts = getNumVerts(curSector);
-  int tx = (actor->x + trydx)/256;
-  int ty = (actor->y + trydy)/256;
+  int tx = actor->x + trydx;
+  int ty = actor->y + trydy;
   
   // see which edge the new coordinate is behind
   for (i = 0; i < secNumVerts; ++i)
@@ -585,23 +587,40 @@ signed char __fastcall__ try_move(int trydx, int trydy)
     v2y = getVertexY(vert2GlobalIndex);
     ex = v2x - v1x;
     ey = v2y - v1y;
-    dot = trydx*ey - trydy*ex;
+    // check if moving towards edge
+    // dot = trydx*ey - trydy*ex;
+    fastMultiplySetup16x8e24(ey);
+    dot = fastMultiply16x8e24(trydx);
+    fastMultiplySetup16x8e24(ex);
+    dot -= fastMultiply16x8e24(trydy);
     if (dot <= 0)
     {
-      px = tx - v1x;
-      py = ty - v1y;
+      px = tx - (((short)v1x)<<8);
+      py = ty - (((short)v1y)<<8);
       edgeGlobalIndex = getEdgeIndex(curSector, i);
       edgeLen = getEdgeLen(edgeGlobalIndex);
-      height = px * ey - py * ex;
-      if (height < 2*edgeLen)
+      //height = px * ey - py * ex;
+      fastMultiplySetup16x8e24(ey);
+      height = fastMultiply16x8e24(px);
+      fastMultiplySetup16x8e24(ex);
+      height -= fastMultiply16x8e24(py);
+
+      fastMultiplySetup8x8(edgeLen);
+      edgeLen2 = fastMultiply8x8(edgeLen);
+
+      if (height < (edgeLen2<<1))
       {
 			  // check we're within the extents of the edge
 			  thatSector = getOtherSector(edgeGlobalIndex, curSector);
 			  if (thatSector != -1 && !isDoorClosed(edgeGlobalIndex))
 			  {
-			    distance = px * ex + py * ey;
-			    if (distance > edgeLen && distance < (edgeLen*edgeLen - edgeLen))
-			    {
+			    //distance = px * ex + py * ey;
+          fastMultiplySetup16x8e24(ex);
+          distance = fastMultiply16x8e24(px);
+          fastMultiplySetup16x8e24(ey);
+          distance += fastMultiply16x8e24(py);
+          if (distance > edgeLen2 && distance < (edgeLen2*edgeLen - edgeLen2))
+          {
             #if 0
             gotoxy(0,16);
             cprintf("%d %d %d %d %d. ", curSector, distance, edgeLen, dot, height);
@@ -618,8 +637,8 @@ signed char __fastcall__ try_move(int trydx, int trydy)
           }
           else
           {
-          // hit a wall
-          sectorToReturn = -1;
+            // hit a wall
+            sectorToReturn = -1;
           }
 			  }
 			  else
@@ -636,7 +655,7 @@ signed char __fastcall__ try_move(int trydx, int trydy)
 boolean __fastcall__ P_TryMove(fixed_t trydx, fixed_t trydy)
 {
    // check the move is valid
-   char nextSector = try_move(trydx, trydy);
+   signed char nextSector = try_move(trydx, trydy);
    if (nextSector != -1)
    {
      char o = objForMobj[actor->mobjIndex];
@@ -798,7 +817,7 @@ void __fastcall__ A_Chase(void)
     }
     
     // check for melee attack
-    if (info->meleestate != 0xff
+    if (info->meleestate != -1
 		  && P_CheckMeleeRange())
     {
       actor->movecount = 0;
@@ -807,14 +826,14 @@ void __fastcall__ A_Chase(void)
     }
     
     // check for missile attack
-    if (info->shootstate != 0xff)
+    if (info->shootstate != -1)
     {
-		  if (actor->movecount)
-		  {
-			  goto nomissile;
-		  }
-		
-		  if (!P_CheckMissileRange())
+      if (actor->movecount)
+      {
+        goto nomissile;
+      }
+
+      if (!P_CheckMissileRange())
 			  goto nomissile;
 		
 		  P_SetMobjState(info->shootstate);
@@ -834,9 +853,9 @@ nomissile:
 
     // make active sound
     if (info->activesound != -1
-		  && P_Random() < 3)
+      && P_Random() < 3)
     {
-		  S_StartSound(info->activesound);
+      S_StartSound(info->activesound);
     }
 }
 
@@ -911,7 +930,7 @@ void __fastcall__ A_Melee(void)
   {
     char damage = ((P_Random()&7)+1)*3;
 		
-    if (info->meleesound != 0xff)
+    if (info->meleesound != -1)
 	    S_StartSound(info->meleesound);
     damagePlayer(damage);
 		

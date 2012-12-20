@@ -61,22 +61,18 @@ lsr
 lsr
 lsr
 
-lsr
-lsr
-bit 0
-; nop
-; nop
+; want to shift right twice
+; usually lsr;lsr + some dummies (eg nop;nop or better, cmp #0)
+; instead use ASR #$ff (thanks to TNT)
+.byte $4b, $ff
+.byte $4b, $ff
 
-bit 0
-bit 0
-;nop
-;nop
-;nop
-;nop
+; bit 0;bit 0 OR nop;nop;nop;nop
+cmp #0
+cmp #0
 
-;nop
-;nop
-bit 0
+; bit 0 OR nop;nop
+cmp #0
 asl
 asl
 
