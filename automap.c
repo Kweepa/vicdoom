@@ -31,6 +31,17 @@ void __fastcall__ automap_enter(void)
   zoom = 1;
 }
 
+void wait_for_ctrl_release(void)
+{
+  char ctrlKeys;
+  do
+  {
+    readInput();
+    ctrlKeys = getControlKeys();
+  }
+  while (ctrlKeys & KEY_CTRL);
+}
+
 char __fastcall__ automap_update(void)
 {
   // check for scrolling
@@ -39,12 +50,7 @@ char __fastcall__ automap_update(void)
   char pxhi, pyhi;
   if (ctrlKeys & KEY_CTRL)
   {
-    do
-    {
-      readInput();
-      ctrlKeys = getControlKeys();
-    }
-    while (ctrlKeys & KEY_CTRL);
+    wait_for_ctrl_release();
     return 0;
   }
   if ((keys & KEY_MOVERIGHT) && offsetX > -MAX_OFFSET)
@@ -63,11 +69,11 @@ char __fastcall__ automap_update(void)
   {
     offsetY -= OFFSET_STEP;
   }
-  if ((keys & KEY_FIRE) && zoom == 1)
+  if (keys & KEY_FIRE)
   {
     zoom = 2;
   }
-  if ((keys & KEY_USE) && zoom == 2)
+  if (keys & KEY_USE)
   {
     zoom = 1;
   }
@@ -83,13 +89,7 @@ char __fastcall__ automap_update(void)
 
 void __fastcall__ automap(void)
 {
-  char ctrlKeys;
   automap_enter();
-  do
-  {
-    readInput();
-    ctrlKeys = getControlKeys();
-  }
-  while (ctrlKeys & KEY_CTRL);
+  wait_for_ctrl_release();
   while (automap_update()) ;
 }

@@ -112,7 +112,7 @@ texFrame texFrames[] =
   { 23, 0, 0, 8, 16, 8, 0, 8 }, // green keycard
   { 23, 0, 0, 8, 16, 8, 8, 8 }, // blue keycard
   { 24, 0, 0, 8, 16, 16, 0, 16 }, // barrel
-  { 21, 0, 1, 5 }, // pillar (was width 5)
+  { 21, 0, 1, 5 }, // pillar
   { 24, 0, 0, 8, 0, 16, 0, 16 }, // skullpile
   { 22, 0, 0, 2, 16, 4, 0, 16 }, // acid
   { 20, 0, 0, 4, 0, 8, 0, 16 }, // possessed corpse (with bullets)
@@ -147,7 +147,6 @@ char playerSector;
 //char playera = 10;
 //char playerSector = 8;
 
-char keyCards[8];
 char shells = 40;
 char armor = 0;
 char combatArmor = 0;
@@ -458,8 +457,8 @@ void __fastcall__ drawHudArmor(void)
 {
     char armorColor = 5;
     if (combatArmor == 1) armorColor = 6;
-    textcolor(armorColor);
-    cputsxy(5, 21, "^");
+    POKE(0x1000 + 22*21 + 5, 30); // armor symbol in font
+    POKE(0x9400 + 22*21 + 5, armorColor);
     setTextColor(armorColor);
     print3DigitNumToScreen(armor, 0x1000 + 22*21 + 6);
 }
@@ -467,8 +466,8 @@ void __fastcall__ drawHudArmor(void)
 void __fastcall__ drawHudAmmo(void)
 {
   // shells
-  textcolor(3);
-  cputsxy(1, 21, "&");
+  POKE(0x1000 + 22*21 + 1, '&');
+  POKE(0x9400 + 22*21 + 1, 3);
   setTextColor(3);
   print2DigitNumToScreen(shells, 0x1000 + 22*21 + 2);
 }
@@ -476,32 +475,13 @@ void __fastcall__ drawHudAmmo(void)
 void __fastcall__ drawHudHealth(void)
 {
   // health
-  textcolor(2);
-  cputsxy(13, 21, "/");
+  POKE(0x1000 + 22*21 + 13, '/');
+  POKE(0x9400 + 22*21 + 13, 2);
   setTextColor(2);
   print3DigitNumToScreen(health, 0x1000 + 22*21 + 14);
 }
 
-char keyCardColors[3] = { 2, 5, 6 };
 char *keyCardNames[3] = { " red", "green", "blue" };
-
-void drawHudKeys(void)
-{
-  char k;
-  // cards
-  for (k = 1; k < 4; ++k)
-  {
-    if (keyCards[k] == 1)
-    {
-      textcolor(keyCardColors[k-1]);
-    }
-    else
-    {
-      textcolor(0);
-    }
-    cputsxy(17+k, 21, ";");
-  }
-}
 
 extern char difficulty;
 
@@ -1383,18 +1363,15 @@ void checkForPickups(void)
               }  
               break;
             case kOT_RedKeycard:
-              keyCards[1] = 1;
-              drawHudKeys();
+              addKeyCard(2);
               pickedUp = 1;
               break;
             case kOT_GreenKeycard:
-              keyCards[2] = 1;
-              drawHudKeys();
+              addKeyCard(4);
               pickedUp = 1;
               break;
             case kOT_BlueKeycard:
-              keyCards[3] = 1;
-              drawHudKeys();
+              addKeyCard(8);
               pickedUp = 1;
               break;
             }
@@ -1449,6 +1426,9 @@ void __fastcall__ setUpScreenForGameplay(void)
   setupBitmap(8 + 2); // multicolor red
   POKE(0x900F, 8 + 5); // green border, and black screen
   drawBorders();
+  // name of level
+  textcolor(2);
+  printCentered(getMapName(), 18);
   playMapTimer();
 }
 
@@ -1470,25 +1450,14 @@ void handleCheatCodes(void)
     printCentered(cheatText[i], 15);
     if (i == 0)
     {
-      char col;
-      godMode = !godMode;
       health = 100;
       drawHudHealth();
-      // yellow or cyan
-      col = godMode ? 3 : 7;
-      POKE(0x95C2, col);
-      POKE(0x95C3, col);
-      POKE(0x95D8, col);
-      POKE(0x95D9, col);
-      POKE(0x95EE, col);
-      POKE(0x95EF, col);
+      godMode = 1-godMode;
+      colorFace(godMode);
     }
     else if (i == 1)
     {
-      keyCards[1] = 1;
-      keyCards[2] = 1;
-      keyCards[3] = 1;
-      drawHudKeys();
+      addKeyCard(2+4+8);
       shells = 80;
       drawHudAmmo();
       armor = 200;
@@ -1517,7 +1486,6 @@ int main()
   char i;
   signed char ca, sa;
   char numObj;
-  char *mapName;
 
   // needed for clearScreen
   load_data_file("pmidcode");
@@ -1558,12 +1526,12 @@ nextLevel:
   caMusic[4] = '0' + level;
   playMusic(caMusic);
 
+  caLevel[4] = '0' + level;
+  load_data_file(caLevel);
+
   setUpScreenForBitmap();
   setUpScreenForGameplay();
 
-  caLevel[4] = '0' + level;
-  load_data_file(caLevel);
-  mapName = getMapName();
   numObj = getNumObjects();
 
   resetDoorClosedAmounts();
@@ -1592,14 +1560,8 @@ nextLevel:
     armor = 0;
     shells = 40;
   }
-  keyCards[0] = 1;
-  keyCards[1] = 0;
-  keyCards[2] = 0;
-  keyCards[3] = 0;
-  keyCards[4] = 0;
-  keyCards[5] = 0;
-  keyCards[6] = 0;
-  keyCards[7] = 0;
+  resetKeyCard();
+  addKeyCard(1);
   numItemsGot = 0;
   playerx = getPlayerSpawnX();
   playery = getPlayerSpawnY();
@@ -1612,13 +1574,9 @@ nextLevel:
   explodingBarrelsObject[2] = -1;
   explodingBarrelsObject[3] = -1;
 
-  // name of level
-  textcolor(2);
-  printCentered(mapName, 18);
   drawHudAmmo();
   drawHudArmor();
   drawHudHealth();
-  drawHudKeys();
   // face
   textcolor(7);
   cputsxy(10, 20, "[£");
@@ -1788,7 +1746,7 @@ nextLevel:
               char prop = (tex & EDGE_PROP_MASK) >> EDGE_PROP_SHIFT;
               if (prop < 4)
               {
-                if (keyCards[prop] == 1)
+                if (haveKeyCard(prop))
                 {
                   openDoor(itemAtCenterOfView);
                 }
@@ -1799,8 +1757,8 @@ nextLevel:
                   textcolor(7);
                   cputsxy(1, 14, "you need a       key");
                   cputsxy(2, 15, "to open this door!");
+                  textcolor(keyCardColor(prop));
                   prop--;
-                  textcolor(keyCardColors[prop]);
                   cputsxy(12, 14, keyCardNames[prop]);
                   eraseMessageAfter = 8;
                 }

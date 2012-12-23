@@ -17,6 +17,11 @@
 .export _setupBitmap
 .export _clearMenuArea
 .export _drawBorders
+.export _addKeyCard
+.export _keyCardColor
+.export _resetKeyCard
+.export _haveKeyCard
+.export _colorFace
 
 .autoimport on
 
@@ -354,3 +359,63 @@ _load_file:
 
         ldy #2
         jmp addysp    ; clean up stack
+
+
+keyCard:
+.byte 0
+keyCardColors:
+.byte 0,2,5,6
+keyCardMasks:
+.byte 1,2,4,8
+
+_resetKeyCard:
+  lda #0
+  sta keyCard
+  rts
+
+_addKeyCard:
+  ora keyCard
+  sta keyCard
+
+  tay
+
+  ldx #3
+keyLoop:
+  lda #';'
+  sta $11df,x
+  tya
+  and keyCardMasks,x
+  beq :+
+  lda keyCardColors,x
+  :
+  sta $95df,x
+  dex
+  bne keyLoop
+  rts
+
+_keyCardColor:
+  tax
+  lda keyCardColors,x
+  rts
+
+_haveKeyCard:
+  tax
+  lda keyCardMasks,x
+  and keyCard
+  rts
+
+faceColor:
+.byte 7,3
+
+_colorFace:
+  ; A = godMode 0 or 1
+  ; convert to yellow (7) or cyan (3)
+  tay
+  lda faceColor,y
+  sta $95c2
+  sta $95c3
+  sta $95d8
+  sta $95d9
+  sta $95ee
+  sta $95ef
+  rts

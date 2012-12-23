@@ -14,3 +14,4 @@ map.txt
 *.rc
 *.lastbuildstate
 .suo
+*.lst

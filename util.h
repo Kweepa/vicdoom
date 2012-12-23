@@ -21,3 +21,10 @@ void __fastcall__ playMusic(char *name);
 
 void __fastcall__ load_data_file(char *fname);
 void __fastcall__ load_file(char *fname, char fnamelen);
+
+char __fastcall__ keyCardColor(char card);
+void __fastcall__ resetKeyCard(void);
+void __fastcall__ addKeyCard(char cardMask);
+char __fastcall__ haveKeyCard(char card);
+
+void __fastcall__ colorFace(char godMode);

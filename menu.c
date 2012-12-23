@@ -118,7 +118,7 @@ void __fastcall__ drawMenuItem(char i)
   printCentered(itemStr, y);
 }
 
-void __fastcall__ drawMenu(void)
+void __fastcall__ drawMenu(char canReturn)
 {
   char i;
   for (i = 0; i < 198; ++i)
@@ -126,6 +126,19 @@ void __fastcall__ drawMenu(void)
     POKE(0x1000 + 242 + i, 32);
     POKE(0x9400 + 242 + i, 7);
   }
+
+  if (!canReturn)
+  {
+    textcolor(TEXT_COLOR);
+    cputsxy(3, 21, "up");
+    cputsxy(3, 22, "down");
+    cputsxy(15, 21, "select");
+    textcolor(HILITE_COLOR);
+    cputsxy(1, 21, "w");
+    cputsxy(1, 22, "s");
+    cputsxy(8, 21, "return");
+  }
+
   // draw the menu
   for (i = 0; i < 3; ++i)
   {
@@ -189,7 +202,7 @@ char __fastcall__ runMenu(char canReturn)
    item = 0;
    stackDepth = 0;
    
-   drawMenu();
+   drawMenu(canReturn);
    
    while (menu != 255)
    {
@@ -258,7 +271,7 @@ char __fastcall__ runMenu(char canReturn)
 			    --stackDepth;
 			    menu = menuStack[stackDepth];
 			    item = itemStack[stackDepth];
-			    drawMenu();
+			    drawMenu(canReturn);
 		    }
 	  }
 	  if (ctrlKeyPressed(KEY_RETURN))
@@ -282,7 +295,7 @@ char __fastcall__ runMenu(char canReturn)
 			    ++stackDepth;
 			    menu = next;
 			    item = 0;
-			    drawMenu();
+			    drawMenu(canReturn);
 			  }
 			  else
 			  {
@@ -290,7 +303,7 @@ char __fastcall__ runMenu(char canReturn)
 			    POKE(198,0);
 			    load_text_screen(next);
 			    while (PEEK(198) == 0) ;
-			    drawMenu();
+			    drawMenu(canReturn);
 			  }
   		}
 	  }
