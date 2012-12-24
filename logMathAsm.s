@@ -360,8 +360,7 @@ asl
 rol tmps
 ldx tmps
 
-ldy #2
-jmp addysp
+jmp incsp2
 
 .endproc
 
@@ -449,8 +448,7 @@ cmp #0
 bne txnotzero
 cpx #0
 bne txnotzero
-ldy #2
-jmp addysp
+jmp incsp2
 
 txnotzero:
 

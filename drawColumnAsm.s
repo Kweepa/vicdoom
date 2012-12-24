@@ -127,8 +127,7 @@ sta filled_lo,y
 txa
 sta filled_hi,y
 
-ldy #1
-jmp addysp
+jmp incsp1
 
 .endproc
 
@@ -150,8 +149,7 @@ sbc tmp
 lda filled_hi,y
 sbc tmp+1
 
-ldy #1
-jmp addysp
+jmp incsp1
 
 .endproc
 
@@ -400,8 +398,7 @@ dex
 bpl loop
 
 end:
-ldy #5
-jmp addysp
+jmp incsp5
 
 
 

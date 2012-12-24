@@ -232,8 +232,7 @@ ldy edgeIndex
 modify:
 lda secVerts,y
 
-ldy #1
-jmp addysp
+jmp incsp1
 
 .endproc
 
@@ -306,8 +305,7 @@ ldy edgeIndex
 modify:
 lda secEdges,y
 
-ldy #1
-jmp addysp
+jmp incsp1
 
 .endproc
 
@@ -337,8 +335,7 @@ tay
 txa
 sta edgeTex,y
 
-ldy #1
-jmp addysp
+jmp incsp1
 
 .endproc
 
@@ -372,8 +369,7 @@ bne end
 lda edgeSec2,y
 
 end:
-ldy #1
-jmp addysp
+jmp incsp1
 
 .endproc
 
@@ -417,8 +413,7 @@ bne done
 lda #0
 
 done:
-ldy #1
-jmp addysp
+jmp incsp1
 
 .endproc
 
@@ -462,8 +457,7 @@ pla
 sta objXlo,y
 txa
 sta objXhi,y
-ldy #1
-jmp addysp
+jmp incsp1
 
 _setObjectY:
 pha
@@ -474,8 +468,7 @@ pla
 sta objYlo,y
 txa
 sta objYhi,y
-ldy #1
-jmp addysp
+jmp incsp1
 
 .proc _getObjectY : near
 
@@ -507,8 +500,7 @@ tay
 txa
 sta objType,y
 
-ldy #1
-jmp addysp
+jmp incsp1
 
 _getNumSectors:
 lda numSectors
@@ -649,8 +641,7 @@ tax
 ldy #0
 lda (sp),y
 jsr addObjectToSector
-ldy #1
-jmp addysp
+jmp incsp1
 
 _setObjectSector:
 
@@ -671,8 +662,7 @@ jsr addObjectToSector
 lda sectorIndex
 sta objSec,x
 
-ldy #1
-jmp addysp
+jmp incsp1
 
 _getMapName:
 lda #<mapName

@@ -34,11 +34,11 @@
 #include "p_enemy.h"
 
 #include "playSound.h"
-#include "p_enemy.h"
 #include "player.h"
 #include "mapAsm.h"
 #include "util.h"
 #include "fastmath.h"
+#include "enemy.h"
 
 #pragma staticlocals(on)
 
@@ -53,94 +53,28 @@
 #define MF_THOUGHTTHISFRAME 2
 #define MF_WASSEENTHISFRAME 4
 
-// states are specific to enemy types
-#define STATE_POSCHASE 0
-#define STATE_POSPAIN 1
-#define STATE_POSSHOOT 2
-#define STATE_POSFALL 3
-#define STATE_IMPCHASE 4
-#define STATE_IMPPAIN 5
-#define STATE_IMPCLAW 6
-#define STATE_IMPMISSILE 7
-#define STATE_IMPFALL 8
-#define STATE_DMNCHASE 9
-#define STATE_DMNPAIN 10
-#define STATE_DMNBITE 11
-#define STATE_DMNFALL 12
-#define STATE_CACCHASE 13
-#define STATE_CACPAIN 14
-#define STATE_CACCLAW 15
-#define STATE_CACMISSILE 16
-#define STATE_CACFALL 17
-#define STATE_IMPSHOTFLY 18
-
-typedef struct
-{
-   char speed;
-   signed char seesound;
-   signed char activesound;
-   signed char painsound;
-   signed char meleesound;
-   signed char missilesound;
-
-   char missiledamage;
-   char spawnhealth;
-   char painchance;
-
-   signed char chasestate;
-   signed char painstate;
-   signed char meleestate;
-   signed char shootstate;
-   signed char deathstate;
-   
-   char deathObjectType;
-}
-mobjInfo_t;
-
 #define MOBJINFO_POSSESSED 0
 #define MOBJINFO_IMP 1
 #define MOBJINFO_DEMON 2
 #define MOBJINFO_CACODEMON 3
 #define MOBJINFO_IMPSHOT 4
 
-mobjInfo_t mobjinfo[] =
-{
-  { 3, -1, SOUND_GURGLE, SOUND_POPAIN, -1, SOUND_PISTOL, 0, 10, 2,
-    STATE_POSCHASE, STATE_POSPAIN, -1, STATE_POSSHOOT, STATE_POSFALL, kOT_PossessedCorpseWithAmmo },
-  { 4, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, SOUND_CLAW, 10, 20, 3,
-    STATE_IMPCHASE, STATE_IMPPAIN, STATE_IMPCLAW, STATE_IMPMISSILE, STATE_IMPFALL, kOT_ImpCorpse },
-  { 6, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, -1, 0, 20, 4,
-    STATE_DMNCHASE, STATE_DMNPAIN, STATE_DMNBITE, -1, STATE_DMNFALL, kOT_DemonCorpse },
-  { 5, -1, SOUND_GURGLE, SOUND_POPAIN, SOUND_CLAW, SOUND_CLAW, 30, 99, 5,
-    STATE_CACCHASE, STATE_CACPAIN, STATE_CACCLAW, STATE_CACMISSILE, STATE_CACFALL, kOT_CacodemonCorpse },
-};
+#define STATE_IMPSHOTFLY 18 // keep in sync with enemy.s
 
-typedef struct
-{
-   char allocated;
-   char mobjIndex;
-   int x;
-   int y;
-   signed char momx;
-   signed char momy;
-   char sector;
-   char movedir;
-   char flags;
-   char reactiontime;
-   signed char movecount;
-   signed char health;
-   char infoType;
-   char stateIndex;
-}
-mobj_t;
+// this needs to be one more than the value in the editor
+// so that the imps can throw projectiles
+#define MAX_MOBJ 21
 
-void __fastcall__ A_Chase(void);
-void __fastcall__ A_Flinch(void);
-void __fastcall__ A_Melee(void);
-void __fastcall__ A_Shoot(void);
-void __fastcall__ A_Missile(void);
-void __fastcall__ A_Fall(void);
-void __fastcall__ A_Fly(void);
+int missile_momx;
+int missile_momy;
+
+void  A_Chase(void);
+void  A_Flinch(void);
+void  A_Melee(void);
+void  A_Shoot(void);
+void  A_Missile(void);
+void  A_Fall(void);
+void  A_Fly(void);
 
 typedef void (*ActionFn)(void);
 
@@ -155,43 +89,66 @@ ActionFn actions[] = { A_Chase, A_Flinch, A_Melee, A_Shoot, A_Missile, A_Fall, A
 #define ACTION_FALL 5
 #define ACTION_FLY 6
 
-typedef struct
+// see enemy.s for the states
+
+char state_texture[] =
 {
-   char texture;
-   char actionIndex;
-}
-mobjState_t;
+  TEX_ANIMATE + 8,
+  10,
+  9,
+  10,
 
-mobjState_t states[] =
-{
-  { TEX_ANIMATE + 8, ACTION_CHASE },
-  { 10, ACTION_FLINCH },
-  { 9, ACTION_SHOOT },
-  { 10, ACTION_FALL },
+  TEX_ANIMATE + 11,
+  13,
+  12,
+  12,
+  13,
 
-  { TEX_ANIMATE + 11, ACTION_CHASE },
-  { 13, ACTION_FLINCH },
-  { 12, ACTION_MELEE },
-  { 12, ACTION_MISSILE },
-  { 13, ACTION_FALL },
+  TEX_ANIMATE + 14,
+  16,
+  15,
+  16,
+
+  TEX_ANIMATE + 17,
+  18,
+  17,
+  17,
+  18,
   
-  { TEX_ANIMATE + 14, ACTION_CHASE },
-  { 16, ACTION_FLINCH },
-  { 15, ACTION_MELEE },
-  { 16, ACTION_FALL },
-
-  { TEX_ANIMATE + 17, ACTION_CHASE },
-  { 18, ACTION_FLINCH },
-  { 17, ACTION_MELEE },
-  { 17, ACTION_MISSILE },
-  { 18, ACTION_FALL },
-  
-  { 0, ACTION_FLY }
+  0
 };
 
-mobj_t *actor;
-mobjInfo_t *info;
-mobjState_t *state;
+char state_actionIndex[] =
+{
+  ACTION_CHASE,
+  ACTION_FLINCH,
+  ACTION_SHOOT,
+  ACTION_FALL,
+
+  ACTION_CHASE,
+  ACTION_FLINCH,
+  ACTION_MELEE,
+  ACTION_MISSILE,
+  ACTION_FALL,
+  
+  ACTION_CHASE,
+  ACTION_FLINCH,
+  ACTION_MELEE,
+  ACTION_FALL,
+
+  ACTION_CHASE,
+  ACTION_FLINCH,
+  ACTION_MELEE,
+  ACTION_MISSILE,
+  ACTION_FALL,
+  
+  ACTION_FLY
+};
+
+
+char actorIndex;
+char objIndex;
+char actionIndex;
 char distanceFromPlayer;
 
 char newChaseDirThisFrame = 0;
@@ -201,8 +158,8 @@ char newChaseDirThisFrame = 0;
 #ifdef PRINT_ACTION
 void __fastcall__ printAction(void)
 {
-   gotoxy(5,0);
-   switch (state->actionIndex)
+   gotoxy(0,10);
+   switch (actionIndex)
    {
    case ACTION_CHASE:
      cputs("chase. ");
@@ -229,22 +186,9 @@ void __fastcall__ printAction(void)
 }
 #endif
 
-char __fastcall__ getTexture(mobj_t *obj)
-{
-   return states[obj->stateIndex].texture;
-}
-
 char numMobj = 0;
-// this needs to be one more than the value in the editor
-// so that the imps can throw projectiles
-#define MAX_MOBJ 21
 // if you change this change the values in mapAsm.s
-// for the object low bytes
 #define MAX_OBJ 48
-
-mobj_t mobjs[MAX_MOBJ];
-char objForMobj[MAX_MOBJ];
-char mobjForObj[MAX_OBJ];
 
 char numEnemies;
 char numKills;
@@ -259,49 +203,46 @@ void __fastcall__ p_enemy_resetMap(void)
   char i;
   for (i = 0; i < MAX_MOBJ; ++i)
   {
-    mobjs[i].allocated = false;
+    setMobjIndex(i);
+    setMobjAllocated(0);
   }
   numEnemies = 0;
   numKills = 0;
 }
 
-char allocated = 0;
+//char numAllocated = 0;
 char firstTime = 1;
 
 char __fastcall__ allocMobj(char o)
 {
   char i;
-  mobj_t *mobj;
-  mobjInfo_t *info;
-//  if (allocated) return -1;
-//  allocated = 1;
+//  ++numAllocated;
+//  if (numAllocated > 2)
+//  {
+//    return -1;
+//  }
   for (i = 0; i < MAX_MOBJ; ++i)
   {
-  	mobj = &mobjs[i];
-    if (mobj->allocated == false)
+    if (!mobjAllocated(i))
     {
+      char ot;
       ++numEnemies;
-      objForMobj[i] = o;
-      mobjForObj[o] = i;
+      setObjForMobj(o, i);
 
       // temp to test
       // setObjectType(o, kOT_Demon);
 
-      mobj->allocated = true;
-      mobj->mobjIndex = i;
-      mobj->x = getObjectX(o);
-      mobj->y = getObjectY(o);
-      mobj->momx = 0;
-      mobj->momy = 0;
-      mobj->sector = getObjectSector(o);
-      mobj->movedir = 0;
-      mobj->flags = 0;
-      mobj->reactiontime = 2;
-      mobj->movecount = 0;
-      mobj->infoType = getObjectType(o);
-      info = &mobjinfo[mobj->infoType];
-      mobj->health = info->spawnhealth;
-      mobj->stateIndex = info->chasestate;
+      setMobjIndex(i);
+      setMobjAllocated(1);
+      setMobjMovedir(0);
+      setMobjFlags(0);
+      setMobjReactiontime(2);
+      setMobjMovecount(0);
+      ot = getObjectType(o);
+      setMobjInfoType(ot);
+      setMobjCurrentType(ot);
+      setMobjHealth(getMobjSpawnHealth());
+      setMobjStateIndex(getMobjChaseState());
       
       return i;
     }
@@ -320,12 +261,15 @@ void __fastcall__ p_enemy_startframe(void)
    thinkercap = 0;
    for (i = 0; i < MAX_MOBJ; ++i)
    {
-     actor = &mobjs[i];
-     actor->flags &= ~(MF_WASSEENTHISFRAME|MF_THOUGHTTHISFRAME);
+     setMobjIndex(i);
+     removeMobjFlags(MF_WASSEENTHISFRAME|MF_THOUGHTTHISFRAME);
      // think dying dudes and projectiles
-     if (actor->health <= 0 || i == MAX_MOBJ-1)
+     if (mobjAllocated(i))
      {
-       p_enemy_add_thinker(objForMobj[i]);
+       if (mobjHealth() <= 0 || i == MAX_MOBJ-1)
+       {
+         p_enemy_add_thinker(objForMobj(i));
+       }
      }
    }
    
@@ -337,10 +281,11 @@ void __fastcall__ p_enemy_add_thinker(char o)
   char t = getObjectType(o);
   if (t < 5)
   {
-    char i = mobjForObj[o];
-    if (!(mobjs[i].flags & MF_THOUGHTTHISFRAME))
+    char i = mobjForObj(o);
+    setMobjIndex(i);
+    if (!testMobjFlags(MF_THOUGHTTHISFRAME))
     {
-      mobjs[i].flags |= MF_THOUGHTTHISFRAME;
+      addMobjFlags(MF_THOUGHTTHISFRAME);
       thinkers[thinkercap] = i;
       ++thinkercap;
     }
@@ -349,44 +294,59 @@ void __fastcall__ p_enemy_add_thinker(char o)
 
 void __fastcall__ p_enemy_wasseenthisframe(char o)
 {
-   char t = getObjectType(o);
-   if (t < 5)
-   {
-     char i = mobjForObj[o];
-     mobjs[i].flags |= MF_WASSEENTHISFRAME;
-   }
+  char t = getObjectType(o);
+  if (t < 5)
+  {
+    char i = mobjForObj(o);
+    setMobjIndex(i);
+    addMobjFlags(MF_WASSEENTHISFRAME);
+  }
 }
 
 char __fastcall__ p_enemy_get_texture(char o)
 {
-  char i = mobjForObj[o];
-  return getTexture(&mobjs[i]);
+  char i = mobjForObj(o);
+  char si;
+  setMobjIndex(i);
+  si = mobjStateIndex();
+  return state_texture[si];
 }
 
 void __fastcall__ P_DamageMobj(char damage);
 
 void __fastcall__ p_enemy_damage(char o, char damage)
 {
-   if (getObjectType(o) < 5)
-   {
-     char i = mobjForObj[o];
-     actor = &mobjs[i];
-     info = &mobjinfo[actor->infoType];
-     P_DamageMobj(damage);
-   }
+  char ot = getObjectType(o);
+  if (ot < 5)
+  {
+    actorIndex = mobjForObj(o);
+    setMobjIndex(actorIndex);
+    setMobjCurrentType(ot);
+    P_DamageMobj(damage);
+  }
 }
 
 void __fastcall__ p_enemy_single_think(char mobjIndex)
 {
-  actor = &mobjs[mobjIndex];
-  info = &mobjinfo[actor->infoType];
-  state = &states[actor->stateIndex];
-  distanceFromPlayer = P_ApproxDistance(playerx - actor->x, playery - actor->y);
+  char ot, si;
+  actorIndex = mobjIndex;
+  objIndex = objForMobj(actorIndex);
+  setMobjIndex(mobjIndex);
+  ot = mobjInfoType();
+  setMobjCurrentType(ot);
+  si = mobjStateIndex();
+  actionIndex = state_actionIndex[si];
+  distanceFromPlayer = P_ApproxDistance(playerx - getObjectX(objIndex), playery - getObjectY(objIndex));
 #ifdef PRINT_ACTION
   printAction();
 #endif
-  actions[state->actionIndex]();
-}  
+//  print3DigitNumToScreen(mobjIndex, 0x1000 + 22*4);
+//  print3DigitNumToScreen(objIndex, 0x1000 + 22*5);
+//  print3DigitNumToScreen(getObjectSector(objIndex), 0x1000 + 22*6);
+//  print3DigitNumToScreen(mobjStateIndex(), 0x1000 + 22*7);
+//  print3DigitNumToScreen(actionIndex, 0x1000 + 22*8);
+  actions[actionIndex]();
+}
 
 void __fastcall__ p_enemy_think(void)
 {
@@ -397,7 +357,7 @@ void __fastcall__ p_enemy_think(void)
     p_enemy_single_think(mobjIndex);
     ++i;
   }
-  if (mobjs[MAX_MOBJ-1].allocated)
+  if (mobjAllocated(MAX_MOBJ-1))
   {
     p_enemy_single_think(MAX_MOBJ-1);
   }
@@ -447,47 +407,41 @@ dirtype_t diags[] =
 // hacked version of this for D20M
 //
 
-boolean __fastcall__ P_CheckSight(void)
+boolean P_CheckSight(void)
 {
-  if (actor->sector == playerSector) return true;
+  if (getObjectSector(objIndex) == playerSector) return true;
   // this table will be cleared at the start of render
   // and filled in during render
-  if (actor->flags & MF_WASSEENTHISFRAME) return true;
+  if (testMobjFlags(MF_WASSEENTHISFRAME)) return true;
   return false;
 }
 
-void __fastcall__ S_StartSound(char sound)
-{
    // just try to play it
    // will succeed or fail based on priorities
    // TODO: perhaps set a volume based on actor position?
-   playSound(sound);
-}
+#define S_StartSound playSound
+#define P_SetMobjState setMobjStateIndex
 
-void __fastcall__ P_SetMobjState(char stateIndex)
-{
-  actor->stateIndex = stateIndex;
-  state = &states[stateIndex];
-}
 
 void __fastcall__ P_DamageMobj(char damage)
 {
-	actor->health -= damage;
-	if (actor->health <= 0)
+	setMobjHealth(mobjHealth() - damage);
+	if (mobjHealth() <= 0)
 	{
 	    // kill actor
-		actor->movecount = 2;
-		P_SetMobjState(info->deathstate);
+		setMobjMovecount(2);
+    playSound(SOUND_POPAIN);
+		P_SetMobjState(getMobjDeathState());
 		++numKills;
 	}
 	else
 	{
-		actor->flags |= MF_JUSTATTACKED;
+		addMobjFlags(MF_JUSTATTACKED);
 		// maybe flinch, depending on threshold
-		if (damage > info->painchance)
+		if (damage > getMobjPainChance())
 		{
-		  actor->movecount = 1;
-		  P_SetMobjState(info->painstate);
+		  setMobjMovecount(1);
+		  P_SetMobjState(getMobjPainState());
 		}
 	}
 }
@@ -498,7 +452,7 @@ void __fastcall__ P_RadiusAttack(char radius)
     if (distanceFromPlayer < radius)
     {
       playSound(SOUND_OOF);
-      damagePlayer(actor->health + (P_Random()&15));
+      damagePlayer(mobjHealth() + (P_Random()&15));
     }
 }
 
@@ -523,16 +477,18 @@ boolean __fastcall__ P_CheckMissileRange(void)
 {
     char dist;
 
-    if (actor->reactiontime)
+    if (mobjReactiontime())
   		return false;	// do not attack yet
 		
     if (! P_CheckSight() )
 		  return false;
 	
 	  dist = distanceFromPlayer;
-		
+
+#if 0
     if (!info->meleestate && dist >= 20)
 		  dist -= 20; // no melee attack, so fire more
+#endif
 
     if (dist > 50)
   		dist = 50;
@@ -542,9 +498,6 @@ boolean __fastcall__ P_CheckMissileRange(void)
 
     return true;
 }
-
-#define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
-#define PEEK(addr) (*(unsigned char *)(addr))
 
 //
 // P_Move
@@ -569,11 +522,11 @@ signed char __fastcall__ try_move(int trydx, int trydy)
   int distance;
   char edgeGlobalIndex;
   char vertGlobalIndex, vert2GlobalIndex;
-  char curSector = actor->sector;
+  char curSector = getObjectSector(objIndex);
   char sectorToReturn = curSector;
   char secNumVerts = getNumVerts(curSector);
-  int tx = actor->x + trydx;
-  int ty = actor->y + trydy;
+  int tx = getObjectX(objIndex) + trydx;
+  int ty = getObjectY(objIndex) + trydy;
   
   // see which edge the new coordinate is behind
   for (i = 0; i < secNumVerts; ++i)
@@ -658,19 +611,13 @@ boolean __fastcall__ P_TryMove(fixed_t trydx, fixed_t trydy)
    signed char nextSector = try_move(trydx, trydy);
    if (nextSector != -1)
    {
-     char o = objForMobj[actor->mobjIndex];
-     actor->x += trydx;
-     actor->y += trydy;
+     setObjectX(objIndex, getObjectX(objIndex) + trydx);
+     setObjectY(objIndex, getObjectY(objIndex) + trydy);
 
-     // also, copy the position to the object
-     setObjectX(o, actor->x);
-     setObjectY(o, actor->y);
-     
      // and, update the sector!
-     if (actor->sector != nextSector)
+     if (getObjectSector(objIndex) != nextSector)
      {
-        actor->sector = nextSector;
-        setObjectSector(o, nextSector);
+       setObjectSector(objIndex, nextSector);
      }
      
      return true;
@@ -688,11 +635,13 @@ boolean __fastcall__ P_Move(void)
 {
     fixed_t	trydx;
     fixed_t	trydy;
+    char moveDir = mobjMovedir();
+    char speed = getMobjSpeed();
     
     // warning: 'catch', 'throw', and 'try'
     // are all C++ reserved words
 		
-    if (actor->movedir == DI_NODIR)
+    if (moveDir == DI_NODIR)
     {
     	return false;
     }
@@ -702,8 +651,8 @@ boolean __fastcall__ P_Move(void)
       return true;
     }
 
-    trydx = info->speed*xspeed[actor->movedir];
-    trydy = info->speed*yspeed[actor->movedir];
+    trydx = speed*xspeed[moveDir];
+    trydy = speed*yspeed[moveDir];
 
     return P_TryMove(trydx, trydy);
 }
@@ -727,48 +676,50 @@ boolean __fastcall__ P_TryWalk(void)
 	   return false;
     }
 
-    actor->movecount = 3 + (P_Random()&3); // was 15!
+    setMobjMovecount(3 + (P_Random()&3)); // was 15!
     return true;
 }
 
 
 
-#define CHASEDIST 256
-
 void __fastcall__ P_NewChaseDir(void)
 {
-    int deltax, deltay;
-    char d1, d2, olddir, newdir, turnaround;
+  signed char deltax, deltay;
+  char d1, d2, olddir, newdir, turnaround;
     
-    if (newChaseDirThisFrame != 0) return;
-    newChaseDirThisFrame = 1;
+  if (newChaseDirThisFrame != 0) return;
+  newChaseDirThisFrame = 1;
 
-    olddir = actor->movedir;
-    newdir = DI_NODIR;
-    turnaround = opposite[olddir];
+  olddir = mobjMovedir();
+  newdir = DI_NODIR;
+  turnaround = opposite[olddir];
 
-    deltax = playerx - actor->x;
-    deltay = playery - actor->y;
+  deltax = (playerx - getObjectX(objIndex))>>8;
+  deltay = (playery - getObjectY(objIndex))>>8;
 
-    if (deltax > CHASEDIST) d1 = DI_EAST;
-    else if (deltax < -CHASEDIST) d1 = DI_WEST;
+  {
+    if (deltax > 0) d1 = DI_EAST;
+    else if (deltax < -1) d1 = DI_WEST;
     else d1 = DI_NODIR;
+  }
 
-    if (deltay < -CHASEDIST) d2 = DI_SOUTH;
-    else if (deltay > CHASEDIST) d2 = DI_NORTH;
+  {
+    if (deltay < -1) d2 = DI_SOUTH;
+    else if (deltay > 0) d2 = DI_NORTH;
     else d2 = DI_NODIR;
+  }
 	
-    // try direct diagonal route
-    if (d1 != DI_NODIR && d2 != DI_NODIR)
-    {
-		newdir = diags[((deltay < 0)<<1) + (deltax > 0)];
+  // try direct diagonal route
+  if (d1 != DI_NODIR && d2 != DI_NODIR)
+  {
+		newdir = diags[((deltay < 0)<<1) + (deltax >= 0)];
 		if (newdir == turnaround)
 		{
 		  newdir = DI_NODIR;
 		}
 	}
-    if (newdir == DI_NODIR)
-    {
+  if (newdir == DI_NODIR)
+  {
 		if (d1 == turnaround) d1 = DI_NODIR;
 		if (d2 == turnaround) d2 = DI_NODIR;
 		if (d1 != DI_NODIR)
@@ -785,11 +736,11 @@ void __fastcall__ P_NewChaseDir(void)
 		}
 	}
 
-	actor->movedir = newdir;
+	setMobjMovedir(newdir);
 	if (!P_TryWalk())
 	{
-		actor->movedir = P_Random() & 7;
-		actor->movecount = 3;
+		setMobjMovedir(P_Random() & 7);
+		setMobjMovecount(3);
 	}
 }
 
@@ -804,154 +755,159 @@ void __fastcall__ P_NewChaseDir(void)
 // Actor has a melee attack,
 // so it tries to close as fast as possible
 //
-void __fastcall__ A_Chase(void)
+void A_Chase(void)
 {
-    if (actor->reactiontime) actor->reactiontime--;
-				
-    // do not attack twice in a row
-    if (actor->flags & MF_JUSTATTACKED)
-    {
-  		actor->flags &= ~MF_JUSTATTACKED;
-	    P_NewChaseDir();
-	  	return;
-    }
-    
-    // check for melee attack
-    if (info->meleestate != -1
-		  && P_CheckMeleeRange())
-    {
-      actor->movecount = 0;
-		  P_SetMobjState(info->meleestate);
-		  return;
-    }
-    
-    // check for missile attack
-    if (info->shootstate != -1)
-    {
-      if (actor->movecount)
-      {
-        goto nomissile;
-      }
+  if (mobjReactiontime()) decMobjReactiontime();
 
-      if (!P_CheckMissileRange())
-			  goto nomissile;
-		
-		  P_SetMobjState(info->shootstate);
-		  actor->flags |= MF_JUSTATTACKED;
-		  return;
+  // do not attack twice in a row
+  if (testMobjFlags(MF_JUSTATTACKED))
+  {
+  	removeMobjFlags(MF_JUSTATTACKED);
+	  P_NewChaseDir();
+	  return;
+  }
+    
+  // check for melee attack
+  if (getMobjMeleeState() != 0xff
+		&& P_CheckMeleeRange())
+  {
+    setMobjMovecount(0);
+		P_SetMobjState(getMobjMeleeState());
+		return;
+  }
+    
+  // check for missile attack
+  if (getMobjShootState() != 0xff)
+  {
+    if (mobjMovecount())
+    {
+      goto nomissile;
     }
+
+    if (!P_CheckMissileRange())
+			goto nomissile;
+		
+		P_SetMobjState(getMobjShootState());
+    addMobjFlags(MF_JUSTATTACKED);
+		return;
+  }
 
     // ?
 nomissile:
 
-    // chase towards player
-    if (--actor->movecount < 0
-	  	|| !P_Move())
-    {
-  		P_NewChaseDir();
-    }
+  // chase towards player
+  if (decMobjMovecount() < 0
+	  || !P_Move())
+  {
+  	P_NewChaseDir();
+  }
 
-    // make active sound
-    if (info->activesound != -1
-      && P_Random() < 3)
-    {
-      S_StartSound(info->activesound);
-    }
+  // make active sound
+  if (P_Random() < 3)
+  {
+    S_StartSound(SOUND_GURGLE);
+  }
 }
 
 //
 // A_Shoot
 //
-void __fastcall__ A_Shoot(void)
+void A_Shoot(void)
 {
   char	damage;
   char dist = distanceFromPlayer;
 	
-  S_StartSound(info->missilesound);
+  S_StartSound(SOUND_PISTOL);
   if (dist > 28) dist = 28;
   if ((P_Random()&31) > dist)
   {
-	  damage = ((P_Random()&3)+2)*3; // this was ((r%5)+1)*3
+    damage = (P_Random()&3)+2;
+	  damage += (damage<<1); // this was ((r%5)+1)*3
 	  damagePlayer(damage);
 	}
-	actor->reactiontime = P_Random()&7;
-	P_SetMobjState(info->chasestate);
+	setMobjReactiontime(P_Random()&7);
+	P_SetMobjState(getMobjChaseState());
 }
 
 //
 // A_Missile
 //
-void __fastcall__ A_Missile(void)
+void A_Missile(void)
 {
 	// launch a missile
 	{
-	  mobj_t *miss = &mobjs[MAX_MOBJ-1];
-	  if (miss->allocated == false)
+    if (mobjAllocated(MAX_MOBJ-1) == false)
 	  {
-	    long dx = playerx - actor->x;
-	    long dy = playery - actor->y;
-	    int distance = sqrt(dx*dx + dy*dy)/64;
-	    dx /= distance;
-	    dy /= distance;
+      char ot = mobjInfoType();
+      char missileDamage = (ot == MOBJINFO_IMP ? 10 : 30);
+      char enemyIndex;
 
-	    miss->allocated = true;
-	    miss->x = actor->x;
-	    miss->y = actor->y;
-	    miss->momx = dx;
-	    miss->momy = dy;
-	    miss->sector = actor->sector;
-	    miss->infoType = MOBJINFO_IMPSHOT;
-	    miss->stateIndex = STATE_IMPSHOTFLY;
-	    miss->mobjIndex = MAX_MOBJ - 1;
-      miss->health = mobjinfo[actor->infoType].missiledamage;
+      // about 256 bytes!
+      long dx = (playerx - getObjectX(objIndex))/16;
+	    long dy = (playery - getObjectY(objIndex))/16;
+	    unsigned int distance = sqrt24(dx*dx + dy*dy)/64;
+      if (distance == 0) distance = 1;
+	    missile_momx = dx/distance;
+	    missile_momy = dy/distance;
+      missile_momx <<= 2;
+      missile_momy <<= 2;
+
+	    //miss->allocated = true;
+	    setObjectX(MAX_OBJ-1, getObjectX(objIndex));
+	    setObjectY(MAX_OBJ-1, getObjectY(objIndex));
+	    setObjectSector(MAX_OBJ-1, getObjectSector(objIndex));
+      enemyIndex = actorIndex;
+      setMobjIndex(MAX_MOBJ-1);
+        setMobjAllocated(1);
+	      setMobjInfoType(MOBJINFO_IMPSHOT);
+	      setMobjStateIndex(STATE_IMPSHOTFLY);
+        setMobjHealth(missileDamage);
+        setMobjMovecount(32);
+      setMobjIndex(enemyIndex);
 
 #if 0
 	    gotoxy(1,1);
 	    cprintf("%ld %ld %d %d. \n", dx, dy, miss->momx, miss->momy);
 #endif
-	    objForMobj[MAX_MOBJ - 1] = MAX_OBJ - 1;
-	    mobjForObj[MAX_OBJ - 1] = MAX_MOBJ - 1;
-	    setObjectSector(MAX_OBJ - 1, miss->sector);
-	    setObjectX(MAX_OBJ - 1, miss->x);
-	    setObjectY(MAX_OBJ - 1, miss->y);
+      setObjForMobj(MAX_OBJ - 1, MAX_MOBJ - 1);
 	    setObjectType(MAX_OBJ - 1, kOT_ImpShot);
 	  }
 	}
-	actor->reactiontime = P_Random()&7;
-	P_SetMobjState(info->chasestate);
+	setMobjReactiontime(P_Random()&7);
+	P_SetMobjState(getMobjChaseState());
 }
 
 //
 // A_Melee
 //
-void __fastcall__ A_Melee(void)
+void A_Melee(void)
 {
-  if (actor->movecount == 0)
+  if (mobjMovecount() == 0)
   {
     char damage = ((P_Random()&7)+1)*3;
 		
-    if (info->meleesound != -1)
-	    S_StartSound(info->meleesound);
+	  S_StartSound(SOUND_CLAW);
     damagePlayer(damage);
 		
-    ++actor->movecount;
+    incMobjMovecount();
   }
   else
   {
-    P_SetMobjState(info->chasestate);
+    P_SetMobjState(getMobjChaseState());
   }
 }
 
 char cacodemonsDead = 0;
 
-void __fastcall__ A_Fall(void)
+void A_Fall(void)
 {
-   if (--actor->movecount == 0)
+   if (decMobjMovecount() == 0)
    {
      // make the object into a static corpse
-     char o = objForMobj[actor->mobjIndex];
-     setObjectType(o, info->deathObjectType);
-     if (info->deathObjectType == kOT_CacodemonCorpse)
+     char o = objForMobj(actorIndex);
+     char ot = mobjInfoType();
+     setObjectType(o, kOT_PossessedCorpseWithAmmo + ot);
+     if (ot == MOBJINFO_CACODEMON)
      {
        // count to 2
        ++cacodemonsDead;
@@ -963,15 +919,15 @@ void __fastcall__ A_Fall(void)
          playSound(SOUND_DOROPN);
        }
      }
-     actor->allocated = false;
+     setMobjAllocated(0);
    }
 }
 
-void __fastcall__ A_Flinch(void)
+void A_Flinch(void)
 {
-  if (--actor->movecount == 0)
+  if (decMobjMovecount() <= 0)
   {
-    P_SetMobjState(info->chasestate);
+    P_SetMobjState(getMobjChaseState());
   }
 }
 
@@ -979,30 +935,29 @@ void __fastcall__ A_Flinch(void)
 // A_Fly
 //
 
-void __fastcall__ A_Fly(void)
+void A_Fly(void)
 {
-   boolean die = false;
-   if (distanceFromPlayer < 3)
-   {
-     die = true;
-     damagePlayer(actor->health + (P_Random()&15));
-     playSound(SOUND_OOF);
-   }
-   else
-   {
-	   int trydx = ((int)actor->momx)<<2;
-	   int trydy = ((int)actor->momy)<<2;
-	   if (!P_TryMove(trydx, trydy))
-	   {
-	      die = true;
-  	      // explode
-	      P_RadiusAttack(4);
-	   }
-   }
-   if (die)
-   {
-	  char o = objForMobj[actor->mobjIndex];
-	  setObjectSector(o, -1);
-	  actor->allocated = false;
-   }
+  boolean die = false;
+  if (distanceFromPlayer < 3)
+  {
+    die = true;
+    damagePlayer(mobjHealth() + (P_Random()&15));
+    playSound(SOUND_OOF);
+  }
+  else if (!P_TryMove(missile_momx, missile_momy))
+  {
+    die = true;
+      // explode
+    P_RadiusAttack(4);
+  }
+  else if (decMobjMovecount() < 0)
+  {
+    die = true;
+  }
+  if (die)
+  {
+    char o = objForMobj(actorIndex);
+    setObjectSector(o, -1);
+    setMobjAllocated(0);
+  }
 }

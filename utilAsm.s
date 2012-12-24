@@ -23,6 +23,10 @@
 .export _haveKeyCard
 .export _colorFace
 
+.export _setObjForMobj
+.export _objForMobj
+.export _mobjForObj
+
 .autoimport on
 
 .segment "MIDCODE"
@@ -293,8 +297,7 @@ sm2: sta $9400,y
   cpy #3
   bne :-
 
-  ldy #1
-  jmp addysp
+  jmp incsp1
 
 .endproc
 
@@ -327,8 +330,7 @@ sm2: sta $9400,y
   cpy #2
   bne :-
 
-  ldy #1
-  jmp addysp
+  jmp incsp1
 
 .endproc
 
@@ -357,8 +359,7 @@ _load_file:
         LDA #$00      ; $00 means: load to memory (not verify)
         JSR $FFD5     ; call LOAD
 
-        ldy #2
-        jmp addysp    ; clean up stack
+        jmp incsp2
 
 
 keyCard:
@@ -418,4 +419,36 @@ _colorFace:
   sta $95d9
   sta $95ee
   sta $95ef
+  rts
+
+
+objForMobj:
+.res 21,0
+mobjForObj:
+.res 49,0
+
+_setObjForMobj:
+  ; A - mobj
+  ; TOS - obj
+
+  ; x - mobj
+  tax
+  ; y - obj
+  ldy #0
+  lda (sp),y
+  tay
+  sta objForMobj,x
+  txa
+  sta mobjForObj,y
+  ldy #1
+  jmp incsp1
+
+_objForMobj:
+  tax
+  lda objForMobj,x
+  rts
+
+_mobjForObj:
+  tax
+  lda mobjForObj,x
   rts
