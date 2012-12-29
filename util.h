@@ -7,7 +7,7 @@ void __fastcall__ meltScreen(char health);
 void __fastcall__ clearScreen(void);
 void __fastcall__ setupBitmap(char color);
 void __fastcall__ clearMenuArea(void);
-void __fastcall__ drawBorders(void);
+void __fastcall__ drawBorders(char c);
 
 void __fastcall__ setTextColor(char c);
 //void __fastcall__ printIntAtXY(char i, char x, char y, char prec);
@@ -28,6 +28,8 @@ void __fastcall__ addKeyCard(char cardMask);
 char __fastcall__ haveKeyCard(char card);
 
 void __fastcall__ colorFace(char godMode);
+void drawFace(void);
+void updateFace(void);
 
 void __fastcall__ setObjForMobj(char obj, char mobj);
 char __fastcall__ objForMobj(char mobj);

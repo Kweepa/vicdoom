@@ -22,6 +22,8 @@
 .export _resetKeyCard
 .export _haveKeyCard
 .export _colorFace
+.export _drawFace
+.export _updateFace
 
 .export _setObjForMobj
 .export _objForMobj
@@ -131,10 +133,12 @@ rts
 
 _drawBorders:
 
+tay
+
 ; borders at the bottom
 ldx #21
 :
-lda #29
+tya
 sta $1176,x
 sta $11a2,x
 lda #6
@@ -147,7 +151,7 @@ bpl :-
 
 ldx #9
 :
-lda #29
+tya
 sta $101c,x
 sta $10e2,x
 lda #6
@@ -159,7 +163,7 @@ bpl :-
 ; left and right of bitmap
 ldx #154
 :
-lda #29
+tya
 sta $1032,x
 sta $103b,x
 lda #6
@@ -341,25 +345,25 @@ sm2: sta $9400,y
 ; TOS - fname
 
 _load_file:
-        pha
-        ldy #0
-        lda (sp), y
-        tax           ; x contains low byte
-        iny
-        lda (sp), y
-        tay           ; y contains high byte
-        pla
+  pha
+  ldy #0
+  lda (sp), y
+  tax           ; x contains low byte
+  iny
+  lda (sp), y
+  tay           ; y contains high byte
+  pla
 
-        JSR $FFBD     ; call SETNAM
-        LDA #$01
-        LDX #$08      ; default to device 8
-        LDY #$01      ; $01 means: load to address stored in file
-        JSR $FFBA     ; call SETLFS
+  jsr SETNAM ; $FFBD
+  lda #1
+  ldx #8      ; default to device 8
+  ldy #1      ; 1 means: load to address stored in file
+  jsr SETLFS ; $FFBA
 
-        LDA #$00      ; $00 means: load to memory (not verify)
-        JSR $FFD5     ; call LOAD
+  lda #$00      ; $00 means: load to memory (not verify)
+  jsr LOAD ; $FFD5
 
-        jmp incsp2
+  jmp incsp2
 
 
 keyCard:
@@ -407,18 +411,64 @@ _haveKeyCard:
 
 faceColor:
 .byte 7,3
+faceChars:
+.byte 27,28,35,36,42,43
+faceOff:
+.byte $c2,$c3,$d8,$d9,$ee,$ef
+changeLookTime:
+.byte 7
+lookDir:
+.byte 0
 
 _colorFace:
   ; A = godMode 0 or 1
   ; convert to yellow (7) or cyan (3)
   tay
   lda faceColor,y
-  sta $95c2
-  sta $95c3
-  sta $95d8
-  sta $95d9
-  sta $95ee
-  sta $95ef
+  pha
+  ldx #5
+  :
+  lda faceOff,x
+  tay
+  pla
+  sta $9500,y
+  pha
+  dex
+  bpl :-
+  pla
+  rts
+
+_drawFace:
+  ldx #5
+  :
+  lda faceOff,x
+  tay
+  lda faceChars,x
+  sta $1100,y
+  dex
+  bpl :-
+  rts
+
+_updateFace:
+  dec changeLookTime
+  beq :+
+  rts
+  :
+  lda lookDir
+  eor #$ff
+  sta lookDir
+  beq :+
+  ldx #6
+  ldy #40
+  bne drawFacePart
+  :
+  ldx #12
+  ldy #35
+drawFacePart:
+  stx changeLookTime
+  sty $11d8
+  iny
+  sty $11d9
   rts
 
 

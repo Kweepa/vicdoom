@@ -13,7 +13,10 @@
 // X 7. add health
 // X 8. advance levels
 // X 9. menus
+// X 10. more optimization?
 // X 11. use a double buffer scheme that draws to two different sets of characters and just copies the characters over
+// X 12. optimize push_out code
+// X 12.5 and the ai try_move code
 // X 13. projectiles!
 // X 14. remote doors need to be openable from the other side - new edge prop that opens a door with e=e-1
 // X 16. make acid do damage
@@ -21,11 +24,7 @@
 // todo
 // 2.5. fix push_out code some more
 // 7.5. and weapons (maybe?)
-// X 10. more optimization?
-// X 12. optimize push_out code
-// 12.5 and the ai try_move code
 // 15. scale x on map (see drawLine.s (*0.75)) - also need to scale the input position
-// X 16. make acid do damage
 
 // memory map:
 // see the .cfg file for how to do this
@@ -40,8 +39,6 @@
 // 7800-7FFF fast multiply tables
 // A000-BDFF texture data, level data, music, sound, code
 // BE00-BFFF back buffer
-
-#define IDDQD 0
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,6 +57,7 @@
 #include "summary.h"
 #include "victory.h"
 #include "fastmath.h"
+#include "enemy.h"
 
 #pragma staticlocals(on)
 
@@ -83,47 +81,6 @@ signed char __fastcall__ get_cos(void);
 char spanStackSec[10];
 signed char spanStackL[10];
 signed char spanStackR[10];
-
-typedef struct
-{
-  char texture;
-  char dummy;
-  char solid;
-  char widthScale;
-  char startY; // from the bottom of the texture
-  char height;
-  char startX;
-  char width; // either 8 or 16
-}
-texFrame;
-
-texFrame texFrames[] =
-{
-  { 8, 1, 1, 5 }, // possessed
-  { 11, 1, 1, 5 }, // imp
-  { 14, 1, 1, 3 }, // demon
-  { 17, 1, 1, 3 }, // caco
-  { 11, 1, 1, 5 }, // baron
-  { 22, 0, 0, 5, 8, 8, 0, 16 }, // green armor
-  { 22, 0, 0, 5, 0, 8, 0, 16 }, // blue armor
-  { 23, 0, 0, 5, 8, 8, 0, 16 }, // bullets
-  { 23, 0, 0, 8, 24, 8, 0, 8 }, // medikit
-  { 23, 0, 0, 8, 24, 8, 8, 8 }, // red keycard
-  { 23, 0, 0, 8, 16, 8, 0, 8 }, // green keycard
-  { 23, 0, 0, 8, 16, 8, 8, 8 }, // blue keycard
-  { 24, 0, 0, 8, 16, 16, 0, 16 }, // barrel
-  { 21, 0, 1, 5 }, // pillar
-  { 24, 0, 0, 8, 0, 16, 0, 16 }, // skullpile
-  { 22, 0, 0, 2, 16, 4, 0, 16 }, // acid
-  { 20, 0, 0, 4, 0, 8, 0, 16 }, // possessed corpse (with bullets)
-  { 20, 0, 0, 4, 0, 8, 0, 16 }, // possessed corpse
-  { 20, 0, 0, 4, 8, 8, 0, 16 }, // imp corpse
-  { 20, 0, 0, 3, 16, 8, 0, 16 }, // demon corpse
-  { 19, 0, 0, 3, 0, 16, 0, 16 }, // caco corpse
-  { 20, 0, 0, 3, 24, 8, 0, 16 }, // baron corpse
-  { 19, 0, 0, 4, 16, 16, 0, 16 }, // imp shot
-  { 25, 0, 0, 2, 0, 32, 0, 16 }, // exploding barrel
-};
 
 char *pickupNames[] =
 {
@@ -241,75 +198,75 @@ void __fastcall__ drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeInd
   x4 = 2*x_L + 1; // need to multiply by 8 later
   for (curX = x_L; curX < x_R; ++curX)
   {
-     //x4 = (256*curX + 128)/HALFSCREENWIDTH;
-     x4 += 2;
-     if (testFilled(curX) == 0x7f)
-     {
-        // denom = dx - x4 * dy / 256;
-         fastMultiplySetup16x8(x4);
-         denom = dx - (fastMultiply16x8(dy)<<3); // here's the x8
-        if (denom > 0)
+    //x4 = (256*curX + 128)/HALFSCREENWIDTH;
+    x4 += 2;
+    if (testFilled(curX) == 0x7f)
+    {
+      // denom = dx - x4 * dy / 256;
+      fastMultiplySetup16x8(x4);
+      denom = dx - (fastMultiply16x8(dy)<<3); // here's the x8
+      if (denom > 0)
+      {
+        // numer = x4 * ((long)y1) / 256 - x1;
+        numer = (fastMultiply16x8(y1)<<3) - x1; // and x8 here
+        //           if (numer > 0)
         {
-           // numer = x4 * ((long)y1) / 256 - x1;
-           numer = (fastMultiply16x8(y1)<<3) - x1; // and x8 here
-//           if (numer > 0)
-           {
-              // t = 256 * numer / denom;
-              t = div88(numer, denom);
-           }
-//           else
-           {
-//              t = 0;
-           }
-           if (t > 255) t = 255;
-           // curY = y1 + t * dy / 256;
-           fastMultiplySetup16x8(t>>1);
-           curY = (fastMultiply16x8(dy)<<1) + y1;
-           setFilled(curX, curY);
-           if (curY > 0)
-           {
-               // perspective transform
-               // Ys = Yw * (Ds/Dw) ; Ys = screenY, Yw = worldY, Ds = dist to screen, Dw = dist to point
-               // h = (SCREENHEIGHT/16)*512/(curY/16);
-
-               h = div88(128, curY);
-               
-               if (type == EDGE_TYPE_JAMB)
-               {
-                 texI = prop >> EDGE_PROP_SHIFT;
-                 textureIndex = 7;
-               }
-               else if (!fit)
-               {
-                  //texI = (t * edgeLen) >> 6; // 256/PIXELSPERMETER
-                  fastMultiplySetup8x8(t>>1);
-                  texI = fastMultiply8x8(edgeLen)>>5;
-               }
-               else
-               {
-                   // switch, door or techwall, so fit to wall
-                   texI = t >> 4;
-               }
-               texI &= 15; // 16 texel wide texture
-               
-               if (curX == 0)
-               {
-                 if (type == EDGE_TYPE_DOOR)
-                 {
-                     typeAtCenterOfView = TYPE_DOOR;
-                     itemAtCenterOfView = edgeGlobalIndex;
-                 }
-                 else if (type == EDGE_TYPE_SWITCH)
-                 {
-                    typeAtCenterOfView = TYPE_SWITCH;
-                    itemAtCenterOfView = edgeGlobalIndex;
-                 }
-               }
-
-               drawColumn(textureIndex, texI, curX, curY, h);
-            }
+          // t = 256 * numer / denom;
+          t = div88(numer, denom);
         }
-     }
+        //           else
+        {
+        //              t = 0;
+        }
+        if (t > 255) t = 255;
+        // curY = y1 + t * dy / 256;
+        fastMultiplySetup16x8(t>>1);
+        curY = (fastMultiply16x8(dy)<<1) + y1;
+        setFilled(curX, curY);
+        if (curY > 0)
+        {
+          // perspective transform
+          // Ys = Yw * (Ds/Dw) ; Ys = screenY, Yw = worldY, Ds = dist to screen, Dw = dist to point
+          // h = (SCREENHEIGHT/16)*512/(curY/16);
+
+          h = div88(128, curY);
+               
+          if (type == EDGE_TYPE_JAMB)
+          {
+            texI = prop >> EDGE_PROP_SHIFT;
+            textureIndex = 7;
+          }
+          else if (!fit)
+          {
+            //texI = (t * edgeLen) >> 6; // 256/PIXELSPERMETER
+            fastMultiplySetup8x8(t>>1);
+            texI = fastMultiply8x8(edgeLen)>>5;
+            texI &= 15; // 16 texel wide texture
+          }
+          else
+          {
+            // switch, door or techwall, so fit to wall
+            texI = t >> 4;
+          }
+               
+          if (curX == 0)
+          {
+            if (type == EDGE_TYPE_DOOR)
+            {
+              typeAtCenterOfView = TYPE_DOOR;
+              itemAtCenterOfView = edgeGlobalIndex;
+            }
+            else if (type == EDGE_TYPE_SWITCH)
+            {
+              typeAtCenterOfView = TYPE_SWITCH;
+              itemAtCenterOfView = edgeGlobalIndex;
+            }
+          }
+
+          drawColumn(textureIndex, texI, curX, curY, h);
+        }
+      }
+    }
   }
 }
 
@@ -385,7 +342,7 @@ void __fastcall__ drawObjectInSector(char objIndex, signed char x_L, signed char
   }
   else
   {
-    textureIndex = texFrames[objectType].texture;
+    textureIndex = texFrameTexture(objectType);
   }
   //w = h/texFrames[objectType].widthScale;
   if (h < 128)
@@ -396,7 +353,7 @@ void __fastcall__ drawObjectInSector(char objIndex, signed char x_L, signed char
   {
     hc = 127;
   }
-  w = getWidthFromHeight(texFrames[objectType].widthScale, hc);
+  w = getWidthFromHeight(texFrameWidthScale(objectType), hc);
   if (w > 0)
   {
      //sx = vx / (vy / HALFSCREENWIDTH);
@@ -583,7 +540,7 @@ void __fastcall__ drawTransparentObject(char transIndex)
   {
     hc = 127;
   }
-  w = getWidthFromHeight(texFrames[objectType].widthScale, hc);
+  w = getWidthFromHeight(texFrameWidthScale(objectType), hc);
   if (w > 0)
   {
      //sx = vx / (vy / HALFSCREENWIDTH);
@@ -599,9 +556,9 @@ void __fastcall__ drawTransparentObject(char transIndex)
        if (endX > 16) endX = 16;
        if (startX < transSXR[transIndex] && endX > transSXL[transIndex])
        {
-          textureIndex = texFrames[objectType].texture;
-          startY = texFrames[objectType].startY;
-          height = texFrames[objectType].height;
+          textureIndex = texFrameTexture(objectType);
+          startY = texFrameStartY(objectType);
+          height = texFrameHeight(objectType);
           for (curX = startX; curX < endX; ++curX)
           {
              if (testFilledWithY(curX, vy) > 0)
@@ -613,9 +570,9 @@ void __fastcall__ drawTransparentObject(char transIndex)
                 // compensate for pixel samples being mid column
                 //texI = TEXWIDTH * (2*(curX - leftX) + 1) / (4 * w);
                 texI = getObjectTexIndex(w, curX - leftX);
-                if (texFrames[objectType].width != 16)
+                if (texFrameWidth(objectType) != 16)
                 {
-                   texI = texFrames[objectType].startX + (texI>>1);
+                   texI = texFrameStartX(objectType) + (texI>>1);
                 }
                 drawColumnTransparent(textureIndex, startY, height, texI, curX, vy, hc);
              }
@@ -710,7 +667,7 @@ void __fastcall__ drawObjectsInSector(char sectorIndex, signed char x_L, signed 
          char index;
          index = sorted[i];
          type = getObjectType(objO[index]);
-         if (texFrames[type].solid)
+         if (texFrameSolid(type))
          {
            drawObjectInSector(index, x_L, x_R);
            p_enemy_add_thinker(objO[index]);
@@ -726,7 +683,7 @@ void __fastcall__ queueTransparentObjects(signed char x_L, signed char x_R)
   {
     char objIndex = sorted[i];
     type = getObjectType(objO[objIndex]);
-    if (!texFrames[type].solid)
+    if (!texFrameSolid(type))
     {
       transO[numTransparent] = objO[objIndex];
       transX[numTransparent] = objX[objIndex];
@@ -1397,8 +1354,11 @@ void checkForPickups(void)
 char turnLeftSpeed = 0;
 char turnRightSpeed = 0;
 char shotgunStage = 0;
+
+#if 0
 char changeLookTime = 7;
 char lookDir = 0;
+#endif
 
 char soundToPlay = 0;
 
@@ -1410,14 +1370,7 @@ void __fastcall__ setUpScreenForBitmap(void)
 
 void __fastcall__ setUpScreenForMenu(void)
 {
-  char i;
-  cputsxy(6, 1, "          ");
-  cputsxy(6, 10, "          ");
-  for (i = 2; i < 10; ++i)
-  {
-    cputsxy(6, i, " ");
-    cputsxy(15, i, " ");
-  }
+  drawBorders(32);
 }
 
 void __fastcall__ setUpScreenForGameplay(void)
@@ -1425,7 +1378,7 @@ void __fastcall__ setUpScreenForGameplay(void)
   clearMenuArea();
   setupBitmap(8 + 2); // multicolor red
   POKE(0x900F, 8 + 5); // green border, and black screen
-  drawBorders();
+  drawBorders(29);
   // name of level
   textcolor(2);
   printCentered(getMapName(), 18);
@@ -1578,11 +1531,8 @@ nextLevel:
   drawHudArmor();
   drawHudHealth();
   // face
-  textcolor(7);
-  cputsxy(10, 20, "[£");
-  POKE(0x1000 + 22*20 + 11, 28);
-  cputsxy(10, 21, "#$");
-  cputsxy(10, 22, "*+");
+  colorFace(0);
+  drawFace();
   
   playMapTimer();
   resetMapTime();
@@ -1807,6 +1757,8 @@ nextLevel:
       ++frame;
       frame &= 7;
       
+      updateFace();
+#if 0
       --changeLookTime;
       if (changeLookTime == 0)
       {
@@ -1824,7 +1776,8 @@ nextLevel:
             POKE(0x11D9, 41); // 11,22
           }
       }
-      
+#endif
+
       if (eraseMessageAfter != 0)
       {
         --eraseMessageAfter;

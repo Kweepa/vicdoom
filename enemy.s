@@ -37,6 +37,15 @@
 .export _getMobjShootState
 .export _getMobjDeathState
 
+.export _texFrameTexture
+.export _texFrameSolid
+.export _texFrameWidthScale
+.export _texFrameStartY
+.export _texFrameHeight
+.export _texFrameStartX
+.export _texFrameWidth
+
+
 .segment "LOWCODE"
 
 ;
@@ -142,41 +151,49 @@ _setMobjCurrentType:
 _getMobjSpeed:
   ldx mobjType
   lda mobjSpeed,x
+  ldx #0
   rts
 
 _getMobjPainChance:
   ldx mobjType
   lda mobjPainChance,x
+  ldx #0
   rts
 
 _getMobjSpawnHealth:
   ldx mobjType
   lda mobjSpawnHealth,x
+  ldx #0
   rts
 
 _getMobjChaseState:
   ldx mobjType
   lda mobjChaseState,x
+  ldx #0
   rts
 
 _getMobjPainState:
   ldx mobjType
   lda mobjPainState,x
+  ldx #0
   rts
 
 _getMobjMeleeState:
   ldx mobjType
   lda mobjMeleeState,x
+  ldx #0
   rts
 
 _getMobjShootState:
   ldx mobjType
   lda mobjShootState,x
+  ldx #0
   rts
 
 _getMobjDeathState:
   ldx mobjType
   lda mobjDeathState,x
+  ldx #0
   rts
 
 
@@ -207,6 +224,7 @@ _setMobjIndex:
 _mobjAllocated:
   tax
   lda mobjAllocated,x
+  ldx #0
   rts
 
 _setMobjAllocated:
@@ -217,6 +235,7 @@ _setMobjAllocated:
 _mobjMovedir:
   ldx mobjIndex
   lda mobjMovedir,x
+  ldx #0
   rts
 
 _setMobjMovedir:
@@ -227,6 +246,7 @@ _setMobjMovedir:
 _mobjFlags:
   ldx mobjIndex
   lda mobjFlags,x
+  ldx #0
   rts
 
 _setMobjFlags:
@@ -255,6 +275,7 @@ _testMobjFlags:
 _mobjReactiontime:
   ldx mobjIndex
   lda mobjReactiontime,x
+  ldx #0
   rts
 
 _setMobjReactiontime:
@@ -270,6 +291,7 @@ _decMobjReactiontime:
 _mobjMovecount:
   ldx mobjIndex
   lda mobjMovecount,x
+  ldx #0
   rts
 
 _setMobjMovecount:
@@ -281,6 +303,7 @@ _decMobjMovecount:
   ldx mobjIndex
   dec mobjMovecount,x
   lda mobjMovecount,x
+  ldx #0
   rts
 
 _incMobjMovecount:
@@ -291,6 +314,7 @@ _incMobjMovecount:
 _mobjHealth:
   ldx mobjIndex
   lda mobjHealth,x
+  ldx #0
   rts
 
 _setMobjHealth:
@@ -301,6 +325,7 @@ _setMobjHealth:
 _mobjInfoType:
   ldx mobjIndex
   lda mobjInfoType,x
+  ldx #0
   rts
 
 _setMobjInfoType:
@@ -311,6 +336,7 @@ _setMobjInfoType:
 _mobjStateIndex:
   ldx mobjIndex
   lda mobjStateIndex,x
+  ldx #0
   rts
 
 _setMobjStateIndex:
@@ -318,3 +344,71 @@ _setMobjStateIndex:
   sta mobjStateIndex,x
   rts
 
+
+texFrameTexture:
+.byte 8,11,14,17,11,22,22,23,23,23,23,23,24,21,24,22,20,20,20,20,19,20,19,25
+
+texFrameWidthScale:
+.byte 5,5,3,3,5,5,5,5,8,8,8,8,8,5,8,2,4,4,4,3,3,3,4,2
+
+; from the bottom of the texture
+texFrameStartY:
+.byte 0,0,0,0,0, 8,0,8,24,24,16,16,16,0,0,16,0,0,8,16,0,24,16,0
+
+texFrameHeight:
+.byte 0,0,0,0,0, 8,8,8,8,8,8,8,16,0,16,4,8,8,8,8,16,8,16,32
+
+; the next three tables could be codified quite easily
+; but it would only save a handful of bytes
+
+texFrameSolid:
+.byte 1,1,1,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0
+
+texFrameStartX:
+.byte 0,0,0,0,0, 0,0,0,0,8,0,8,0,0,0,0,0,0,0,0,0,0,0,0
+
+; either 8 or 16
+texFrameWidth:
+.byte 0,0,0,0,0, 16,16,16,8,8,8,8,16,0,16,16,16,16,16,16,16,16,16,16
+
+_texFrameTexture:
+  tay
+  lda texFrameTexture,y
+  ldx #0
+  rts
+
+_texFrameSolid:
+  tay
+  lda texFrameSolid,y
+  ldx #0
+  rts
+
+_texFrameWidthScale:
+  tay
+  lda texFrameWidthScale,y
+  ldx #0
+  rts
+
+_texFrameStartY:
+  tay
+  lda texFrameStartY,y
+  ldx #0
+  rts
+
+_texFrameHeight:
+  tay
+  lda texFrameHeight,y
+  ldx #0
+  rts
+
+_texFrameStartX:
+  tay
+  lda texFrameStartX,y
+  ldx #0
+  rts
+
+_texFrameWidth:
+  tay
+  lda texFrameWidth,y
+  ldx #0
+  rts

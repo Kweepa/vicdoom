@@ -448,12 +448,12 @@ void __fastcall__ P_DamageMobj(char damage)
 
 void __fastcall__ P_RadiusAttack(char radius)
 {
-   // attempt to damage the player
-    if (distanceFromPlayer < radius)
-    {
-      playSound(SOUND_OOF);
-      damagePlayer(mobjHealth() + (P_Random()&15));
-    }
+  // attempt to damage the player
+  if (distanceFromPlayer < radius)
+  {
+    playSound(SOUND_OOF);
+    damagePlayer(mobjHealth() + (P_Random()&15));
+  }
 }
 
 //
@@ -475,28 +475,28 @@ boolean __fastcall__ P_CheckMeleeRange(void)
 //
 boolean __fastcall__ P_CheckMissileRange(void)
 {
-    char dist;
+  char dist;
 
-    if (mobjReactiontime())
-  		return false;	// do not attack yet
+  if (mobjReactiontime())
+    return false;	// do not attack yet
 		
-    if (! P_CheckSight() )
-		  return false;
+  if (! P_CheckSight() )
+	  return false;
 	
-	  dist = distanceFromPlayer;
+  dist = distanceFromPlayer;
 
 #if 0
-    if (!info->meleestate && dist >= 20)
-		  dist -= 20; // no melee attack, so fire more
+  if (!info->meleestate && dist >= 20)
+	  dist -= 20; // no melee attack, so fire more
 #endif
 
-    if (dist > 50)
-  		dist = 50;
+  if (dist > 50)
+    dist = 50;
 		
-    if ((P_Random()>>2) < dist)
-	  	return false;
+  if ((P_Random()>>2) < dist)
+	  return false;
 
-    return true;
+  return true;
 }
 
 //
@@ -671,13 +671,13 @@ boolean __fastcall__ P_Move(void)
 //
 boolean __fastcall__ P_TryWalk(void)
 {	
-    if (!P_Move())
-    {
-	   return false;
-    }
+  if (!P_Move())
+  {
+    return false;
+  }
 
-    setMobjMovecount(3 + (P_Random()&3)); // was 15!
-    return true;
+  setMobjMovecount(3 + (P_Random()&3)); // was 15!
+  return true;
 }
 
 

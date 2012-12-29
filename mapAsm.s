@@ -434,6 +434,7 @@ objectIndex:
 
 tay
 lda objSec,y
+ldx #0
 rts
 
 .endproc
@@ -531,11 +532,11 @@ sectorFirstObj:
 
 sectorNextObj:
 ; one for each object
-.res NUMSEC, $ff
+.res 48, $ff
 
 sectorPrevObj:
 ; one for each object
-.res NUMSEC, $ff
+.res 48, $ff
 
 addObjectToSector:
 ; x contains object index
@@ -572,7 +573,7 @@ rts
 _addObjectsToSectors:
 
 ; clear first objects
-ldx #63
+ldx #(NUMSEC-1)
 lda #$ff
 @clearLoop:
 sta sectorFirstObj,x
@@ -592,11 +593,13 @@ rts
 _getFirstObjectInSector:
 tay
 lda sectorFirstObj,y
+ldx #0
 rts
 
 _getNextObjectInSector:
 tay
 lda sectorNextObj,y
+ldx #0
 rts
 
 _removeObjectFromSector:
