@@ -1,8 +1,0 @@
-[red]WRITTEN 2011 BY [yellow]STEVE
-MCCREA[red], USING [white]CC65[red] BY
-[yellow]ULLRICH BASSEWITZ[red],
-[white]PAINT.NET[red] AND [white]ARIA
-MAESTOSA[red]. THANKS TO
-THE FINE FOLKS ON THE
-[yellow]DENIAL[red] FORUMS.
-[white]DOOM[red] BY [yellow]ID SOFTWARE
