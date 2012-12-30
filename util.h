@@ -22,6 +22,8 @@ void __fastcall__ playMusic(char *name);
 void __fastcall__ load_data_file(char *fname);
 void __fastcall__ load_file(char *fname, char fnamelen);
 
+void __fastcall__ load_full_text_screen(char *fname);
+
 char __fastcall__ keyCardColor(char card);
 void __fastcall__ resetKeyCard(void);
 void __fastcall__ addKeyCard(char cardMask);

@@ -1,0 +1,23 @@
+^controls^
+
+move forward      ^w^
+move backward      ^s^
+
+turn left         ^j^
+turn right         ^l^
+
+strafe left       ^a^    
+strafe right       ^d^
+
+use               ^k^
+fire               ^i^
+
+^automap functions^
+
+toggle automap  ^ctrl^
+
+pan          ^w,a,s,d^
+
+zoom in           ^i^
+zoom out           ^k^
+@

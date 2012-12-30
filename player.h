@@ -4,4 +4,4 @@ extern int playery;
 extern char playerSector;
 extern char playera;
 
-void damagePlayer(signed char damage);
+void __fastcall__ damagePlayer(char damage);

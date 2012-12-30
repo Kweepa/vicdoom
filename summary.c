@@ -22,20 +22,20 @@ void __fastcall__ waitASecond(void)
 	  {
 		  waitForRaster(1);
 	  }
-	--i;
+  	--i;
   }
   while (i > 0);
 }
 
-void __fastcall__ rollInPercentage(char pc, char y)
+void __fastcall__ rollInPercentage(char pc, int scr)
 {
   char i = 0;
-  cputsxy(17, y, "%");
+  POKE(scr + 3,'%');
   do
   {
-    print3DigitNumToScreen(i, 0x1000+22*y+14);
+    print3DigitNumToScreen(i, scr);
     playSound(SOUND_PISTOL);
-    i++;
+    ++i;
     if (PEEK(198) == 0)
     {
 		  waitForRaster(2);
@@ -44,22 +44,19 @@ void __fastcall__ rollInPercentage(char pc, char y)
   while (i <= pc);
 }
 
-void __fastcall__ rollInTime(int t, char y)
+void __fastcall__ rollInTime(int t, int scr)
 {
   int i = -5;
   char ih, il;
-  cputsxy(15, y, ":");
+  POKE(scr + 2,':');
   do
   {
-    int screenPos;
     i += 5;
     if (i > t) i = t;
     ih = i / 60;
-    il = i % 60;
-    screenPos = 0x1000 + 22*y + 13;
-    print2DigitNumToScreen(ih, screenPos);
-    screenPos += 3;
-    print2DigitNumToScreen(il, screenPos);
+    il = i - 60 * ih;
+    print2DigitNumToScreen(ih, scr);
+    print2DigitNumToScreen(il, scr + 3);
     playSound(SOUND_PISTOL);
     if (PEEK(198) == 0)
     {
@@ -100,17 +97,17 @@ void __fastcall__ summaryScreen(void)
   cputsxy(4, 12, "time");
   cputsxy(4, 14, "par");
 
-  setTextColor(2);  
+  setTextColor(2);
   POKE(198, 0);
-  rollInPercentage(kills, 5);
+  rollInPercentage(kills, 0x1000+22*5+14);
   waitASecond();
-  rollInPercentage(items, 7);
+  rollInPercentage(items, 0x1000+22*7+14);
   waitASecond();
-  rollInPercentage(secret, 9);
+  rollInPercentage(secret, 0x1000+22*9+14);
   waitASecond();
-  rollInTime(time, 12);
+  rollInTime(time, 0x1000+22*12+13);
   waitASecond();
-  rollInTime(par, 14);
+  rollInTime(par, 0x1000+22*14+13);
   waitASecond();
   printCentered("press a key", 20);
   POKE(198, 0);

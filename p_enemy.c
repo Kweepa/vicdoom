@@ -211,7 +211,11 @@ void __fastcall__ p_enemy_resetMap(void)
 }
 
 //char numAllocated = 0;
-char firstTime = 1;
+
+void goToChaseState(void)
+{
+  setMobjStateIndex(getMobjChaseState());
+}
 
 char __fastcall__ allocMobj(char o)
 {
@@ -242,7 +246,7 @@ char __fastcall__ allocMobj(char o)
       setMobjInfoType(ot);
       setMobjCurrentType(ot);
       setMobjHealth(getMobjSpawnHealth());
-      setMobjStateIndex(getMobjChaseState());
+      goToChaseState();
       
       return i;
     }
@@ -257,23 +261,23 @@ void __fastcall__ p_enemy_add_thinker(char o);
 
 void __fastcall__ p_enemy_startframe(void)
 {
-   char i;
-   thinkercap = 0;
-   for (i = 0; i < MAX_MOBJ; ++i)
-   {
-     setMobjIndex(i);
-     removeMobjFlags(MF_WASSEENTHISFRAME|MF_THOUGHTTHISFRAME);
-     // think dying dudes and projectiles
-     if (mobjAllocated(i))
-     {
-       if (mobjHealth() <= 0 || i == MAX_MOBJ-1)
-       {
-         p_enemy_add_thinker(objForMobj(i));
-       }
-     }
-   }
-   
-   newChaseDirThisFrame = 0;
+  char i;
+  thinkercap = 0;
+  for (i = 0; i < MAX_MOBJ; ++i)
+  {
+    setMobjIndex(i);
+    removeMobjFlags(MF_WASSEENTHISFRAME|MF_THOUGHTTHISFRAME);
+    // think dying dudes and projectiles
+    if (mobjAllocated(i))
+    {
+      if (mobjHealth() <= 0 || i == MAX_MOBJ-1)
+      {
+        p_enemy_add_thinker(objForMobj(i));
+      }
+    }
+  }
+
+  newChaseDirThisFrame = 0;
 }
 
 void __fastcall__ p_enemy_add_thinker(char o)
@@ -367,16 +371,16 @@ char P_Random(void);
 
 enum EDirType
 {
-    DI_EAST,
-    DI_NORTHEAST,
-    DI_NORTH,
-    DI_NORTHWEST,
-    DI_WEST,
-    DI_SOUTHWEST,
-    DI_SOUTH,
-    DI_SOUTHEAST,
-    DI_NODIR,
-    NUMDIRS
+  DI_EAST,
+  DI_NORTHEAST,
+  DI_NORTH,
+  DI_NORTHWEST,
+  DI_WEST,
+  DI_SOUTHWEST,
+  DI_SOUTH,
+  DI_SOUTHEAST,
+  DI_NODIR,
+  NUMDIRS
 };
 // enums are 16 bit, so don't use
 #define dirtype_t char
@@ -392,7 +396,7 @@ dirtype_t opposite[] =
 
 dirtype_t diags[] =
 {
-    DI_NORTHWEST, DI_NORTHEAST, DI_SOUTHWEST, DI_SOUTHEAST
+  DI_NORTHWEST, DI_NORTHEAST, DI_SOUTHWEST, DI_SOUTHEAST
 };
 
 
@@ -440,7 +444,6 @@ void __fastcall__ P_DamageMobj(char damage)
 		// maybe flinch, depending on threshold
 		if (damage > getMobjPainChance())
 		{
-		  setMobjMovecount(1);
 		  P_SetMobjState(getMobjPainState());
 		}
 	}
@@ -633,28 +636,28 @@ signed char yspeed[8] = {0,FU_45,MIN_SPEED,FU_45,0,-FU_45,-MIN_SPEED,-FU_45};
 
 boolean __fastcall__ P_Move(void)
 {
-    fixed_t	trydx;
-    fixed_t	trydy;
-    char moveDir = mobjMovedir();
-    char speed = getMobjSpeed();
+  fixed_t	trydx;
+  fixed_t	trydy;
+  char moveDir = mobjMovedir();
+  char speed = getMobjSpeed();
     
-    // warning: 'catch', 'throw', and 'try'
-    // are all C++ reserved words
+  // warning: 'catch', 'throw', and 'try'
+  // are all C++ reserved words
 		
-    if (moveDir == DI_NODIR)
-    {
-    	return false;
-    }
+  if (moveDir == DI_NODIR)
+  {
+    return false;
+  }
 
-    if (distanceFromPlayer < MELEERANGE)
-    {
-      return true;
-    }
+  if (distanceFromPlayer < MELEERANGE)
+  {
+    return true;
+  }
 
-    trydx = speed*xspeed[moveDir];
-    trydy = speed*yspeed[moveDir];
+  trydx = speed*xspeed[moveDir];
+  trydy = speed*yspeed[moveDir];
 
-    return P_TryMove(trydx, trydy);
+  return P_TryMove(trydx, trydy);
 }
 
 
@@ -826,7 +829,7 @@ void A_Shoot(void)
 	  damagePlayer(damage);
 	}
 	setMobjReactiontime(P_Random()&7);
-	P_SetMobjState(getMobjChaseState());
+  goToChaseState();
 }
 
 //
@@ -874,7 +877,7 @@ void A_Missile(void)
 	  }
 	}
 	setMobjReactiontime(P_Random()&7);
-	P_SetMobjState(getMobjChaseState());
+  goToChaseState();
 }
 
 //
@@ -884,16 +887,18 @@ void A_Melee(void)
 {
   if (mobjMovecount() == 0)
   {
-    char damage = ((P_Random()&7)+1)*3;
+    {
+      char damage = ((P_Random()&7)+1);
+      damagePlayer(damage + (damage<<1));
+    }
 		
 	  S_StartSound(SOUND_CLAW);
-    damagePlayer(damage);
 		
     incMobjMovecount();
   }
   else
   {
-    P_SetMobjState(getMobjChaseState());
+    goToChaseState();
   }
 }
 
@@ -925,10 +930,8 @@ void A_Fall(void)
 
 void A_Flinch(void)
 {
-  if (decMobjMovecount() <= 0)
-  {
-    P_SetMobjState(getMobjChaseState());
-  }
+  // only flinch for one frame
+  goToChaseState();
 }
 
 //

@@ -11,8 +11,7 @@
 
 void __fastcall__ drawLogo(void);
 
-#define POKE(addr,val) ((*(unsigned char *)(addr)) = val)
-#define PEEK(addr) (*(unsigned char *)(addr))
+char *textScreens[] = { "pcredits.txt", "phelp.txt", "porder.txt" };
 
 char *caMenus[][3] =
 {
@@ -29,27 +28,13 @@ char *caMenus[][3] =
   {
 	  "effects volume 15",
 	  "music volume 10",
-	  "keys"
+	  "controls"
   },
   {
-    "can i play daddy?",
-	  "hurt me plenty",
+    "i'm too young to die",
+    "hurt me plenty",
 	  "ultra-violence"
   }
-};
-
-char *caInfos[] =
-{
-  "pcred.pt",
-  "pkeys.pt",
-  "pbuy.pt"
-};
-
-char *caColors[] =
-{
-  "pcred.co",
-  "pkeys.co",
-  "pbuy.co"
 };
 
 char nextMenu[3][3] = { { 1, 2, -1 }, { 3, -3, -3 }, { -10, -10, -2 } };
@@ -68,12 +53,6 @@ char oldKeys = 0;
 char oldCtrlKeys = 0;
 char moveKeys = 0;
 char ctrlKeys = 0;
-
-void __fastcall__ load_text_screen(char scr)
-{
-  load_data_file(caInfos[scr]);
-  load_data_file(caColors[scr]);
-}
 
 char __fastcall__ keyPressed(char keyMask)
 {
@@ -246,7 +225,7 @@ char __fastcall__ runMenu(char canReturn)
 		   {
 		     if (item == 0)
 		     {
-			   addToEffectsVolume(255);
+           addToEffectsVolume(255);
 		     }
 		     else if (item == 1)
 		     {
@@ -300,9 +279,9 @@ char __fastcall__ runMenu(char canReturn)
 			  else
 			  {
 			    next = (-next)-1;
-			    POKE(198,0);
-			    load_text_screen(next);
-			    while (PEEK(198) == 0) ;
+          load_full_text_screen(textScreens[next]);
+          setupBitmap(8 + 2); // multicolor red
+          drawLogo();
 			    drawMenu(canReturn);
 			  }
   		}

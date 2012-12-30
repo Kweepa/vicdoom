@@ -1,0 +1,23 @@
+^doom^ for the ^vic-20^
+
+ported by
+          ^steve mccrea^
+
+developed using
+
+ ^cc65^
+     ullrich bassewitz
+
+ ^vice^
+              viceteam
+
+other tools
+
+ adventure game studio
+         aria maestosa
+         paint dot net
+ visual studio express
+
+thanks to everyone on
+the ^denial^ forums, and
+to ^id^ for doom!@

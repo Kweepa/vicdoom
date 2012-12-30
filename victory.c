@@ -13,49 +13,16 @@
 
 void __fastcall__ victoryScreen(void)
 {
-  int i;
-  char j, x;
+  char j;
   char caFileName[] = "pvictory1.txt";
 
   playMusic("pvictormus");
 
-  POKE(0x900f,8); //black border
-
   for (j = 0; j < 2; ++j)
   {
-    // clear screen
-    clearScreen();
-    for (i = 0; i < 506; ++i)
-    {
-      POKE(0x9400+i, 0);
-    }
-
-    // read in the text, then reveal it by painting red slowly.
     caFileName[8] = '1' + j;
-    load_data_file(caFileName);
-
-    for (i = 0; i < 506; ++i)
-    {
-      x = PEEK(0x1000+i);
-      if (x > 96) x -= 96;
-
-      POKE(0x1000+i, x);
-      POKE(0x9400+i, 2);
-
-      if (x != 32)
-      {
-        char wait = 4;
-        if (x == '.' || x == '?' || x == '!') wait = 48;
-        if (x == ',') wait = 16;
-        waitForRaster(wait);
-      }
-    }
-  
-    POKE(198, 0);
-    while (PEEK(198) == 0) ;
+    load_full_text_screen(caFileName);
   }
 
-  // clear screen
-  clearScreen();
   stopMusic();
 }

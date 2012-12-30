@@ -23,7 +23,7 @@ char updateCheatCodes(void)
     {
       if (cheats[i][cheatp[i]] == c)
       {
-        cheatp[i]++;
+        ++cheatp[i];
         if (cheats[i][cheatp[i]] == 0)
         {
           cheatp[i] = 0;

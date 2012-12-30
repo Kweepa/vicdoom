@@ -23,8 +23,7 @@
 
 // todo
 // 2.5. fix push_out code some more
-// 7.5. and weapons (maybe?)
-// 15. scale x on map (see drawLine.s (*0.75)) - also need to scale the input position
+// 17. add weapons (maybe?)
 
 // memory map:
 // see the .cfg file for how to do this
@@ -150,7 +149,7 @@ char eraseMessageAfter = 0;
 #define DOOR_TYPE_SHOT 4
 #define DOOR_TYPE_ONEWAY 6
 
-unsigned char frame = 0;
+char frame = 0;
 
 void __fastcall__ drawColumn(char textureIndex, char texI, signed char curX, short curY, unsigned char h);
 void __fastcall__ drawColumnSameY(char textureIndex, char texI, signed char curX, short curY, unsigned char h);
@@ -412,8 +411,7 @@ char flashBorderTime = 0;
 
 void __fastcall__ drawHudArmor(void)
 {
-    char armorColor = 5;
-    if (combatArmor == 1) armorColor = 6;
+    char armorColor = 5 + combatArmor;
     POKE(0x1000 + 22*21 + 5, 30); // armor symbol in font
     POKE(0x9400 + 22*21 + 5, armorColor);
     setTextColor(armorColor);
@@ -590,7 +588,7 @@ void __fastcall__ updateAcid(void)
 
   if (acidBurn > 0)
   {
-    acidBurn--;
+    --acidBurn;
   }
   if (acidBurn == 0)
   {
@@ -929,7 +927,7 @@ char totalCheckedEdges;
 
 EPushOutResult __fastcall__ push_out_from_edge(char i)
 {
-  totalCheckedEdges++;
+  ++totalCheckedEdges;
   ni = getNextEdge(curSector, i);
   vertGlobalIndex = getVertexIndex(curSector, i);
   vert2GlobalIndex = getVertexIndex(curSector, ni);
@@ -1160,7 +1158,7 @@ void __fastcall__ push_out(void)
 signed char explodingBarrelsObject[4];
 char explodingBarrelsTime[4];
 
-void addExplodingBarrel(char o)
+void __fastcall__ addExplodingBarrel(char o)
 {
   char i;
   setObjectType(o, kOT_ExplodingBarrel);
@@ -1186,7 +1184,7 @@ void updateBarrels(void)
     o = explodingBarrelsObject[i];
     if (o != -1)
     {
-      explodingBarrelsTime[i]--;
+      --explodingBarrelsTime[i];
       t = explodingBarrelsTime[i];
       if (t == 2)
       {
@@ -1383,6 +1381,15 @@ void __fastcall__ setUpScreenForGameplay(void)
   textcolor(2);
   printCentered(getMapName(), 18);
   playMapTimer();
+
+  drawHudAmmo();
+  drawHudArmor();
+  drawHudHealth();
+  addKeyCard(1);
+  // face
+  colorFace(0);
+  drawFace();
+  
 }
 
 signed char updateCheatCodes(void);
@@ -1437,7 +1444,7 @@ int main()
   char keys;
   char ctrlKeys;
   char i;
-  signed char ca, sa;
+  int ca, sa;
   char numObj;
 
   // needed for clearScreen
@@ -1458,11 +1465,11 @@ int main()
   load_data_file("psluts");
   load_data_file("ptextures");
 
-  POKE(0x900E, (6<<4) + (PEEK(0x900E)&0x0f)); // blue aux color
+  POKE(0x900E, (6<<4) | (PEEK(0x900E)&0x0f)); // blue aux color
   POKE(0x900F, 8 + 5); // green border, and black screen
   
   // set the character set to $1400
-  POKE(0x9005, 13 + (PEEK(0x9005)&0xf0));
+  POKE(0x9005, 13 | (PEEK(0x9005)&0xf0));
 
 start:
   setUpScreenForBitmap();
@@ -1473,14 +1480,25 @@ start:
   runMenu(0);
   level = 1;
   godMode = 0;
-  
+
 nextLevel:
 
-  caMusic[4] = '0' + level;
+  {
+    char p = '0' + level;
+    caMusic[4] = p;
+    caLevel[4] = p;
+  }
   playMusic(caMusic);
-
-  caLevel[4] = '0' + level;
   load_data_file(caLevel);
+
+  if (health == 0)
+  {
+    health = 100;
+    armor = 0;
+    combatArmor = 0;
+    shells = 40;
+  }
+  resetKeyCard();
 
   setUpScreenForBitmap();
   setUpScreenForGameplay();
@@ -1507,14 +1525,6 @@ nextLevel:
   
   resetSectorsVisited();
   
-  if (health <= 0)
-  {
-    health = 100;
-    armor = 0;
-    shells = 40;
-  }
-  resetKeyCard();
-  addKeyCard(1);
   numItemsGot = 0;
   playerx = getPlayerSpawnX();
   playery = getPlayerSpawnY();
@@ -1527,17 +1537,10 @@ nextLevel:
   explodingBarrelsObject[2] = -1;
   explodingBarrelsObject[3] = -1;
 
-  drawHudAmmo();
-  drawHudArmor();
-  drawHudHealth();
-  // face
-  colorFace(0);
-  drawFace();
-  
   playMapTimer();
   resetMapTime();
 
-  while (health > 0 && !endLevel)
+  while (health != 0 && !endLevel)
   {
       if (!flashBorderTime)
       {
@@ -1580,7 +1583,7 @@ nextLevel:
         turnRightSpeed = 0;
         if (turnLeftSpeed < 3)
         {
-            turnLeftSpeed++;
+            ++turnLeftSpeed;
         }
         playera -= turnLeftSpeed;
       }
@@ -1589,7 +1592,7 @@ nextLevel:
         turnLeftSpeed = 0;
         if (turnRightSpeed < 3)
         {
-            turnRightSpeed++;
+            ++turnRightSpeed;
         }
         playera += turnRightSpeed;
       }
@@ -1600,37 +1603,37 @@ nextLevel:
       }
       playera &= 63;
       setCameraAngle(playera);
-      ca = get_cos();
-      sa = get_sin();
+      ca = get_cos()<<1;
+      sa = get_sin()<<1;
       if (keys & KEY_MOVELEFT)
       {
-        playerx -= 2*ca;
-        playery += 2*sa;
+        playerx -= ca;
+        playery += sa;
       }
       if (keys & KEY_MOVERIGHT)
       {
-        playerx += 2*ca;
-        playery -= 2*sa;
+        playerx += ca;
+        playery -= sa;
       }
 
       if (keys & KEY_FORWARD)
       {
         if (!(testFilled(0) < 4 && typeAtCenterOfView == TYPE_OBJECT))
         {
-          playerx += 4*sa;
-          playery += 4*ca;
+          playerx += sa<<1;
+          playery += ca<<1;
         }
       }
       if (keys & KEY_BACK)
       {
-        playerx -= 2*sa;
-        playery -= 2*ca;
+        playerx -= sa;
+        playery -= ca;
       }
 //      gotoxy(0, 14);
 //      cprintf("%d %d %d %d. ", playerSector, playerx, playery, playera);
       if (shotgunStage > 0)
       {
-        shotgunStage--;
+        --shotgunStage;
         if (shotgunStage == 3)
         {
             playSound(SOUND_SGCOCK);
@@ -1641,7 +1644,7 @@ nextLevel:
         // pressed fire
         if (shells > 0 && shotgunStage == 0)
         {
-          shells--;
+          --shells;
           drawHudAmmo();
           POKE(0x900F, 8+1);
           shotgunStage = 7;
@@ -1674,9 +1677,12 @@ nextLevel:
 
       for (i = 0; i < 4; ++i)
       {
-        if (doorOpenTime[i] > 0)
+        char dot = doorOpenTime[i];
+        if (dot > 0)
         {
-          if (--doorOpenTime[i] == 0)
+          --dot;
+          doorOpenTime[i] = dot;
+          if (dot == 0)
           {
             // try to close the door - should just get pushed out, so go ahead
             basicCloseDoor(openDoors[i]);
@@ -1708,7 +1714,7 @@ nextLevel:
                   cputsxy(1, 14, "you need a       key");
                   cputsxy(2, 15, "to open this door!");
                   textcolor(keyCardColor(prop));
-                  prop--;
+                  --prop;
                   cputsxy(12, 14, keyCardNames[prop]);
                   eraseMessageAfter = 8;
                 }
@@ -1758,25 +1764,6 @@ nextLevel:
       frame &= 7;
       
       updateFace();
-#if 0
-      --changeLookTime;
-      if (changeLookTime == 0)
-      {
-        lookDir = 1 - lookDir;
-        if (lookDir == 0)
-        {
-            changeLookTime = 12;
-            POKE(0x11D8, 35); // 10,22
-            POKE(0x11D9, 36); // 11,22
-          }
-          else
-          {
-            changeLookTime = 6;
-            POKE(0x11D8, 40); // 10,22
-            POKE(0x11D9, 41); // 11,22
-          }
-      }
-#endif
 
       if (eraseMessageAfter != 0)
       {
@@ -1792,7 +1779,7 @@ nextLevel:
     pauseMapTimer();
     
     textcolor(2);
-    if (health <= 0)
+    if (health == 0)
     {
       cputsxy(5, 13, "you are dead");
       cputsxy(5, 15, "press return");
@@ -1806,7 +1793,7 @@ nextLevel:
 
     meltScreen(health);
     
-    if (health > 0)
+    if (health != 0)
     {
       summaryScreen();
       if (level == 9)

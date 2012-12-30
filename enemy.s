@@ -68,8 +68,6 @@ _P_ApproxDistance:
 txa
 bpl :+
 eor #$ff
-clc
-adc #1
 :
 sta dy
 
@@ -78,8 +76,6 @@ ldy #1
 lda (sp),y
 bpl :+
 eor #$ff
-clc
-adc #1
 :
 sta dx
 
@@ -87,7 +83,7 @@ sta dx
 ; dx < dy, dx/2+dy
 
 cmp dy
-bpl shiftY
+bcc shiftY
 lsr
 jmp :+
 shiftY:

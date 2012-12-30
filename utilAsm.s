@@ -60,6 +60,9 @@ ldy #0
   lda #32
   sta $1000,y ; clear screen
   sta $1100,y
+  lda #2
+  sta $9400,y
+  sta $9500,y
   iny
   bne :-
   rts
