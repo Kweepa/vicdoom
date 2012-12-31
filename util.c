@@ -14,47 +14,6 @@ void __fastcall__ printCentered(char *str, char y)
   cputsxy(11 - len/2, y, str);
 }
 
-unsigned int __fastcall__ sqrt24(unsigned long x)
-{
-  // reduced from 0x40000000 (see only usages in push_out_from_edge and A_Missile)
-  unsigned long m = 0x00100000;
-  unsigned long y = 0;
-  unsigned long b;
-  while (m != 0)
-  {
-     b = y | m;
-     y = y >> 1;
-     if (x >= b)
-     {
-        x -= b;
-        y = y | m;
-     }
-     m = m >> 2;
-  }
-  return ((unsigned int)y);
-}
-
-#if 0
-unsigned int __fastcall__ sqrt(unsigned long x)
-{
-  unsigned long m = 0x40000000;
-  unsigned long y = 0;
-  unsigned long b;
-  while (m != 0)
-  {
-     b = y | m;
-     y = y >> 1;
-     if (x >= b)
-     {
-        x -= b;
-        y = y | m;
-     }
-     m = m >> 2;
-  }
-  return ((unsigned int)y);
-}
-#endif
-
 void __fastcall__ load_data_file(char *fname)
 {
   load_file(fname, strlen(fname));

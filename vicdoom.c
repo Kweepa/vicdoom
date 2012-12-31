@@ -1603,8 +1603,8 @@ nextLevel:
       }
       playera &= 63;
       setCameraAngle(playera);
-      ca = get_cos()<<1;
-      sa = get_sin()<<1;
+      ca = ((int)get_cos())<<1;
+      sa = ((int)get_sin())<<1;
       if (keys & KEY_MOVELEFT)
       {
         playerx -= ca;
@@ -1620,8 +1620,8 @@ nextLevel:
       {
         if (!(testFilled(0) < 4 && typeAtCenterOfView == TYPE_OBJECT))
         {
-          playerx += sa<<1;
-          playery += ca<<1;
+          playerx += (sa<<1);
+          playery += (ca<<1);
         }
       }
       if (keys & KEY_BACK)

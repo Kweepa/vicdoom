@@ -3,6 +3,7 @@
 
 .import addysp
 .importzp sp
+.importzp sreg
 .import _P_Random
 .import _readInput
 .import _getControlKeys
@@ -28,6 +29,8 @@
 .export _setObjForMobj
 .export _objForMobj
 .export _mobjForObj
+
+.export _sqrt24
 
 .autoimport on
 
@@ -505,3 +508,102 @@ _mobjForObj:
   tax
   lda mobjForObj,x
   rts
+
+; these are zp addresses for ptr1-4 and tmp1-4
+xxxx = $a
+yyyy = $d
+mmmm = $10
+bbbb = $13
+
+_sqrt24:
+
+; x <- eax
+sta xxxx
+stx xxxx+1
+lda sreg
+sta xxxx+2
+
+; mmmm = 0x100000
+; yyyy = 0
+lda #0
+ldx #4
+:
+sta yyyy,x
+dex
+bpl :-
+lda #$10
+sta mmmm+2
+
+; for (i = 11; i != 0; --i)
+ldy #10
+
+@sqrtloop:
+
+; b = y | m
+lda yyyy
+ora mmmm
+sta bbbb
+lda yyyy+1
+ora mmmm+1
+sta bbbb+1
+lda yyyy+2
+ora mmmm+2
+sta bbbb+2
+
+; y >>= 1
+lsr yyyy+2
+ror yyyy+1
+ror yyyy
+
+; b = x - b
+sec
+lda xxxx
+sbc bbbb
+sta bbbb
+lda xxxx+1
+sbc bbbb+1
+sta bbbb+1
+lda xxxx+2
+sbc bbbb+2
+sta bbbb+2
+
+; if (b >= 0)
+bmi @skipacc
+
+; x = b
+lda bbbb
+sta xxxx
+lda bbbb+1
+sta xxxx+1
+lda bbbb+2
+sta xxxx+2
+
+; y |= m
+lda yyyy
+ora mmmm
+sta yyyy
+lda yyyy+1
+ora mmmm+1
+sta yyyy+1
+lda yyyy+2
+ora mmmm+2
+sta yyyy+2
+
+@skipacc:
+
+; m >>= 2
+lsr mmmm+2
+ror mmmm+1
+ror mmmm
+lsr mmmm+2
+ror mmmm+1
+ror mmmm
+
+dey
+bpl @sqrtloop
+
+; return y
+lda yyyy
+ldx yyyy+1
+
+rts

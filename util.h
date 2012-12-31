@@ -10,12 +10,10 @@ void __fastcall__ clearMenuArea(void);
 void __fastcall__ drawBorders(char c);
 
 void __fastcall__ setTextColor(char c);
-//void __fastcall__ printIntAtXY(char i, char x, char y, char prec);
 void __fastcall__ print3DigitNumToScreen(char i, int addr);
 void __fastcall__ print2DigitNumToScreen(char i, int addr);
 void __fastcall__ printCentered(char *str, char y);
 unsigned int __fastcall__ sqrt24(unsigned long x);
-//unsigned int __fastcall__ sqrt(unsigned long x);
 void __fastcall__ read_data_file(char *name, unsigned int addr, int maxSize);
 void __fastcall__ playMusic(char *name);
 
