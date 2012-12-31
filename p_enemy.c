@@ -434,7 +434,7 @@ void __fastcall__ P_DamageMobj(char damage)
 	{
 	    // kill actor
 		setMobjMovecount(2);
-    playSound(SOUND_POPAIN);
+    playSound(getMobjDeathSound());
 		P_SetMobjState(getMobjDeathState());
 		++numKills;
 	}

@@ -36,6 +36,7 @@
 .export _getMobjMeleeState
 .export _getMobjShootState
 .export _getMobjDeathState
+.export _getMobjDeathSound
 
 .export _texFrameTexture
 .export _texFrameSolid
@@ -119,6 +120,11 @@ STATE_CACMISSILE = 16
 STATE_CACFALL = 17
 STATE_IMPSHOTFLY = 18
 
+SOUND_DMPAIN = 1
+SOUND_PLPAIN = 8
+SOUND_POPAIN = 9
+SOUND_SGTDTH = 11
+
 mobjSpeed:
 .byte 3,4,6,5
 mobjPainChance:
@@ -136,6 +142,8 @@ mobjShootState:
 .byte STATE_POSSHOOT, STATE_IMPMISSILE, $ff, STATE_CACMISSILE
 mobjDeathState:
 .byte STATE_POSFALL, STATE_IMPFALL, STATE_DMNFALL, STATE_CACFALL
+mobjDeathSound:
+.byte SOUND_SGTDTH, SOUND_PLPAIN, SOUND_DMPAIN, SOUND_POPAIN
 
 mobjType:
 .byte 0
@@ -189,6 +197,12 @@ _getMobjShootState:
 _getMobjDeathState:
   ldx mobjType
   lda mobjDeathState,x
+  ldx #0
+  rts
+
+_getMobjDeathSound:
+  ldx mobjType
+  lda mobjDeathSound,x
   ldx #0
   rts
 

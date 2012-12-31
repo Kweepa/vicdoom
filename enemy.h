@@ -31,7 +31,7 @@ char getMobjPainState(void);
 char getMobjMeleeState(void);
 char getMobjShootState(void);
 char getMobjDeathState(void);
-
+char getMobjDeathSound(void);
 
 char __fastcall__ texFrameTexture(char ot);
 char __fastcall__ texFrameSolid(char ot);
