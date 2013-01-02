@@ -602,6 +602,24 @@ ror mmmm
 dey
 bpl @sqrtloop
 
+; round
+; if (x > y)
+sec
+lda yyyy
+sbc xxxx
+lda yyyy+1
+sbc xxxx+1
+
+bpl @noround
+
+; ++y
+inc yyyy
+bne :+
+inc yyyy+1
+:
+
+@noround:
+
 ; return y
 lda yyyy
 ldx yyyy+1

@@ -47,7 +47,7 @@
 #define false 0
 #define true 1
 
-#define MELEERANGE 4
+#define MELEERANGE 3
 
 #define MF_JUSTATTACKED 1
 #define MF_THOUGHTTHISFRAME 2

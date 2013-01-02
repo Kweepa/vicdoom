@@ -1,4 +1,4 @@
-^controls^
+^controls:^
 
 move forward      ^w^
 move backward      ^s^
@@ -12,7 +12,7 @@ strafe right       ^d^
 use               ^k^
 fire               ^i^
 
-^automap functions^
+^automap functions:^
 
 toggle automap  ^ctrl^
 

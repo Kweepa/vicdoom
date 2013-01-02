@@ -97,6 +97,9 @@ int playery;
 char playera;
 char playerSector;
 
+int playeroldx;
+int playeroldy;
+
 // a render problem (e1m1):
 //int playerx = 13*256 + 109;
 //int playery = 34*256 + 240;
@@ -904,6 +907,7 @@ signed char v1x, v1y, v2x, v2y, ex, ey;
 long px, py;
 long height;
 long edgeLen;
+long edgeLen2;
 long dist;
 long distanceToPush;
 char edgeGlobalIndex;
@@ -925,9 +929,16 @@ char totalCheckedEdges;
 #define OUTERCOLLISIONRADIUS 528
 #define COLLISIONDELTA (OUTERCOLLISIONRADIUS - INNERCOLLISIONRADIUS)
 
+void breakpoint(void)
+{
+  // completely free of side effects :)
+  POKE(0x9600, 1);
+}
+
 EPushOutResult __fastcall__ push_out_from_edge(char i)
 {
   ++totalCheckedEdges;
+
   ni = getNextEdge(curSector, i);
   vertGlobalIndex = getVertexIndex(curSector, i);
   vert2GlobalIndex = getVertexIndex(curSector, ni);
@@ -951,7 +962,21 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
   py = playery - (((short)v1y)<<8);
   // need to precalc 65536/edge.len
   edgeGlobalIndex = getEdgeIndex(curSector, i);
-  edgeLen = getEdgeLen(edgeGlobalIndex);
+
+  // get edge len^2 (16.0)
+  fastMultiplySetup8x8(ex);
+  edgeLen2 = fastMultiply8x8(ex);
+  fastMultiplySetup8x8(ey);
+  edgeLen2 += fastMultiply8x8(ey);
+  // make it 16.8
+  edgeLen2 <<= 8;
+
+  // edgeLen is 8.4
+  edgeLen = sqrt24(edgeLen2);
+  // make it 8.8
+  edgeLen <<= 4;
+
+  //edgeLen = getEdgeLen(edgeGlobalIndex);
 
   //height = px * ey - py * ex;
   {
@@ -969,9 +994,10 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
       height = p1 - p2;
     }
   }
+  // height is 16.8
 
   // height < INNERCOLLISIONRADIUS*edgeLen
-  if (height < 0 || (height>>9) < edgeLen)
+  if (height <= 0 || height < (edgeLen<<1))
   {
     // check we're within the extents of the edge
     //dist = px * ex + py * ey;
@@ -983,57 +1009,64 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
       dist = p1 + p2;
     }
     dgz = (dist >= 0);
-    //dle = (dist < 256*edgeLen*edgeLen);
+    dle = (dist < edgeLen2);
+#if 0
     {
       long len2 = 0;
       fastMultiplySetup8x8(edgeLen);
       len2 = ((long)fastMultiply8x8(edgeLen))<<8;
       dle = dist < len2;
     }
+#endif
     if (dgz & dle)
     {
-        thatSector = getOtherSector(edgeGlobalIndex, curSector);
-        if (thatSector != -1 && !isDoorClosed(edgeGlobalIndex))
+      thatSector = getOtherSector(edgeGlobalIndex, curSector);
+      if (thatSector != -1 && !isDoorClosed(edgeGlobalIndex))
+      {
+        if (height < 0)
         {
-          if (height < 0)
-          {
-              nextSector = thatSector;
+          nextSector = thatSector;
                  
-              // crossed a line, so check for special
-              doEdgeSpecial(edgeGlobalIndex);
-          }
-          return kPOR_Sector;
+          // crossed a line, so check for special
+          doEdgeSpecial(edgeGlobalIndex);
         }
-        else
+        return kPOR_Sector;
+      }
+      else
+      {
+        // try just pushing out
+        //distanceToPush = OUTERCOLLISIONRADIUS*edgeLen - height;
+        // distanceToPush is X.8
+        distanceToPush = (edgeLen<<1) + (edgeLen>>4) - height;
+        //fastMultiplySetup16x8e24(edgeLen);
+        //distanceToPush = fastMultiply16x8e24(OUTERCOLLISIONRADIUS) - height;
+        if (reversedEdge)
         {
-          // try just pushing out
-          //distanceToPush = OUTERCOLLISIONRADIUS*edgeLen - height;
-          fastMultiplySetup16x8e24(edgeLen);
-          distanceToPush = fastMultiply16x8e24(OUTERCOLLISIONRADIUS) - height;
-          if (reversedEdge)
-          {
-            ex = -ex;
-            ey = -ey;
-          }
-          //playerx += distanceToPush * ey / (edgeLen*edgeLen);
-          //playery -= distanceToPush * ex / (edgeLen*edgeLen);
-          {
-            int edgeLen2;
-            fastMultiplySetup8x8(edgeLen);
-            edgeLen2 = fastMultiply8x8(edgeLen);
-            fastMultiplySetup16x8e24(ey);
-            playerx += fastMultiply16x8e24(distanceToPush) / edgeLen2;
-            fastMultiplySetup16x8e24(ex);
-            playery -= fastMultiply16x8e24(distanceToPush) / edgeLen2;
-          }
-          return kPOR_Wall;
+          ex = -ex;
+          ey = -ey;
         }
+        //playerx += distanceToPush * ey / (edgeLen*edgeLen);
+        //playery -= distanceToPush * ex / (edgeLen*edgeLen);
+        {
+          //int edgeLen2;
+          //fastMultiplySetup8x8(edgeLen);
+          //edgeLen2 = fastMultiply8x8(edgeLen);
+          // need a X.8 value on the right
+          edgeLen2 >>= 8;
+          fastMultiplySetup16x8e24(ey);
+          playerx += fastMultiply16x8e24(distanceToPush) / edgeLen2;
+          fastMultiplySetup16x8e24(ex);
+          playery -= fastMultiply16x8e24(distanceToPush) / edgeLen2;
+        }
+        return kPOR_Wall;
+      }
     }
     else
     {
       char checkVert = 0;
       // if (!dgz && (dist > -INNERCOLLISIONRADIUS*edgeLen))
-      if (!dgz && ((dist>>9) > -edgeLen))
+      //if (!dgz && ((dist>>9) > -edgeLen))
+      if (!dgz && dist > -(edgeLen<<1))
       {
         checkVert = 1;
       }
@@ -1042,9 +1075,12 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
         if (!dle)
         {
           //if (dist < (256*edgeLen + INNERCOLLISIONRADIUS)*edgeLen))
-          int paddedEdgeLen = ((int)(edgeLen+2))<<8;
-          fastMultiplySetup16x8e24(edgeLen);
-          if (dist < fastMultiply16x8e24(paddedEdgeLen))
+          // if (dist < (edgeLen+2)*edgeLen)
+          long lim = edgeLen2 + (edgeLen<<1);
+          //int paddedEdgeLen = ((int)(edgeLen+2))<<8;
+          //fastMultiplySetup16x8e24(edgeLen);
+          //if (dist < fastMultiply16x8e24(paddedEdgeLen))
+          if (dist < lim)
           {
             checkVert = 1;
             // check the far end
@@ -1055,105 +1091,206 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
       }
       if (checkVert)
       {
-        //POKE(0x900f, 11);
-          height = px * px + py * py;
-        //POKE(0x900f, 13);
-          //if (height < INNERCOLLISIONRADIUS*INNERCOLLISIONRADIUS)
-          if ((height>>18) == 0)
-          {
-            height = sqrt24(height);
-            distanceToPush = OUTERCOLLISIONRADIUS - height;
-            playerx += distanceToPush * px / height;
-            playery += distanceToPush * py / height;
-            return kPOR_Wall;
-          }
+        height = px * px + py * py;
+        //if (height < INNERCOLLISIONRADIUS*INNERCOLLISIONRADIUS)
+        if ((height&0xfffc0000) == 0)
+        {
+          height = sqrt24(height);
+          distanceToPush = OUTERCOLLISIONRADIUS - height;
+          playerx += distanceToPush * px / height;
+          playery += distanceToPush * py / height;
+          return kPOR_Wall;
+        }
       }
     }
   }
   return kPOR_Nada;
 }
 
-char touchedSector;
-
-char possibleWallsToTouch[2];
-char numPossibleWallsToTouch;
-
-void __fastcall__ push_out(void)
+int __fastcall__ playerOverlapsEdge(char i)
 {
-  // probably a good idea to check the edges we can cross first
-  // if any of them teleport us, move, then push_out in the new sector
-  
-  // so, consider at most two edges to push out from
-  // whether or not we get pushed in this sector, check any
-  // portal edges we touch and try pushing out from edges in the neighbouring sectors
-  // hopefully should only touch the one portal edge  
+  signed char ppx, ppy, temp;
+  ni = getNextEdge(curSector, i);
+  vertGlobalIndex = getVertexIndex(curSector, i);
+  vert2GlobalIndex = getVertexIndex(curSector, ni);
+  v1x = getVertexX(vertGlobalIndex);
+  v1y = getVertexY(vertGlobalIndex);
+  v2x = getVertexX(vert2GlobalIndex);
+  v2y = getVertexY(vert2GlobalIndex);
 
-  char i, secNumVerts;
+  if (v1x > v2x)
+  {
+    temp = v1x;
+    v1x = v2x;
+    v2x = temp;
+  }
+  if (v1y > v2y)
+  {
+    temp = v1y;
+    v1y = v2y;
+    v2y = temp;
+  }
+
+  ppx = (playerx + 127)>>8;
+  ppy = (playery + 127)>>8;
+
+  return ppx > v1x-5 && ppx < v2x+5 && ppy > v1y-5 && ppy < v2y+5;
+}
+
+int oldPlayerInFrontOfEdge(void)
+{
+  signed char ppx, ppy;
+  int pxey, pyex;
+  // always set by the previous fn.
+  //ni = getNextEdge(curSector, i);
+  //vertGlobalIndex = getVertexIndex(curSector, i);
+  //vert2GlobalIndex = getVertexIndex(curSector, ni);
+  v1x = getVertexX(vertGlobalIndex);
+  v1y = getVertexY(vertGlobalIndex);
+  ex = getVertexX(vert2GlobalIndex) - v1x;
+  ey = getVertexY(vert2GlobalIndex) - v1y;
+
+  ppx = ((playeroldx + 127)>>8) - v1x;
+  ppy = ((playeroldy + 127)>>8) - v1y;
+
+  //height = px * ey - py * ex;
+  fastMultiplySetup8x8(ppx);
+  pxey = fastMultiply8x8(ey);
+  fastMultiplySetup8x8(ppy);
+  pyex = fastMultiply8x8(ex);
+
+  return pxey >= pyex;
+}
+
+char sectorsToCheck[3];
+char numSectorsToCheck;
+
+char sectorStack[3];
+char sectorStackTop;
+
+char wallsToCheck_Sector[16];
+char wallsToCheck_Edge[16];
+char wallsToCheck_Checked[16];
+char numWallsToCheck;
+
+char crossablesToCheck_Sector[4];
+char crossablesToCheck_Edge[4];
+char numCrossablesToCheck;
+
+void push_out(void)
+{
+  char h, i, j, k, secNumVerts;
   EPushOutResult r;
+  char numPushedOutFrom = 0;
+  // here's the new plan
+  // collect up the edges we're overlapping (bbox) (and that are facing the player's old position)
+  // push out in turn from each
+  // once we push out from one, remove it from the list and recheck the rest
+  // then check the crossable edges
 
   totalCheckedEdges = 0;
-  
-  touchedSector = 0xff;
-  nextSector = 0xff;
 
-  curSector = playerSector;
-  secNumVerts = getNumVerts(curSector);
-  
-  numPossibleWallsToTouch = 0;
-  
-  // see which edge the new coordinate is behind
-  for (i = 0; i < secNumVerts; ++i)
+  // collect edges
+  sectorsToCheck[0] = playerSector;
+  numSectorsToCheck = 1;
+
+  sectorStack[0] = playerSector;
+  sectorStackTop = 1;
+
+  numWallsToCheck = 0;
+  numCrossablesToCheck = 0;
+
+  h = 1;
+  while (sectorStackTop != 0)
   {
-    //if (getOtherSector(getEdgeIndex(curSector, i), curSector) != -1)
-    {
-       r = push_out_from_edge(i);
-       if (r == kPOR_Sector)
-       {
-         touchedSector = thatSector;
-       }
-       else if (r == kPOR_Wall)
-       {
-         // add the neighbouring edges
-         if (i > 0)
-         {
-           possibleWallsToTouch[numPossibleWallsToTouch++] = i-1;
-         }
-         if (i == secNumVerts-1)
-         {
-           possibleWallsToTouch[numPossibleWallsToTouch++] = 0;
-         }
-       }
-    }
-  }
-  
-  if (touchedSector != 0xff)
-  {
-    curSector = touchedSector;
+    h = 0;
+    --sectorStackTop;
+    curSector = sectorStack[sectorStackTop];
     secNumVerts = getNumVerts(curSector);
+
     for (i = 0; i < secNumVerts; ++i)
     {
-      r = push_out_from_edge(i);
-      if (r == kPOR_Wall)
+      edgeGlobalIndex = getEdgeIndex(curSector, i);
+      thatSector = getOtherSector(edgeGlobalIndex, curSector);
+      if (thatSector != -1 && !isDoorClosed(edgeGlobalIndex))
       {
-         break;
+        k = 0;
+        for (j = 0; j < numSectorsToCheck; ++j)
+        {
+          if (thatSector == sectorsToCheck[j])
+          {
+            k = 1;
+            break;
+          }
+        }
+        if (k == 0)
+        {
+          if (playerOverlapsEdge(i))
+          {
+            sectorStack[sectorStackTop] = thatSector;
+            ++sectorStackTop;
+            sectorsToCheck[numSectorsToCheck] = thatSector;
+            ++numSectorsToCheck;
+            crossablesToCheck_Sector[numCrossablesToCheck] = curSector;
+            crossablesToCheck_Edge[numCrossablesToCheck] = i;
+            ++numCrossablesToCheck;
+            h = 1;
+          }
+        }
+      }
+      else if (playerOverlapsEdge(i))
+      {
+        if (oldPlayerInFrontOfEdge())
+        {
+          wallsToCheck_Sector[numWallsToCheck] = curSector;
+          wallsToCheck_Edge[numWallsToCheck] = i;
+          wallsToCheck_Checked[numWallsToCheck] = 0;
+          ++numWallsToCheck;
+        }
       }
     }
   }
-  if (numPossibleWallsToTouch > 0)
+
+  h = 1;
+  while (h != 0)
   {
-    curSector = playerSector;
-    for (i = 0; i < numPossibleWallsToTouch; ++i)
+    h = 0;
+    for (i = 0; i < numWallsToCheck; ++i)
     {
-      push_out_from_edge(possibleWallsToTouch[i]);
+      if (!wallsToCheck_Checked[i])
+      {
+        curSector = wallsToCheck_Sector[i];
+        r = push_out_from_edge(wallsToCheck_Edge[i]);
+        if (r == kPOR_Wall)
+        {
+          wallsToCheck_Checked[i] = 1;
+          ++numPushedOutFrom;
+          h = 1;
+          break;
+        }
+      }
     }
   }
-  if (nextSector != -1)
+
+  // then check crossables
+  for (i = 0; i < numCrossablesToCheck; ++i)
   {
-    playerSector = nextSector;
+    curSector = crossablesToCheck_Sector[i];
+    nextSector = -1;
+    r = push_out_from_edge(crossablesToCheck_Edge[i]);
+    if (nextSector != -1)
+    {
+      playerSector = nextSector;
+    }
   }
 
-//  print3DigitNumToScreen(totalCheckedEdges, 0x1000 + 110);
+  //print3DigitNumToScreen(totalCheckedEdges, 0x1000 + 88);
+  //print3DigitNumToScreen(numSectorsToCheck, 0x1000 + 110);
+  //print3DigitNumToScreen(numWallsToCheck, 0x1000 + 132);
+  //print3DigitNumToScreen(numPushedOutFrom, 0x1000 + 155);
+  //print3DigitNumToScreen(numCrossablesToCheck, 0x1000 + 176);
 }
+
 
 signed char explodingBarrelsObject[4];
 char explodingBarrelsTime[4];
@@ -1528,6 +1665,8 @@ nextLevel:
   numItemsGot = 0;
   playerx = getPlayerSpawnX();
   playery = getPlayerSpawnY();
+  playeroldx = playerx;
+  playeroldy = playery;
   playera = getPlayerSpawnAngle();
   playerSector = getPlayerSpawnSector();
   endLevel = 0;
@@ -1605,6 +1744,8 @@ nextLevel:
       setCameraAngle(playera);
       ca = ((int)get_cos())<<1;
       sa = ((int)get_sin())<<1;
+      playeroldx = playerx;
+      playeroldy = playery;
       if (keys & KEY_MOVELEFT)
       {
         playerx -= ca;

@@ -64,6 +64,7 @@ void __fastcall__ load_full_text_screen(char *fname)
     else if (x != '\r')
     {
       if (x > 96) x -= 96;
+      x &= 63;
       POKE(m, x);
       POKE(q, c);
       ++m;

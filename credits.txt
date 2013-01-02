@@ -1,4 +1,4 @@
-^doom^ for the ^vic-20^
+^<=>^ for the ^vic-20^
 
 ported by
           ^steve mccrea^
@@ -20,4 +20,4 @@ other tools
 
 thanks to everyone on
 the ^denial^ forums, and
-to ^id^ for doom!@
+to ^]^ for ^<=>^!@
