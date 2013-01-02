@@ -1134,7 +1134,7 @@ int __fastcall__ playerOverlapsEdge(char i)
   ppx = (playerx + 127)>>8;
   ppy = (playery + 127)>>8;
 
-  return ppx > v1x-5 && ppx < v2x+5 && ppy > v1y-5 && ppy < v2y+5;
+  return ppx > v1x-4 && ppx < v2x+4 && ppy > v1y-4 && ppy < v2y+4;
 }
 
 int oldPlayerInFrontOfEdge(void)
@@ -1162,10 +1162,10 @@ int oldPlayerInFrontOfEdge(void)
   return pxey >= pyex;
 }
 
-char sectorsToCheck[3];
+char sectorsToCheck[8];
 char numSectorsToCheck;
 
-char sectorStack[3];
+char sectorStack[8];
 char sectorStackTop;
 
 char wallsToCheck_Sector[16];
@@ -1173,8 +1173,8 @@ char wallsToCheck_Edge[16];
 char wallsToCheck_Checked[16];
 char numWallsToCheck;
 
-char crossablesToCheck_Sector[4];
-char crossablesToCheck_Edge[4];
+char crossablesToCheck_Sector[8];
+char crossablesToCheck_Edge[8];
 char numCrossablesToCheck;
 
 void push_out(void)
@@ -1284,11 +1284,12 @@ void push_out(void)
     }
   }
 
-  //print3DigitNumToScreen(totalCheckedEdges, 0x1000 + 88);
-  //print3DigitNumToScreen(numSectorsToCheck, 0x1000 + 110);
-  //print3DigitNumToScreen(numWallsToCheck, 0x1000 + 132);
-  //print3DigitNumToScreen(numPushedOutFrom, 0x1000 + 155);
-  //print3DigitNumToScreen(numCrossablesToCheck, 0x1000 + 176);
+//  print3DigitNumToScreen(playerSector, 0x1000 + 66);
+//  print3DigitNumToScreen(totalCheckedEdges, 0x1000 + 88);
+//  print3DigitNumToScreen(numSectorsToCheck, 0x1000 + 110);
+//  print3DigitNumToScreen(numWallsToCheck, 0x1000 + 132);
+//  print3DigitNumToScreen(numPushedOutFrom, 0x1000 + 155);
+//  print3DigitNumToScreen(numCrossablesToCheck, 0x1000 + 176);
 }
 
 
