@@ -5,6 +5,7 @@
 // done
 // X 1. move angle to sin/cos and logsin/logcos to a separate function and just use those values
 // X 2. fix push_out code
+// X 2.5. fix push_out code some more
 // X 3. add transparent objects
 // X 4. finish map and use that instead of the test map
 // X 5. enemy AI (update only visible enemies, plus enemies in the current sector)
@@ -22,8 +23,8 @@
 // X 16. make acid do damage
 
 // todo
-// 2.5. fix push_out code some more
-// 17. add weapons (maybe?)
+// 17. fix sound glitches when loading data
+// 18. add weapons (maybe?)
 
 // memory map:
 // see the .cfg file for how to do this
@@ -600,6 +601,7 @@ void __fastcall__ updateAcid(void)
   }
   if (acidBurn == 0)
   {
+    acidBurn = 4;
     for (o = getFirstObjectInSector(playerSector); o != 0xff; o = getNextObjectInSector(o))
     {
       if (getObjectType(o) == kOT_Acid)
@@ -613,7 +615,6 @@ void __fastcall__ updateAcid(void)
         {
           playSound(SOUND_OOF);
           damagePlayer(1 + (P_Random()&7));
-          acidBurn = 4;
           break;
         }
       }
@@ -1379,104 +1380,120 @@ void preparePickupMessage(void)
   eraseMessageAfter = 8;
 }
 
-void checkForPickups(void)
+void __fastcall__ checkSectorForPickups(char sec)
 {
   char o, objectType, d;
   int dx, dy;
-  for (o = 0; o < getNumObjects(); ++o)
+  for (o = getFirstObjectInSector(sec); o != 0xff; o = getNextObjectInSector(o))
   {
-    if (getObjectSector(o) != 255)
+    objectType = getObjectType(o);
+    if ((objectType >= kOT_GreenArmor && objectType <= kOT_BlueKeycard)
+      || objectType == kOT_PossessedCorpseWithAmmo)
     {
-      objectType = getObjectType(o);
-      if ((objectType >= kOT_GreenArmor && objectType <= kOT_BlueKeycard)
-        || objectType == kOT_PossessedCorpseWithAmmo)
+      dx = getObjectX(o) - playerx;
+      dy = getObjectY(o) - playery;
+
+      d = P_ApproxDistance(dx, dy);
+
+      if (d < 3)
       {
-        dx = getObjectX(o) - playerx;
-        dy = getObjectY(o) - playery;
-
-        d = P_ApproxDistance(dx, dy);
-
-        if (d < 3)
+        char pickupType = objectType;
+        char remove = 1;
+        if (objectType == kOT_PossessedCorpseWithAmmo)
         {
-          char pickupType = objectType;
-          char remove = 1;
-          if (objectType == kOT_PossessedCorpseWithAmmo)
+          setObjectType(o, kOT_PossessedCorpse);
+          remove = 0;
+          pickupType = kOT_Bullets;
+        }
+
+        if (pickupType >= kOT_GreenArmor && pickupType <= kOT_BlueKeycard)
+        {
+          char pickedUp = 0;
+
+          switch (pickupType)
           {
-            setObjectType(o, kOT_PossessedCorpse);
-            remove = 0;
-            pickupType = kOT_Bullets;
+          case kOT_GreenArmor:
+            if (armor < 100)
+            {
+              armor = 100;
+              combatArmor = 0;
+              drawHudArmor();
+              pickedUp = 1;
+            }
+            break;
+          case kOT_BlueArmor:
+            if (armor < 200)
+            {
+              armor = 200;
+              combatArmor = 1;
+              drawHudArmor();
+              pickedUp = 1;
+            }
+            break;
+          case kOT_Bullets:
+            if (shells < 80)
+            {
+              shells += 4;
+              if (shells > 80) shells = 80;
+              drawHudAmmo();
+              pickedUp = 1;
+            }
+            break;
+          case kOT_Medkit:
+            if (health < 100)
+            {
+              health += 25;
+              if (health > 100) health = 100;
+              drawHudHealth();
+              pickedUp = 1;
+            }  
+            break;
+          case kOT_RedKeycard:
+            addKeyCard(2);
+            pickedUp = 1;
+            break;
+          case kOT_GreenKeycard:
+            addKeyCard(4);
+            pickedUp = 1;
+            break;
+          case kOT_BlueKeycard:
+            addKeyCard(8);
+            pickedUp = 1;
+            break;
           }
-
-          if (pickupType >= kOT_GreenArmor && pickupType <= kOT_BlueKeycard)
+          if (pickedUp)
           {
-            char pickedUp = 0;
+            preparePickupMessage();
+            printCentered("you got the", 14);
+            printCentered(pickupNames[pickupType - kOT_GreenArmor], 15);
 
-            switch (pickupType)
+            if (remove)
             {
-            case kOT_GreenArmor:
-              if (armor < 100)
-              {
-                  armor = 100;
-                  combatArmor = 0;
-                  drawHudArmor();
-                  pickedUp = 1;
-              }
-              break;
-            case kOT_BlueArmor:
-              if (armor < 200)
-              {
-                  armor = 200;
-                  combatArmor = 1;
-                  drawHudArmor();
-                  pickedUp = 1;
-              }
-              break;
-            case kOT_Bullets:
-              if (shells < 80)
-              {
-                  shells += 4;
-                  if (shells > 80) shells = 80;
-                  drawHudAmmo();
-                  pickedUp = 1;
-              }
-              break;
-            case kOT_Medkit:
-              if (health < 100)
-              {
-                health += 25;
-                if (health > 100) health = 100;
-                drawHudHealth();
-                pickedUp = 1;
-              }  
-              break;
-            case kOT_RedKeycard:
-              addKeyCard(2);
-              pickedUp = 1;
-              break;
-            case kOT_GreenKeycard:
-              addKeyCard(4);
-              pickedUp = 1;
-              break;
-            case kOT_BlueKeycard:
-              addKeyCard(8);
-              pickedUp = 1;
-              break;
+              setObjectSector(o, -1);
+              ++numItemsGot;
             }
-            if (pickedUp)
-            {
-              preparePickupMessage();
-              printCentered("you got the", 14);
-              printCentered(pickupNames[pickupType - kOT_GreenArmor], 15);
-
-              if (remove)
-              {
-                setObjectSector(o, -1);
-                ++numItemsGot;
-              }
-            }
+            break;
           }
         }
       }
+    }
+  }
+}
+
+void checkForPickups(void)
+{
+  char i, secNumVerts;
+  // just check this sector and its neighbours
+  checkSectorForPickups(playerSector);
+  secNumVerts = getNumVerts(playerSector);
+
+  for (i = 0; i < secNumVerts; ++i)
+  {
+    char edgeGlobalIndex = getEdgeIndex(curSector, i);
+    char thatSector = getOtherSector(edgeGlobalIndex, curSector);
+    if (thatSector != 0xff && !isDoorClosed(edgeGlobalIndex))
+    {
+      checkSectorForPickups(thatSector);
     }
   }
 }
@@ -1792,7 +1809,8 @@ nextLevel:
           }
           else if (typeAtCenterOfView == TYPE_OBJECT)
           {
-            char damage = P_Random();
+            // take the high nybble, because it's more random
+            char damage = P_Random()>>4;
             if (difficulty == 0)
             {
               damage = (damage&1) + 10;
@@ -1804,6 +1822,11 @@ nextLevel:
             else
             {
               damage = (damage&7) + 4;
+            }
+            // shotgun: if close, boost damage
+            if (testFilled(0) < 4)
+            {
+              damage += 4;
             }
             p_enemy_damage(itemAtCenterOfView, damage);
           }
