@@ -932,7 +932,7 @@ char totalCheckedEdges;
 void breakpoint(void)
 {
   // completely free of side effects :)
-  POKE(0x9600, 1);
+  POKE(0x9700, 1);
 }
 
 EPushOutResult __fastcall__ push_out_from_edge(char i)
@@ -1107,44 +1107,30 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
   return kPOR_Nada;
 }
 
-int __fastcall__ playerOverlapsEdge(char i)
+int getPlayerX(void)
 {
-  signed char ppx, ppy, temp;
-  ni = getNextEdge(curSector, i);
-  vertGlobalIndex = getVertexIndex(curSector, i);
-  vert2GlobalIndex = getVertexIndex(curSector, ni);
-  v1x = getVertexX(vertGlobalIndex);
-  v1y = getVertexY(vertGlobalIndex);
-  v2x = getVertexX(vert2GlobalIndex);
-  v2y = getVertexY(vert2GlobalIndex);
-
-  if (v1x > v2x)
-  {
-    temp = v1x;
-    v1x = v2x;
-    v2x = temp;
-  }
-  if (v1y > v2y)
-  {
-    temp = v1y;
-    v1y = v2y;
-    v2y = temp;
-  }
-
-  ppx = (playerx + 127)>>8;
-  ppy = (playery + 127)>>8;
-
-  return ppx > v1x-4 && ppx < v2x+4 && ppy > v1y-4 && ppy < v2y+4;
+  return playerx;
 }
 
-int oldPlayerInFrontOfEdge(void)
+int getPlayerY(void)
+{
+  return playery;
+}
+
+char getCurSector(void)
+{
+  return curSector;
+}
+
+char __fastcall__ playerOverlapsEdge(char i);
+
+char oldPlayerInFrontOfEdge(char i)
 {
   signed char ppx, ppy;
   int pxey, pyex;
-  // always set by the previous fn.
-  //ni = getNextEdge(curSector, i);
-  //vertGlobalIndex = getVertexIndex(curSector, i);
-  //vert2GlobalIndex = getVertexIndex(curSector, ni);
+  ni = getNextEdge(curSector, i);
+  vertGlobalIndex = getVertexIndex(curSector, i);
+  vert2GlobalIndex = getVertexIndex(curSector, ni);
   v1x = getVertexX(vertGlobalIndex);
   v1y = getVertexY(vertGlobalIndex);
   ex = getVertexX(vert2GlobalIndex) - v1x;
@@ -1238,14 +1224,17 @@ void push_out(void)
           }
         }
       }
-      else if (playerOverlapsEdge(i))
+      else
       {
-        if (oldPlayerInFrontOfEdge())
+        if (playerOverlapsEdge(i))
         {
-          wallsToCheck_Sector[numWallsToCheck] = curSector;
-          wallsToCheck_Edge[numWallsToCheck] = i;
-          wallsToCheck_Checked[numWallsToCheck] = 0;
-          ++numWallsToCheck;
+          if (oldPlayerInFrontOfEdge(i))
+          {
+            wallsToCheck_Sector[numWallsToCheck] = curSector;
+            wallsToCheck_Edge[numWallsToCheck] = i;
+            wallsToCheck_Checked[numWallsToCheck] = 0;
+            ++numWallsToCheck;
+          }
         }
       }
     }

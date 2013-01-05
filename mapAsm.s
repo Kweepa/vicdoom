@@ -70,6 +70,12 @@
 
 .export _getMapName
 
+.import _getCurSector
+.import _getPlayerX
+.import _getPlayerY
+
+.export _playerOverlapsEdge
+
 .include "e1m1.s"
 
 .segment "CODE"
@@ -210,15 +216,10 @@ rts
 
 .endproc
 
-.proc _getVertexIndex : near
+.proc getVertexIndex: near
 
-; params:
-; A - vertexIndex
-; TOS - sectorIndex
-
-sta edgeIndex
-ldy #0
-lda (sp),y
+; A - sectorIndex
+; X - vertexIndex
 
 asl
 asl
@@ -228,10 +229,23 @@ lda #>secVerts
 adc #0
 sta modify+2
 
-ldy edgeIndex
 modify:
-lda secVerts,y
+lda secVerts,x
 
+rts
+
+.endproc
+
+.proc _getVertexIndex : near
+
+; params:
+; A - vertexIndex
+; TOS - sectorIndex
+
+tax
+ldy #0
+lda (sp),y
+jsr getVertexIndex
 jmp incsp1
 
 .endproc
@@ -394,6 +408,23 @@ rts
 
 .endproc
 
+.proc getNextEdge: near
+
+; X - edgeIndex
+; Y - sectorIndex
+
+lda secNumVerts,y
+sta numberOfVerts
+inx
+txa
+cmp numberOfVerts
+bne done
+lda #0
+done:
+rts
+
+.endproc
+
 .proc _getNextEdge : near
 
 ; params:
@@ -401,17 +432,10 @@ rts
 ; TOS - sectorIndex
 
 tax
-inx
 ldy #0
 lda (sp),y
 tay
-lda secNumVerts,y
-sta numberOfVerts
-txa
-cmp numberOfVerts
-bne done
-lda #0
-
+jsr getNextEdge
 done:
 jmp incsp1
 
@@ -528,7 +552,7 @@ rts
 
 sectorFirstObj:
 ; one for each sector
-.res NUMSEC, $ff
+.res 64, $ff
 
 sectorNextObj:
 ; one for each object
@@ -693,7 +717,7 @@ ldx #0
 rts
 
 visitedSectors:
-.res NUMSEC, 0
+.res 64, 0
 
 _resetSectorsVisited:
 ldx numSectors
@@ -1019,3 +1043,153 @@ rts
 .endproc
 
 .endif
+
+
+__curSector:
+.byte 0
+thisEdgeIndex:
+.byte 0
+nextEdgeIndex:
+.byte 0
+playercoord:
+.byte 0
+box:
+.byte 0, 0
+
+.proc _playerOverlapsEdge: near
+
+sta thisEdgeIndex
+jsr _getCurSector
+sta __curSector
+tay
+ldx thisEdgeIndex
+jsr getNextEdge
+sta nextEdgeIndex
+ldx thisEdgeIndex
+lda __curSector
+jsr getVertexIndex
+sta thisEdgeIndex
+ldx nextEdgeIndex
+lda __curSector
+jsr getVertexIndex
+tay
+
+jsr _getPlayerX
+clc
+adc #127
+bcc :+
+inx
+:
+txa
+clc
+adc #128
+sta playercoord
+
+ldx thisEdgeIndex
+
+lda vertX,x
+clc
+adc #128
+sta box
+lda vertX,y
+clc
+adc #128
+sta box+1
+cmp box
+bcc @xswap
+
+lda box
+sec
+sbc #4
+sec
+sbc playercoord
+bpl @no_overlap
+
+lda box+1
+clc
+adc #5
+sec
+sbc playercoord
+bpl @checky
+
+@no_overlap:
+
+lda #0
+rts
+
+@xswap:
+lda box
+clc
+adc #5
+sec
+sbc playercoord
+bmi @no_overlap
+
+lda box+1
+sec
+sbc #4
+sec
+sbc playercoord
+bpl @no_overlap
+
+@checky:
+
+jsr _getPlayerY
+clc
+adc #127
+bcc :+
+inx
+:
+txa
+clc
+adc #128
+sta playercoord
+
+ldx thisEdgeIndex
+
+lda vertY,x
+clc
+adc #128
+sta box
+lda vertY,y
+clc
+adc #128
+sta box+1
+cmp box
+bcc @yswap
+
+lda box
+sec
+sbc #4
+sec
+sbc playercoord
+bpl @no_overlap
+
+lda box+1
+clc
+adc #5
+sec
+sbc playercoord
+bmi @no_overlap
+bpl @overlap
+
+@yswap:
+lda box
+clc
+adc #5
+sec
+sbc playercoord
+bmi @no_overlap
+
+lda box+1
+sec
+sbc #4
+sec
+sbc playercoord
+bpl @no_overlap
+
+@overlap:
+lda #1
+rts
+
+.endproc
