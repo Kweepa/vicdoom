@@ -47,7 +47,7 @@
 #define false 0
 #define true 1
 
-#define MELEERANGE 3
+#define MELEERANGE 4
 
 #define MF_JUSTATTACKED 1
 #define MF_THOUGHTTHISFRAME 2
@@ -221,7 +221,7 @@ char __fastcall__ allocMobj(char o)
 {
   char i;
 //  ++numAllocated;
-//  if (numAllocated > 2)
+//  if (numAllocated > 1)
 //  {
 //    return -1;
 //  }
@@ -344,11 +344,14 @@ void __fastcall__ p_enemy_single_think(char mobjIndex)
 #ifdef PRINT_ACTION
   printAction();
 #endif
-//  print3DigitNumToScreen(mobjIndex, 0x1000 + 22*4);
-//  print3DigitNumToScreen(objIndex, 0x1000 + 22*5);
-//  print3DigitNumToScreen(getObjectSector(objIndex), 0x1000 + 22*6);
-//  print3DigitNumToScreen(mobjStateIndex(), 0x1000 + 22*7);
-//  print3DigitNumToScreen(actionIndex, 0x1000 + 22*8);
+#if 0
+  print3DigitNumToScreen(distanceFromPlayer, 0x1000 + 22*3);
+  print3DigitNumToScreen(mobjIndex, 0x1000 + 22*4);
+  print3DigitNumToScreen(objIndex, 0x1000 + 22*5);
+  print3DigitNumToScreen(getObjectSector(objIndex), 0x1000 + 22*6);
+  print3DigitNumToScreen(mobjStateIndex(), 0x1000 + 22*7);
+  print3DigitNumToScreen(actionIndex, 0x1000 + 22*8);
+#endif
   actions[actionIndex]();
 }
 
@@ -483,10 +486,14 @@ boolean __fastcall__ P_CheckMissileRange(void)
   if (mobjReactiontime())
     return false;	// do not attack yet
 		
-  if (! P_CheckSight() )
+  if (!P_CheckSight())
 	  return false;
 	
   dist = distanceFromPlayer;
+
+  // almost impossible to dodge these
+  if (dist < 6)
+    return false;
 
 #if 0
   if (!info->meleestate && dist >= 20)
@@ -508,18 +515,18 @@ boolean __fastcall__ P_CheckMissileRange(void)
 // returns false if the move is blocked.
 //
 
-signed char __fastcall__ try_move(int trydx, int trydy)
+char __fastcall__ try_move(int trydx, int trydy)
 {
   // check the edges we can cross first
   // if any of them teleport us, move
   
-  signed char thatSector;
+  char thatSector;
   char i, ni;
   signed char v1x, v1y, v2x, v2y;
   signed char ex, ey;
   int px, py;
   long dot;
-  long height;
+  int height;
   int edgeLen;
   int edgeLen2;
   int distance;
@@ -557,51 +564,54 @@ signed char __fastcall__ try_move(int trydx, int trydy)
       edgeLen = getEdgeLen(edgeGlobalIndex);
       //height = px * ey - py * ex;
       fastMultiplySetup16x8e24(ey);
-      height = fastMultiply16x8e24(px);
+      height = fastMultiply16x8e24(px) >> 8;
       fastMultiplySetup16x8e24(ex);
-      height -= fastMultiply16x8e24(py);
+      height -= fastMultiply16x8e24(py) >> 8;
 
-      fastMultiplySetup8x8(edgeLen);
-      edgeLen2 = fastMultiply8x8(edgeLen);
-
-      if (height < (edgeLen2<<1))
+      if (height < edgeLen)
       {
+        fastMultiplySetup8x8(edgeLen);
+        edgeLen2 = fastMultiply8x8(edgeLen);
+
+			  //distance = px * ex + py * ey;
+        fastMultiplySetup16x8e24(ex);
+        distance = fastMultiply16x8e24(px) >> 8;
+        fastMultiplySetup16x8e24(ey);
+        distance += fastMultiply16x8e24(py) >> 8;
+
 			  // check we're within the extents of the edge
 			  thatSector = getOtherSector(edgeGlobalIndex, curSector);
-			  if (thatSector != -1 && !isDoorClosed(edgeGlobalIndex))
+			  if (thatSector != 0xff && !isDoorClosed(edgeGlobalIndex))
 			  {
-			    //distance = px * ex + py * ey;
-          fastMultiplySetup16x8e24(ex);
-          distance = fastMultiply16x8e24(px);
-          fastMultiplySetup16x8e24(ey);
-          distance += fastMultiply16x8e24(py);
-          if (distance > edgeLen2 && distance < (edgeLen2*edgeLen - edgeLen2))
+          if (distance > edgeLen && distance < edgeLen2 - edgeLen)
           {
             #if 0
-            gotoxy(0,16);
-            cprintf("%d %d %d %d %d. ", curSector, distance, edgeLen, dot, height);
+            print3DigitNumToScreen(curSector, 0x1000 + 16*22);
+            print3DigitNumToScreen(distance, 0x1000 + 16*22 + 4);
+            print3DigitNumToScreen(edgeLen, 0x1000 + 16*22 + 8);
+            print3DigitNumToScreen(dot, 0x1000 + 16*22 + 12);
+            print3DigitNumToScreen(height, 0x1000 + 16*22 + 16);
             #endif
             if (height <= 0)
             {
-              #if 0
-              gotoxy(0,4);
-              cprintf("%d. ", thatSector);
-              #endif
               return thatSector;
             }
             return curSector;
           }
-          else
-          {
-            // hit a wall
-            sectorToReturn = -1;
-          }
-			  }
-			  else
-			  {
-			    // hit a wall
-			    sectorToReturn = -1;
-			  }
+        }
+        if (distance > -edgeLen && distance < edgeLen2 + edgeLen)
+        {
+          // hit a wall
+          #if 0
+          print3DigitNumToScreen(i, 0x1000 + 18);
+          print3DigitNumToScreen(distance>>16, 0x1000 + 22 + 18);
+          print3DigitNumToScreen((distance>>8)&255, 0x1000 + 2*22 + 18);
+          print3DigitNumToScreen(distance&255, 0x1000 + 3*22 + 18);
+          print3DigitNumToScreen((edgeLen2>>8)&255, 0x1000 + 5*22 + 18);
+          print3DigitNumToScreen(edgeLen2&255, 0x1000 + 6*22 + 18);
+          #endif
+          sectorToReturn = -1;
+        }
       }
 	  }
   }
@@ -611,8 +621,8 @@ signed char __fastcall__ try_move(int trydx, int trydy)
 boolean __fastcall__ P_TryMove(fixed_t trydx, fixed_t trydy)
 {
    // check the move is valid
-   signed char nextSector = try_move(trydx, trydy);
-   if (nextSector != -1)
+   char nextSector = try_move(trydx, trydy);
+   if (nextSector != 0xff)
    {
      setObjectX(objIndex, getObjectX(objIndex) + trydx);
      setObjectY(objIndex, getObjectY(objIndex) + trydy);

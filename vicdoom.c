@@ -451,6 +451,11 @@ void __fastcall__ damagePlayer(char damage)
   {
     if (difficulty == 0)
     {
+      // approximation for /3
+      damage = damage/4 + damage/16;
+    }
+    else if (difficulty == 1)
+    {
       damage = damage/2;
     }
     if (armor > 0)
@@ -1787,10 +1792,18 @@ nextLevel:
           }
           else if (typeAtCenterOfView == TYPE_OBJECT)
           {
-            char damage = 2 + (P_Random()&7);
+            char damage = P_Random();
             if (difficulty == 0)
             {
-              damage <<= 1;
+              damage = (damage&1) + 10;
+            }
+            else if (difficulty == 1)
+            {
+              damage = (damage&3) + 8;
+            }
+            else
+            {
+              damage = (damage&7) + 4;
             }
             p_enemy_damage(itemAtCenterOfView, damage);
           }

@@ -1,6 +1,10 @@
 .setcpu	"6502"
 .autoimport	on
 .importzp sp
+.importzp tmp1
+.importzp tmp2
+.importzp tmp3
+.importzp tmp4
 
 .export _P_ApproxDistance
 .export _setMobjIndex
@@ -54,46 +58,78 @@
 ; Gives an estimation of distance (not exact)
 ;
 
-dy:
-.byte 0
-dx:
-.byte 0
-
 _P_ApproxDistance:
 
 ; TOS - dx
 ; AX - dy
 
-; just bin the lower byte
+sta tmp1
 
+; abs
 txa
 bpl :+
 eor #$ff
+tax
+lda tmp1
+eor #$ff
+sta tmp1
 :
-sta dy
+stx tmp2
 
-
-ldy #1
+; pop y
+ldy #0
 lda (sp),y
+sta tmp3
+iny
+lda (sp),y
+tax
+
+; abs
 bpl :+
 eor #$ff
+tax
+lda tmp3
+eor #$ff
+sta tmp3
 :
-sta dx
+stx tmp4
+
 
 ; dx > dy, dx+dy/2
 ; dx < dy, dx/2+dy
 
-cmp dy
-bcc shiftY
-lsr
+; shift
+cpx tmp2
+bcs shiftY
+lsr tmp4
+ror tmp3
 jmp :+
 shiftY:
-lsr dy
+lsr tmp2
+ror tmp1
 :
-clc
-adc dy
-jmp incsp2
 
+; sum
+clc
+lda tmp1
+adc tmp3
+sta tmp1
+
+lda tmp2
+adc tmp4
+sta tmp2
+
+; round
+clc
+lda tmp1
+bpl :+
+inc tmp2
+:
+
+; return
+lda tmp2
+
+jmp incsp2
 
 
 .segment "CODE"
