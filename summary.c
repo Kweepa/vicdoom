@@ -29,19 +29,20 @@ void __fastcall__ waitASecond(void)
 
 void __fastcall__ rollInPercentage(char pc, int scr)
 {
-  char i = 0;
+  signed char i = -4;
   POKE(scr + 3,'%');
   do
   {
+    i += 4;
+    if (i > pc) i = pc;
     print3DigitNumToScreen(i, scr);
     playSound(SOUND_PISTOL);
-    ++i;
     if (PEEK(198) == 0)
     {
 		  waitForRaster(2);
     }
   }
-  while (i <= pc);
+  while (i < pc);
 }
 
 void __fastcall__ rollInTime(int t, int scr)
@@ -105,7 +106,15 @@ void __fastcall__ summaryScreen(void)
   waitASecond();
   rollInPercentage(secret, 0x1000+22*9+14);
   waitASecond();
-  rollInTime(time, 0x1000+22*12+13);
+  if (time > 10*60-1)
+  {
+    cputsxy(13,12,"sucks");
+    playSound(SOUND_PISTOL);
+  }
+  else
+  {
+    rollInTime(time, 0x1000+22*12+13);
+  }
   waitASecond();
   rollInTime(par, 0x1000+22*14+13);
   waitASecond();

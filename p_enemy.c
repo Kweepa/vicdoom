@@ -432,24 +432,27 @@ boolean P_CheckSight(void)
 
 void __fastcall__ P_DamageMobj(char damage)
 {
-	setMobjHealth(mobjHealth() - damage);
-	if (mobjHealth() <= 0)
-	{
-	    // kill actor
-		setMobjMovecount(2);
-    playSound(getMobjDeathSound());
-		P_SetMobjState(getMobjDeathState());
-		++numKills;
-	}
-	else
-	{
-		addMobjFlags(MF_JUSTATTACKED);
-		// maybe flinch, depending on threshold
-		if (damage > getMobjPainChance())
-		{
-		  P_SetMobjState(getMobjPainState());
-		}
-	}
+  if (mobjHealth() > 0)
+  {
+  	setMobjHealth(mobjHealth() - damage);
+	  if (mobjHealth() <= 0)
+	  {
+	      // kill actor
+		  setMobjMovecount(2);
+      playSound(getMobjDeathSound());
+		  P_SetMobjState(getMobjDeathState());
+		  ++numKills;
+	  }
+	  else
+	  {
+		  addMobjFlags(MF_JUSTATTACKED);
+		  // maybe flinch, depending on threshold
+		  if (damage > getMobjPainChance())
+		  {
+		    P_SetMobjState(getMobjPainState());
+		  }
+	  }
+  }
 }
 
 void __fastcall__ P_RadiusAttack(char radius)

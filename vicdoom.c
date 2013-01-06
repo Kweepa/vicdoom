@@ -86,7 +86,7 @@ char *pickupNames[] =
 {
   "green armor!",
   "blue armor!",
-  "bullets!",
+  "ammo!",
   "medikit!",
   "red keycard!",
   "green keycard!",
@@ -107,10 +107,13 @@ int playeroldy;
 //char playera = 10;
 //char playerSector = 8;
 
-char shells = 40;
-char armor = 0;
-char combatArmor = 0;
-signed char health = 100;
+char shells;
+char bullets;
+char weapons[2];
+char weapon;
+char armor;
+char combatArmor;
+signed char health = 0;
 
 char endLevel;
 char level;
@@ -416,28 +419,30 @@ char flashBorderTime = 0;
 void __fastcall__ drawHudArmor(void)
 {
     char armorColor = 5 + combatArmor;
-    POKE(0x1000 + 22*21 + 5, 30); // armor symbol in font
-    POKE(0x9400 + 22*21 + 5, armorColor);
+    POKE(0x1000 + 22*21 + 13, 30); // armor symbol in font
+    POKE(0x9400 + 22*21 + 13, armorColor);
     setTextColor(armorColor);
-    print3DigitNumToScreen(armor, 0x1000 + 22*21 + 6);
+    print3DigitNumToScreen(armor, 0x1000 + 22*21 + 14);
 }
+
+char weaponSymbol[3] = { 38, 31, 34 };
 
 void __fastcall__ drawHudAmmo(void)
 {
-  // shells
-  POKE(0x1000 + 22*21 + 1, '&');
+  // weapon and ammo
+  POKE(0x1000 + 22*21 + 1, weaponSymbol[weapon]);
   POKE(0x9400 + 22*21 + 1, 3);
   setTextColor(3);
-  print2DigitNumToScreen(shells, 0x1000 + 22*21 + 2);
+  print2DigitNumToScreen(weapon == 1 ? shells : bullets, 0x1000 + 22*21 + 2);
 }
 
 void __fastcall__ drawHudHealth(void)
 {
   // health
-  POKE(0x1000 + 22*21 + 13, '/');
-  POKE(0x9400 + 22*21 + 13, 2);
+  POKE(0x1000 + 22*21 + 5, '/');
+  POKE(0x9400 + 22*21 + 5, 2);
   setTextColor(2);
-  print3DigitNumToScreen(health, 0x1000 + 22*21 + 14);
+  print3DigitNumToScreen(health, 0x1000 + 22*21 + 6);
 }
 
 char *keyCardNames[3] = { " red", "green", "blue" };
@@ -1431,10 +1436,20 @@ void __fastcall__ checkSectorForPickups(char sec)
             }
             break;
           case kOT_Bullets:
-            if (shells < 80)
+            if (weapons[1])
             {
-              shells += 4;
-              if (shells > 80) shells = 80;
+              if (shells < 50 && (P_Random()&64))
+              {
+                shells += 4;
+                if (shells > 50) shells = 50;
+                drawHudAmmo();
+                pickedUp = 1;
+              }
+            }
+            if (!pickedUp && bullets < 200)
+            {
+              bullets += 10;
+              if (bullets > 200) bullets = 200;
               drawHudAmmo();
               pickedUp = 1;
             }
@@ -1501,6 +1516,7 @@ void checkForPickups(void)
 char turnLeftSpeed = 0;
 char turnRightSpeed = 0;
 char shotgunStage = 0;
+char pistolStage = 0;
 
 #if 0
 char changeLookTime = 7;
@@ -1567,7 +1583,11 @@ void handleCheatCodes(void)
     else if (i == 1)
     {
       addKeyCard(2+4+8);
-      shells = 80;
+      weapons[0] = 1;
+      weapons[1] = 1;
+      weapons[2] = 1;
+      bullets = 200;
+      shells = 50;
       drawHudAmmo();
       armor = 200;
       drawHudArmor();
@@ -1587,6 +1607,20 @@ char __fastcall__ runMenu(char canReturn);
 
 char caLevel[] = "pe1m1";
 char caMusic[] = "pe1m1mus";
+
+char *caLevelNames[10] =
+{
+  "",
+  "hangar",
+  "nuclear plant",
+  "toxin refinery",
+  "command control",
+  "phobos lab",
+  "central processing",
+  "computer station",
+  "phobos anomaly",
+  "military base"
+};
 
 int main()
 {
@@ -1614,17 +1648,16 @@ int main()
   load_data_file("psluts");
   load_data_file("ptextures");
 
+start:
+  playMusic("pe1m9mus");
+
   POKE(0x900E, (6<<4) | (PEEK(0x900E)&0x0f)); // blue aux color
-  POKE(0x900F, 8 + 5); // green border, and black screen
   
   // set the character set to $1400
   POKE(0x9005, 13 | (PEEK(0x9005)&0xf0));
 
-start:
   setUpScreenForBitmap();
   setUpScreenForMenu();
-
-  playMusic("pe1m9mus");
 
   runMenu(0);
   level = 1;
@@ -1632,20 +1665,31 @@ start:
 
 nextLevel:
 
+  POKE(0x900F, 8 + 5); // green border, and black screen
+
   {
     char p = '0' + level;
     caMusic[4] = p;
     caLevel[4] = p;
   }
-  playMusic(caMusic);
+  textcolor(2);
+  printCentered("entering", 8);
+  textcolor(1);
+  printCentered(caLevelNames[level], 10);
   load_data_file(caLevel);
+  playMusic(caMusic);
 
   if (health == 0)
   {
     health = 100;
     armor = 0;
     combatArmor = 0;
-    shells = 40;
+    bullets = 50;
+    shells = 20;
+    weapons[0] = 1;
+    weapons[1] = 1;
+    weapons[2] = 1;
+    weapon = 0;
   }
   resetKeyCard();
 
@@ -1784,33 +1828,31 @@ nextLevel:
       }
 //      gotoxy(0, 14);
 //      cprintf("%d %d %d %d. ", playerSector, playerx, playery, playera);
-      if (shotgunStage > 0)
+      if (shotgunStage != 0)
       {
         --shotgunStage;
         if (shotgunStage == 3)
         {
-            playSound(SOUND_SGCOCK);
-          }
+          playSound(SOUND_SGCOCK);
+        }
+      }
+      if (pistolStage != 0)
+      {
+        --pistolStage;
       }
       if (keys & KEY_FIRE)
       {
         // pressed fire
-        if (shells > 0 && shotgunStage == 0)
+        // take the high nybble, because it's more random
+        char damage = 0;
+        if (weapon == 1)
         {
-          --shells;
-          drawHudAmmo();
-          POKE(0x900F, 8+1);
-          shotgunStage = 7;
-          
-          playSound(SOUND_PISTOL);
-          if (barrelAtCenterOfScreen != -1)
+          if (shells > 0 && shotgunStage == 0)
           {
-            addExplodingBarrel(barrelAtCenterOfScreen);
-          }
-          else if (typeAtCenterOfView == TYPE_OBJECT)
-          {
-            // take the high nybble, because it's more random
-            char damage = P_Random()>>4;
+            --shells;
+            shotgunStage = 7;
+
+            damage = P_Random()>>4;
             if (difficulty == 0)
             {
               damage = (damage&1) + 10;
@@ -1828,16 +1870,68 @@ nextLevel:
             {
               damage += 4;
             }
+          }
+        }
+        else
+        {
+          if (bullets > 0 && pistolStage == 0)
+          {
+            --bullets;
+            damage = P_Random()>>4;
+
+            if (weapon == 0)
+            {
+              pistolStage = 3;
+              if (difficulty == 0)
+              {
+                damage = 4;
+              }
+              else if (difficulty == 1)
+              {
+                damage = (damage&1) + 3;
+              }
+              else
+              {
+                damage = (damage&3) + 1;
+              }
+            }
+            else
+            {
+              if (difficulty == 0)
+              {
+                damage = 2;
+              }
+              else
+              {
+                damage = 1 + (damage&1);
+              }
+            }
+          }
+        }
+
+        if (damage != 0)
+        {
+          playSound(SOUND_PISTOL);
+
+          drawHudAmmo();
+          POKE(0x900F, 8+1);
+          
+          if (barrelAtCenterOfScreen != -1)
+          {
+            addExplodingBarrel(barrelAtCenterOfScreen);
+          }
+          else if (typeAtCenterOfView == TYPE_OBJECT)
+          {
             p_enemy_damage(itemAtCenterOfView, damage);
           }
           else if (typeAtCenterOfView == TYPE_DOOR)
           {
-              char tex = getEdgeTexture(itemAtCenterOfView);
-              char prop = (tex & EDGE_PROP_MASK) >> EDGE_PROP_SHIFT;
-              if (prop == DOOR_TYPE_SHOT)
-              {
-                openDoor(itemAtCenterOfView);
-              }
+            char tex = getEdgeTexture(itemAtCenterOfView);
+            char prop = (tex & EDGE_PROP_MASK) >> EDGE_PROP_SHIFT;
+            if (prop == DOOR_TYPE_SHOT)
+            {
+              openDoor(itemAtCenterOfView);
+            }
           }
         }
       }
@@ -1938,6 +2032,16 @@ nextLevel:
         if (!eraseMessageAfter)
         {
           eraseMessage();
+        }
+      }
+
+      if (PEEK(198) > 0)
+      {
+        char w = PEEK(631) - 49;
+        if (w < 3 && weapons[w])
+        {
+          weapon = w;
+          drawHudAmmo();
         }
       }
 

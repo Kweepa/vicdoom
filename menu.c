@@ -259,6 +259,10 @@ char __fastcall__ runMenu(char canReturn)
 	    if (menu == 1) episode = item;
 	    else if (menu == 3)
 	    {
+        stopMusic();
+        playSound(SOUND_PISTOL);
+        clearScreen();
+        waitForRaster(30);
 	      difficulty = item;
 	      return 1;
 	    }
@@ -279,6 +283,8 @@ char __fastcall__ runMenu(char canReturn)
 			  else
 			  {
 			    next = (-next)-1;
+          clearScreen();
+          waitForRaster(30);
           load_full_text_screen(textScreens[next]);
           setupBitmap(8 + 2); // multicolor red
           drawLogo();
