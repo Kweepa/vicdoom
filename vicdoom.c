@@ -90,7 +90,18 @@ char *pickupNames[] =
   "medikit!",
   "red keycard!",
   "green keycard!",
-  "blue keycard!"
+  "blue keycard!",
+  "", "", "", "",
+  "chainsaw!",
+  "shotgun!",
+  "chaingun!"
+};
+
+char *weaponNames[] =
+{
+  "pistol",
+  "shotgun",
+  "chaingun"
 };
 
 int playerx;
@@ -109,7 +120,7 @@ int playeroldy;
 
 char shells;
 char bullets;
-char weapons[2];
+char weapons[3];
 char weapon;
 char armor;
 char combatArmor;
@@ -1392,8 +1403,7 @@ void __fastcall__ checkSectorForPickups(char sec)
   for (o = getFirstObjectInSector(sec); o != 0xff; o = getNextObjectInSector(o))
   {
     objectType = getObjectType(o);
-    if ((objectType >= kOT_GreenArmor && objectType <= kOT_BlueKeycard)
-      || objectType == kOT_PossessedCorpseWithAmmo)
+    if (isPickup(objectType))
     {
       dx = getObjectX(o) - playerx;
       dy = getObjectY(o) - playery;
@@ -1410,8 +1420,15 @@ void __fastcall__ checkSectorForPickups(char sec)
           remove = 0;
           pickupType = kOT_Bullets;
         }
+        if (objectType == kOT_Shotgun && weapons[1])
+        {
+          pickupType = kOT_Bullets;
+        }
+        if (objectType == kOT_Chaingun && weapons[2])
+        {
+          pickupType = kOT_Bullets;
+        }
 
-        if (pickupType >= kOT_GreenArmor && pickupType <= kOT_BlueKeycard)
         {
           char pickedUp = 0;
 
@@ -1473,6 +1490,14 @@ void __fastcall__ checkSectorForPickups(char sec)
             break;
           case kOT_BlueKeycard:
             addKeyCard(8);
+            pickedUp = 1;
+            break;
+          case kOT_Shotgun:
+            weapons[1] = 1;
+            pickedUp = 1;
+            break;
+          case kOT_Chaingun:
+            weapons[2] = 1;
             pickedUp = 1;
             break;
           }
@@ -1687,8 +1712,8 @@ nextLevel:
     bullets = 50;
     shells = 20;
     weapons[0] = 1;
-    weapons[1] = 1;
-    weapons[2] = 1;
+    weapons[1] = 0;
+    weapons[2] = 0;
     weapon = 0;
   }
   resetKeyCard();
@@ -1826,8 +1851,7 @@ nextLevel:
         playerx -= sa;
         playery -= ca;
       }
-//      gotoxy(0, 14);
-//      cprintf("%d %d %d %d. ", playerSector, playerx, playery, playera);
+
       if (shotgunStage != 0)
       {
         --shotgunStage;
@@ -2038,8 +2062,10 @@ nextLevel:
       if (PEEK(198) > 0)
       {
         char w = PEEK(631) - 49;
-        if (w < 3 && weapons[w])
+        if (w < 3 && w != weapon && weapons[w])
         {
+          preparePickupMessage();
+          printCentered(weaponNames[w], 14);
           weapon = w;
           drawHudAmmo();
         }

@@ -42,6 +42,8 @@
 .export _getMobjDeathState
 .export _getMobjDeathSound
 
+.export _isPickup
+
 .export _texFrameTexture
 .export _texFrameSolid
 .export _texFrameWidthScale
@@ -392,30 +394,63 @@ _setMobjStateIndex:
 
 
 texFrameTexture:
-.byte 8,11,14,17,11,22,22,23,23,23,23,23,24,21,24,22,20,20,20,20,19,20,19,25
+.byte 8,11,14,17,11,22,22,23
+.byte 23,23,23,23,24,21,24,22
+.byte 23,23,22,20,20,20,20,19
+.byte 20,19,25
 
 texFrameWidthScale:
-.byte 5,5,3,3,5,5,5,5,8,8,8,8,8,5,8,2,4,4,4,3,3,3,4,2
+.byte 5,5,3,3,5,5,5,5
+.byte 8,8,8,8,8,5,8,2
+.byte 5,5,5,4,4,4,3,3
+.byte 3,4,2
 
 ; from the bottom of the texture
 texFrameStartY:
-.byte 0,0,0,0,0, 8,0,8,24,24,16,16,16,0,0,16,0,0,8,16,0,24,16,0
+.byte 0,0,0,0,0,8,0,8
+.byte 24,24,16,16,16,0,0,16
+.byte 0,0,24,0,0,8,16,0
+.byte 24,16,0
 
 texFrameHeight:
-.byte 0,0,0,0,0, 8,8,8,8,8,8,8,16,0,16,4,8,8,8,8,16,8,16,32
+.byte 0,0,0,0,0,8,8,8
+.byte 8,8,8,8,16,0,16,4
+.byte 8,8,8,8,8,8,8,16
+.byte 8,16,32
 
 ; the next three tables could be codified quite easily
 ; but it would only save a handful of bytes
 
 texFrameSolid:
-.byte 1,1,1,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0
+.byte 1,1,1,1,1,0,0,0
+.byte 0,0,0,0,0,1,0,0
+.byte 0,0,0,0,0,0,0,0
+.byte 0,0,0
 
 texFrameStartX:
-.byte 0,0,0,0,0, 0,0,0,0,8,0,8,0,0,0,0,0,0,0,0,0,0,0,0
+.byte 0,0,0,0,0,0,0,0
+.byte 0,8,0,8,0,0,0,0
+.byte 0,0,0,0,0,0,0,0
+.byte 0,0,0
 
 ; either 8 or 16
 texFrameWidth:
-.byte 0,0,0,0,0, 16,16,16,8,8,8,8,16,0,16,16,16,16,16,16,16,16,16,16
+.byte 0,0,0,0,0,16,16,16
+.byte 8,8,8,8,16,0,16,16
+.byte 16,16,16,16,16,16,16,16
+.byte 16,16,16
+
+
+isPickup:
+.byte 0,0,0,0,0,1,1,1
+.byte 1,1,1,1,0,0,0,0
+.byte 1,1,1,0,1,0,0,0
+.byte 0,0,0
+
+_isPickup:
+tax
+lda isPickup,x
+rts
 
 _texFrameTexture:
   tay

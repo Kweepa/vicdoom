@@ -68,11 +68,11 @@ numSectors:
 numObj:
 .byte 39
 playerSpawnX:
-.byte 61
+.byte 60
 playerSpawnY:
 .byte 14
 playerSpawnAngle:
-.byte 48
+.byte 0
 playerSpawnSector:
 .byte 1
 mapName:
@@ -81,7 +81,7 @@ mapName:
 numEnemies:
 .byte 20
 numItems:
-.byte 14
+.byte 12
 numSecrets:
 .byte 1
 parTime:
@@ -114,7 +114,7 @@ objYhi:
 objType:
 .byte 8, 6, 0, 0, 1, 0, 11, 1, 1, 1, 1, 0, 8, 0, 9, 2
 .byte 0, 0, 2, 5, 8, 2, 1, 0, 2, 2, 0, 12, 12, 12, 13, 13
-.byte 7, 7, 8, 7, 8, 7, 7
+.byte 18, 7, 8, 7, 8, 7, 17
 .res 9, 0
 
 objSec:

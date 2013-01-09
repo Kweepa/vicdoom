@@ -77,7 +77,7 @@ mapName:
 numEnemies:
 .byte 20
 numItems:
-.byte 14
+.byte 12
 numSecrets:
 .byte 2
 parTime:
@@ -108,8 +108,8 @@ objYhi:
 
 objType:
 .byte 13, 13, 15, 15, 10, 11, 1, 0, 2, 2, 0, 1, 1, 1, 0, 15
-.byte 6, 8, 7, 1, 0, 2, 0, 1, 0, 8, 1, 1, 15, 0, 12, 12
-.byte 1, 0, 8, 7, 8, 7, 7, 7, 7, 7
+.byte 6, 8, 18, 1, 0, 2, 0, 1, 0, 8, 1, 1, 15, 0, 12, 12
+.byte 1, 0, 8, 17, 8, 7, 7, 7, 7, 7
 .res 6, 0
 
 objSec:

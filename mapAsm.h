@@ -16,6 +16,9 @@ enum EObjType
    kOT_Pillar,
    kOT_Skullpile,
    kOT_Acid,
+   kOT_Chainsaw,
+   kOT_Shotgun,
+   kOT_Chaingun,
    kOT_PossessedCorpse,
    kOT_PossessedCorpseWithAmmo,
    kOT_ImpCorpse,
@@ -81,3 +84,5 @@ char __fastcall__ getParTime(void);
 void __fastcall__ resetSectorsVisited(void);
 void __fastcall__ setSectorVisited(int i);
 char __fastcall__ getNumVisitedSecrets(void);
+
+char __fastcall__ isPickup(char ot);
