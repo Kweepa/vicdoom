@@ -396,7 +396,7 @@ _setMobjStateIndex:
 texFrameTexture:
 .byte 8,11,14,17,11,22,22,23
 .byte 23,23,23,23,24,21,24,22
-.byte 23,23,22,20,20,20,20,19
+.byte 20,23,22,20,20,20,20,19
 .byte 20,19,25
 
 texFrameWidthScale:
@@ -409,7 +409,7 @@ texFrameWidthScale:
 texFrameStartY:
 .byte 0,0,0,0,0,8,0,8
 .byte 24,24,16,16,16,0,0,16
-.byte 0,0,24,0,0,8,16,0
+.byte 24,0,24,0,0,8,16,0
 .byte 24,16,0
 
 texFrameHeight:

@@ -84,8 +84,8 @@ signed char spanStackR[10];
 
 char *pickupNames[] =
 {
-  "green armor!",
-  "blue armor!",
+  "security armor!",
+  "combat armor!",
   "ammo!",
   "medikit!",
   "red keycard!",
@@ -99,6 +99,7 @@ char *pickupNames[] =
 
 char *weaponNames[] =
 {
+  "chainsaw",
   "pistol",
   "shotgun",
   "chaingun"
@@ -120,7 +121,7 @@ int playeroldy;
 
 char shells;
 char bullets;
-char weapons[3];
+char weapons[4];
 char weapon;
 char armor;
 char combatArmor;
@@ -436,15 +437,26 @@ void __fastcall__ drawHudArmor(void)
     print3DigitNumToScreen(armor, 0x1000 + 22*21 + 14);
 }
 
-char weaponSymbol[3] = { 38, 31, 34 };
+char weaponSymbol[] = { 61, 38, 31, 34 };
 
 void __fastcall__ drawHudAmmo(void)
 {
   // weapon and ammo
-  POKE(0x1000 + 22*21 + 1, weaponSymbol[weapon]);
+  char sym = weaponSymbol[weapon];
+  if (!weapons[weapon]) ++sym; // select fist instead
+  POKE(0x1000 + 22*21 + 1, sym);
   POKE(0x9400 + 22*21 + 1, 3);
-  setTextColor(3);
-  print2DigitNumToScreen(weapon == 1 ? shells : bullets, 0x1000 + 22*21 + 2);
+  if (weapon == 0)
+  {
+    POKE(0x1000 + 22*21 + 2, 32);
+    POKE(0x1000 + 22*21 + 3, 32);
+    POKE(0x1000 + 22*21 + 4, 32);
+  }
+  else
+  {
+    setTextColor(3);
+    print2DigitNumToScreen(weapon == 2 ? shells : bullets, 0x1000 + 22*21 + 2);
+  }
 }
 
 void __fastcall__ drawHudHealth(void)
@@ -1420,11 +1432,11 @@ void __fastcall__ checkSectorForPickups(char sec)
           remove = 0;
           pickupType = kOT_Bullets;
         }
-        if (objectType == kOT_Shotgun && weapons[1])
+        if (objectType == kOT_Shotgun && weapons[2])
         {
           pickupType = kOT_Bullets;
         }
-        if (objectType == kOT_Chaingun && weapons[2])
+        if (objectType == kOT_Chaingun && weapons[3])
         {
           pickupType = kOT_Bullets;
         }
@@ -1453,7 +1465,7 @@ void __fastcall__ checkSectorForPickups(char sec)
             }
             break;
           case kOT_Bullets:
-            if (weapons[1])
+            if (weapons[2])
             {
               if (shells < 50 && (P_Random()&64))
               {
@@ -1463,10 +1475,10 @@ void __fastcall__ checkSectorForPickups(char sec)
                 pickedUp = 1;
               }
             }
-            if (!pickedUp && bullets < 200)
+            if (!pickedUp && bullets < 99)
             {
               bullets += 10;
-              if (bullets > 200) bullets = 200;
+              if (bullets > 99) bullets = 99;
               drawHudAmmo();
               pickedUp = 1;
             }
@@ -1492,12 +1504,17 @@ void __fastcall__ checkSectorForPickups(char sec)
             addKeyCard(8);
             pickedUp = 1;
             break;
+          case kOT_Chainsaw:
+            weapons[0] = 1;
+            pickedUp = 1;
+            drawHudAmmo();
+            break;
           case kOT_Shotgun:
-            weapons[1] = 1;
+            weapons[2] = 1;
             pickedUp = 1;
             break;
           case kOT_Chaingun:
-            weapons[2] = 1;
+            weapons[3] = 1;
             pickedUp = 1;
             break;
           }
@@ -1611,7 +1628,8 @@ void handleCheatCodes(void)
       weapons[0] = 1;
       weapons[1] = 1;
       weapons[2] = 1;
-      bullets = 200;
+      weapons[3] = 1;
+      bullets = 99;
       shells = 50;
       drawHudAmmo();
       armor = 200;
@@ -1711,10 +1729,11 @@ nextLevel:
     combatArmor = 0;
     bullets = 50;
     shells = 20;
-    weapons[0] = 1;
-    weapons[1] = 0;
+    weapons[0] = 0;
+    weapons[1] = 1;
     weapons[2] = 0;
-    weapon = 0;
+    weapons[3] = 0;
+    weapon = 1;
   }
   resetKeyCard();
 
@@ -1869,7 +1888,11 @@ nextLevel:
         // pressed fire
         // take the high nybble, because it's more random
         char damage = 0;
-        if (weapon == 1)
+        if (weapon == 0)
+        {
+          // fist or chainsaw
+        }
+        else if (weapon == 2)
         {
           if (shells > 0 && shotgunStage == 0)
           {
@@ -1903,7 +1926,7 @@ nextLevel:
             --bullets;
             damage = P_Random()>>4;
 
-            if (weapon == 0)
+            if (weapon == 1)
             {
               pistolStage = 3;
               if (difficulty == 0)
@@ -2062,12 +2085,22 @@ nextLevel:
       if (PEEK(198) > 0)
       {
         char w = PEEK(631) - 49;
-        if (w < 3 && w != weapon && weapons[w])
+        if (w < 4 && w != weapon)
         {
-          preparePickupMessage();
-          printCentered(weaponNames[w], 14);
-          weapon = w;
-          drawHudAmmo();
+          if (w == 0 || weapons[w])
+          {
+            preparePickupMessage();
+            if (!weapons[w])
+            {
+              printCentered("fist", 14);
+            }
+            else
+            {
+              printCentered(weaponNames[w], 14);
+            }
+            weapon = w;
+            drawHudAmmo();
+          }
         }
       }
 

@@ -1,4 +1,4 @@
-^<=>^ for the ^vic-20^
+^doom^ for the ^vic-20^
 
 ported by
           ^steve mccrea^
@@ -11,13 +11,10 @@ developed using
  ^vice^
               viceteam
 
-other tools
-
- adventure game studio
-         aria maestosa
-         paint dot net
- visual studio express
+loader by
+                 tokra
+                  mike
 
 thanks to everyone on
 the ^denial^ forums, and
-to ^]^ for ^<=>^!@
+to ^]^ for ^doom^!@
