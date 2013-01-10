@@ -61,7 +61,7 @@ mapName:
 numEnemies:
 .byte 14
 numItems:
-.byte 7
+.byte 8
 numSecrets:
 .byte 2
 parTime:
