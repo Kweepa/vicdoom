@@ -4,7 +4,7 @@
 .export _readInput
 .export _getControlKeys
 
-.segment "HICODE"
+.segment "STACKCODE"
 
 ; bits reversed from normal understanding
 ; so lowest at the left

@@ -12,12 +12,12 @@ strafe right       ^d^
 use               ^k^
 fire               ^i^
 
+select weapon    ^1^-^4^
+
 ^automap functions:^
 
 toggle automap  ^ctrl^
 
 pan          ^w,a,s,d^
-
 zoom in           ^i^
-zoom out           ^k^
-@
+zoom out           ^k^@

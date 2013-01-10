@@ -252,7 +252,7 @@ void __fastcall__ drawWall(char sectorIndex, char curEdgeIndex, char nextEdgeInd
           if (type == EDGE_TYPE_JAMB)
           {
             texI = prop >> EDGE_PROP_SHIFT;
-            textureIndex = 7;
+            textureIndex = 8;
           }
           else if (!fit)
           {
@@ -1506,15 +1506,18 @@ void __fastcall__ checkSectorForPickups(char sec)
             break;
           case kOT_Chainsaw:
             weapons[0] = 1;
+            weapon = 0;
             pickedUp = 1;
             drawHudAmmo();
             break;
           case kOT_Shotgun:
             weapons[2] = 1;
+            weapon = 2;
             pickedUp = 1;
             break;
           case kOT_Chaingun:
             weapons[3] = 1;
+            weapon = 3;
             pickedUp = 1;
             break;
           }
@@ -1683,7 +1686,7 @@ int main()
 
   load_data_file("psounds");
   load_data_file("plowcode");
-  load_data_file("phicode");
+  load_data_file("pstackcode");
 
   playSoundInitialize();
 

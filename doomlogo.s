@@ -1,7 +1,7 @@
 .setcpu "6502"
 .export _drawLogo
 
-.segment "HICODE"
+.segment "CODE"
 
 bitmap = $1600
 
