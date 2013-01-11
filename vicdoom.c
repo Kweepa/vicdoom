@@ -1913,7 +1913,7 @@ nextLevel:
               if (testFilled(0) < 4)
               {
                 playSound(SOUND_SAWHIT);
-                damage = 10;
+                damage = 2 + ((P_Random()>>4)&3);
               }
               else
               {
