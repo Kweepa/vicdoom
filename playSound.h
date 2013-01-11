@@ -13,7 +13,11 @@ enum ESound
 	SOUND_SGCOCK,
 	SOUND_SGTDTH,
 	SOUND_SHOTGN,
-	SOUND_STNMOV
+	SOUND_STNMOV,
+  SOUND_SAWIDL,
+  SOUND_SAWFUL,
+  SOUND_SAWHIT,
+  SOUND_PUNCH
 };
 
 void __fastcall__ playSoundInitialize(void);

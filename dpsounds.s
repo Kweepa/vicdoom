@@ -66,8 +66,22 @@ dpshotgn:
 .byte 6, 8, 4, 4, 5, 6, 3, 4, 6, 3, 1, 4, 1, 2, 1, 2
 dpstnmov:
 .byte 7, 1, 6, 9, 9, 12, 15, 15
+dpsawidl:
+.byte 20, 0, 0, 2, 1, 0, 0, 1, 2, 0, 0, 2, 1, 0, 0, 1
+.byte 2, 0, 0, 2, 1
+dpsawful:
+.byte 20, 1, 15, 1, 8, 1, 15, 1, 8, 1, 15, 1, 8, 1, 15, 1
+.byte 8, 1, 15, 1, 8
+dpsawhit:
+.byte 25, 3, 1, 4, 1, 4, 1, 5, 1, 6, 1, 7, 1, 9, 2, 10
+.byte 3, 11, 3, 12, 3, 13, 4, 14, 5, 15
+dppunch:
+.byte 59, 9, 14, 9, 14, 10, 14, 10, 14, 10, 14, 10, 14, 10, 14, 10
+.byte 14, 9, 15, 9, 15, 9, 15, 9, 9, 9, 7, 8, 5, 8, 3, 8
+.byte 1, 7, 0, 7, 0, 6, 0, 5, 0, 4, 0, 4, 0, 3, 0, 2
+.byte 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1
 
-; total sound size 672
+; total sound size 808
 soundTable:
 .word dpclaw
 .word dpdmpain
@@ -83,3 +97,7 @@ soundTable:
 .word dpsgtdth
 .word dpshotgn
 .word dpstnmov
+.word dpsawidl
+.word dpsawful
+.word dpsawhit
+.word dppunch

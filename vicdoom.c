@@ -1562,6 +1562,7 @@ char turnLeftSpeed = 0;
 char turnRightSpeed = 0;
 char shotgunStage = 0;
 char pistolStage = 0;
+char sawStage = 0;
 
 #if 0
 char changeLookTime = 7;
@@ -1886,7 +1887,18 @@ nextLevel:
       {
         --pistolStage;
       }
-      if (keys & KEY_FIRE)
+      if (sawStage != 0)
+      {
+        --sawStage;
+      }
+      if (!(keys & KEY_FIRE))
+      {
+        if (weapons[0] && weapon == 0)
+        {
+          playSound(SOUND_SAWIDL);
+        }
+      }
+      else
       {
         // pressed fire
         // take the high nybble, because it's more random
@@ -1894,6 +1906,35 @@ nextLevel:
         if (weapon == 0)
         {
           // fist or chainsaw
+          if (sawStage == 0)
+          {
+            if (weapons[0])
+            {
+              if (testFilled(0) < 4)
+              {
+                playSound(SOUND_SAWHIT);
+                damage = 10;
+              }
+              else
+              {
+                playSound(SOUND_SAWFUL);
+              }
+              sawStage = 1;
+            }
+            else
+            {
+              if (testFilled(0) < 4)
+              {
+                damage = 2;
+                playSound(SOUND_PUNCH);
+              }
+              else
+              {
+                playSound(SOUND_OOF);
+              }
+              sawStage = 3;
+            }
+          }
         }
         else if (weapon == 2)
         {
@@ -1901,6 +1942,7 @@ nextLevel:
           {
             --shells;
             shotgunStage = 7;
+            playSound(SOUND_SHOTGN);
 
             damage = P_Random()>>4;
             if (difficulty == 0)
@@ -1928,6 +1970,7 @@ nextLevel:
           {
             --bullets;
             damage = P_Random()>>4;
+            playSound(SOUND_PISTOL);
 
             if (weapon == 1)
             {
@@ -1961,8 +2004,6 @@ nextLevel:
 
         if (damage != 0)
         {
-          playSound(SOUND_PISTOL);
-
           drawHudAmmo();
           POKE(0x900F, 8+1);
           

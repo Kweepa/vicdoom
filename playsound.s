@@ -66,6 +66,8 @@ tickCount:
 .byte 0
 musicPlaying:
 .byte 0
+tempVol:
+.byte 0
 
 .proc playSoundIrq : near
 
@@ -96,6 +98,26 @@ inc mapTimeSeconds+1
 lda soundIndex
 cmp #$ff
 beq playMusic
+
+ldx effectsVolume
+stx tempVol
+cmp #14 ; sawidl
+bne :+
+lsr tempVol
+lsr tempVol
+:
+
+; turn off music
+lda #0
+sta $900a
+sta $900b
+sta $900c
+
+; turn up volume a bit
+lda $900e
+and #$f0
+ora tempVol
+sta $900e
 
 ; play next sample
 inc soundCount
@@ -267,17 +289,6 @@ iny
 sty soundMax
 lda #0
 sta soundCount
-
-; turn off music
-sta $900a
-sta $900b
-sta $900c
-
-; turn up volume a bit
-lda $900e
-and #$f0
-ora effectsVolume
-sta $900e
 
 ; start the new sound playing
 stx soundIndex

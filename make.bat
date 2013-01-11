@@ -24,7 +24,7 @@ mid2vic\debug\prepend_load_address victormus b770
 mid2vic\debug\prepend_load_address sluts 400
 mid2vic\debug\prepend_load_address lowcode 640
 mid2vic\debug\prepend_load_address textures a000
-mid2vic\debug\prepend_load_address sounds ba10
+mid2vic\debug\prepend_load_address sounds ba90
 mid2vic\debug\prepend_load_address midcode 1200
 mid2vic\debug\prepend_load_address stackcode 0100
 mid2vic\debug\prepend_load_address victory1.txt 1600
