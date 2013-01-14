@@ -51,9 +51,19 @@ noteTable2:
 .byte 195, 197, 200, 203, 207, 209, 212, 214, 216, 219, 221, 223
 .byte 224, 226, 228, 229, 231, 232, 233, 235, 236, 237, 238, 239
 
+soundPriorities:
+; claw, dmpain, doropn, dorcls, itemup, oof
+.byte 2,2,1,1,1,2
+; gurgle, pistol, plpain, popain, sgcock, sgtdth
+.byte 0,2,2,2,2,2
+; shotgn, stnmov, sawidl, sawful, sawhit, punch
+.byte 2,0,0,1,2,2
+
 soundPointer = $30
 soundIndex:
 .byte $ff
+soundPriority:
+.byte 0
 soundCount:
 .byte 0
 soundMax:
@@ -140,6 +150,8 @@ sta $900d
 
 lda #$ff
 sta soundIndex
+lda #0
+sta soundPriority
 
 ; set to music volume
 lda $900e
@@ -271,6 +283,13 @@ jmp end
 .proc _playSound : near
 
 tax
+lda soundPriorities,x
+cmp soundPriority
+bcc :+
+
+sta soundPriority
+
+txa
 asl
 tay
 ; first stop the old sound
@@ -292,7 +311,7 @@ sta soundCount
 
 ; start the new sound playing
 stx soundIndex
-
+:
 rts
 
 .endproc

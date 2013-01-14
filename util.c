@@ -29,7 +29,7 @@ void __fastcall__ playMusic(char *name)
 void __fastcall__ load_full_text_screen(char *fname)
 {
   int i, k, m, q;
-  char x, c;
+  char x, c, d;
 
   POKE(0x900f,8); //black border
   POKE(198, 0);
@@ -40,11 +40,12 @@ void __fastcall__ load_full_text_screen(char *fname)
   // clear screen
   clearScreen();
 
-  k = 0x1600;
+  k = 0xbe00;
   i = 0x1000;
   m = i;
   q = 0x9400;
   c = 2;
+  d = 0;
   while (1)
   {
     x = PEEK(k);
@@ -61,6 +62,10 @@ void __fastcall__ load_full_text_screen(char *fname)
       // toggle between red and yellow
       c = 9 - c;
     }
+    else if (x == '#')
+    {
+      d = 1;
+    }
     else if (x != '\r')
     {
       if (x > 96) x -= 96;
@@ -73,8 +78,12 @@ void __fastcall__ load_full_text_screen(char *fname)
       if (x != 32)
       {
         char wait = 4;
-        if (x == '.' || x == '?' || x == '!') wait = 48;
-        if (x == ',') wait = 16;
+        if (d == 0)
+        {
+          if (x == '.' || x == '?' || x == '!') wait = 48;
+          if (x == ',') wait = 16;
+        }
+        d = 0;
         if (PEEK(198) == 0) waitForRaster(wait);
       }
       POKE(m, 32);

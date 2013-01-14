@@ -34,7 +34,7 @@
 
 .autoimport on
 
-.segment "MIDCODE"
+.segment "HICODE"
 
 _eraseMessage:
 
@@ -201,6 +201,28 @@ rts
 
 .endproc
 
+intToAsc:
+  ldy #$2f
+  ldx #$3a
+  sec
+:   iny
+    sbc #100
+    bcs :-
+:   dex
+    adc #10
+    bmi :-
+  adc #$2f
+  rts
+
+textcolor:
+.byte 1
+
+_setTextColor:
+  sta textcolor
+  rts
+
+.segment "LOWCODE"
+
 x22p7:
 .byte 51, 73, 95, 117, 139, 161, 183
 meltCount:
@@ -255,26 +277,7 @@ sm: lda #0 ; health
 
 .endproc
 
-
-intToAsc:
-  ldy #$2f
-  ldx #$3a
-  sec
-:   iny
-    sbc #100
-    bcs :-
-:   dex
-    adc #10
-    bmi :-
-  adc #$2f
-  rts
-
-textcolor:
-.byte 1
-
-_setTextColor:
-  sta textcolor
-  rts
+.segment "CODE"
 
 .proc _print3DigitNumToScreen: near
   ; AX pos
@@ -310,6 +313,7 @@ sm2: sta $9400,y
   jmp incsp1
 
 .endproc
+
 
 .proc _print2DigitNumToScreen: near
   ; AX pos

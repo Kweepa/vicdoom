@@ -75,9 +75,6 @@ playerSpawnAngle:
 .byte 0
 playerSpawnSector:
 .byte 2
-mapName:
-.byte "nuclear plant"
-.res 9, 0
 numEnemies:
 .byte 17
 numItems:

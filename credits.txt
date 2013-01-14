@@ -1,20 +1,23 @@
 ^doom^ for the ^vic-20^
 
-ported by
-          ^steve mccrea^
+ported by ^steve mccrea^
 
 developed using
 
  ^cc65^
      ullrich bassewitz
 
- ^vice^
-              viceteam
+ ^vice^   viceteam#.org
 
-loader by
-                 tokra
-                  mike
+loader by        ^tokra^
+
+                  ^mike^
+
 
 thanks to everyone on
+
 the ^denial^ forums, and
-to ^]^ for ^doom^!@
+
+to ^]^ for ^doom^!
+
+2013 kweepa#.com.@

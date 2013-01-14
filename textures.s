@@ -7,24 +7,23 @@
 .include "GRATE.S"
 .include "SWITCH.S"
 .include "DOOR.S"
-.include "HEXAGONS.S"
 .include "DOORTRAK.S"
 
-.include "POSWALK.S"  ;9
+.include "POSWALK.S"  ;8
 .include "POSATK.S"
 .include "POSPAIN.S"
-.include "IMP.S"      ;12
+.include "IMP.S"      ;11
 .include "IMPATK.S"
 .include "IMPPAIN.S"
-.include "DEMON.S"    ;15
+.include "DEMON.S"    ;14
 .include "DEMONATK.S"
 .include "DEMONPAIN.S"
-.include "CACO.S"     ;18
+.include "CACO.S"     ;17
 .include "CACOPAIN.S"
 .include "CACODEAD.S"
-.include "CORPSES.S"  ;21
+.include "CORPSES.S"  ;20
 
-.include "TECHCOLUMN.S"    ;22
+.include "TECHCOLUMN.S"    ;21
 .include "ARMOR.S"
 .include "ITEMS.S"
 .include "BARRELSKULLS.S"

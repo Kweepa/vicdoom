@@ -13,6 +13,9 @@
 
 #pragma staticlocals(on)
 
+extern char *caLevelNames[];
+extern char level;
+
 void __fastcall__ waitASecond(void)
 {
   char i = 60;
@@ -89,7 +92,7 @@ void __fastcall__ summaryScreen(void)
   clearScreen();
   
   textcolor(1);
-  printCentered(getMapName(), 1);
+  printCentered(caLevelNames[level-1], 1);
   textcolor(2);
   printCentered("finished", 2);
   cputsxy(4, 5, "kills");

@@ -55,9 +55,6 @@ playerSpawnAngle:
 .byte 0
 playerSpawnSector:
 .byte 0
-mapName:
-.byte "hangar"
-.res 16, 0
 numEnemies:
 .byte 14
 numItems:

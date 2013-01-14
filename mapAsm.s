@@ -68,8 +68,6 @@
 .export _setSectorVisited
 .export _getNumVisitedSecrets
 
-.export _getMapName
-
 .import _getCurSector
 .import _getPlayerX
 .import _getPlayerY
@@ -690,11 +688,6 @@ lda sectorIndex
 sta objSec,x
 
 jmp incsp1
-
-_getMapName:
-lda #<mapName
-ldx #>mapName
-rts
 
 _getNumEnemies:
 lda numEnemies

@@ -73,9 +73,6 @@ playerSpawnAngle:
 .byte 0
 playerSpawnSector:
 .byte 0
-mapName:
-.byte "central processing"
-.res 4, 0
 numEnemies:
 .byte 20
 numItems:

@@ -18,6 +18,9 @@
 	.export     _testFilledWithY
 	.export     _setFilled
 
+  .import _fastMultiplySetup16x8
+  .import _fastMultiply16x8
+
 ;
 textures = $A000
 bitmap = $1600
@@ -204,24 +207,13 @@ bmi noadjust
 beq noadjust
 ldx #32
 stx height
+
 ; multiply yStep by overage
-ldx #0
-jsr log2
-sta tmp
-stx tmp+1
+
+jsr _fastMultiplySetup16x8e24
 lda stepLo+1
 ldx stepHi+1
-jsr log2
-clc
-adc tmp
-tay
-txa
-adc tmp+1
-clc
-adc #8
-tax
-tya
-jsr exp2
+jsr _fastMultiply16x8e24
 clc
 adc texY
 sta texY
@@ -452,24 +444,14 @@ bmi noadjust
 beq noadjust
 ldx #32
 stx height
+
+
 ; multiply yStep by overage
-ldx #0
-jsr log2
-sta tmp
-stx tmp+1
+
+jsr _fastMultiplySetup16x8e24
 lda stepLo+1
 ldx stepHi+1
-jsr log2
-clc
-adc tmp
-tay
-txa
-adc tmp+1
-clc
-adc #8
-tax
-tya
-jsr exp2
+jsr _fastMultiply16x8e24
 clc
 adc texY
 sta texY

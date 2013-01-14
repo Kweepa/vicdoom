@@ -71,9 +71,6 @@ playerSpawnAngle:
 .byte 0
 playerSpawnSector:
 .byte 0
-mapName:
-.byte "toxin refinery"
-.res 8, 0
 numEnemies:
 .byte 20
 numItems:

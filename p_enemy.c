@@ -93,27 +93,27 @@ ActionFn actions[] = { A_Chase, A_Flinch, A_Melee, A_Shoot, A_Missile, A_Fall, A
 
 char state_texture[] =
 {
-  TEX_ANIMATE + 9,
-  11,
+  TEX_ANIMATE + 8,
   10,
-  11,
+  9,
+  10,
 
-  TEX_ANIMATE + 12,
-  14,
+  TEX_ANIMATE + 11,
   13,
+  12,
+  12,
   13,
-  14,
 
-  TEX_ANIMATE + 15,
-  17,
+  TEX_ANIMATE + 14,
   16,
-  17,
+  15,
+  16,
 
-  TEX_ANIMATE + 18,
-  19,
+  TEX_ANIMATE + 17,
   18,
+  17,
+  17,
   18,
-  19,
   
   0
 };

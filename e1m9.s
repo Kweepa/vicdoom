@@ -1,11 +1,11 @@
 .segment "MAPDATA"
 ; sector data
 secVerts:
-.byte 0, 1, 2, 3, 0, 0, 0, 0
+.byte 0, 1, 2, 3, 3, 2, 1, 0
 .res 504, 0
 
 secEdges:
-.byte 1, 2, 3, 0, 0, 0, 0, 0
+.byte 1, 2, 3, 0, 3, 4, 3, 4
 .res 504, 0
 
 ; summary data (8 bytes)
@@ -25,9 +25,6 @@ playerSpawnAngle:
 .byte 0
 playerSpawnSector:
 .byte 0
-mapName:
-.byte "slough of despair"
-.res 5, 0
 numEnemies:
 .byte 1
 numItems:

@@ -85,8 +85,6 @@ savex = $4C
 angle = $50
 cosa = $51
 sina = $52
-logcosa = $53
-logsina = $55
 cameraX = $57
 cameraY = $59
 
@@ -106,14 +104,14 @@ cameraY = $59
  	txa
  	eor	#$FF
  	adc	#0
-   	tax
+  tax
  	tya
 .endmacro
 
 .macro add_to_stack val
 .local skip
-    ldy #val
-    pha
+  ldy #val
+  pha
  	clc
  	tya
  	adc	sp
@@ -240,59 +238,6 @@ tya
 jsr exp2
 
 add_to_stack 2
-rts
-
-.endproc
-
-; ---------------------------------------------------------------
-
-; int __fastcall__ _mul88(int p, int q)
-; p in ax
-; logq in tmp/tmp+1, sign of q in tmps
-
-.proc _mul88:near
-
-; convert p to log
-; first check it's not zero
-cmp #0
-bne pnotzero
-cpx #0
-bne pnotzero
-rts
-
-pnotzero:
-tay
-txa
-eor tmps
-sta tmps
-tya
-cpx #0
-bpl ppos
-
-negate_ax
-
-ppos:
-jsr log2
-sta tmp+2
-stx tmp+3
-
-lda tmp
-clc
-adc tmp+2
-tay
-lda tmp+1
-adc tmp+3
-tax
-tya
-
-jsr exp2
-
-ldy tmps
-bpl pqpos
-
-negate_ax
-
-pqpos:
 rts
 
 .endproc
@@ -515,47 +460,6 @@ tay
 lda sintab,y
 sta cosa
 
-lda angle
-and #15
-beq sca_done
-
-lda #0
-ldx sina
-cpx #0
-bpl sca_sinPositive
-jsr negax
-sca_sinPositive:
-jsr log2
-
-; divide by 256*127 (subtract 06FD)
-; this routine is purely for the transform
-
-sec
-sbc #$FD
-sta logsina
-txa
-sbc #$06
-sta logsina+1
-
-lda #0
-ldx cosa
-cpx #0
-bpl sca_cosPositive
-jsr negax
-sca_cosPositive:
-jsr log2
-
-; divide by 256*127 (subtract 06FD)
-; this routine is purely for the transform
-
-sec
-sbc #$FD
-sta logcosa
-txa
-sbc #$06
-sta logcosa+1
-
-sca_done:
 rts
 
 .endproc
