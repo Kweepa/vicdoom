@@ -494,8 +494,9 @@ boolean __fastcall__ P_CheckMissileRange(void)
 	
   dist = distanceFromPlayer;
 
-  // almost impossible to dodge these
-  if (dist < 6)
+  // almost impossible to dodge projectiles
+  // (anything with a melee state also fires projectiles)
+  if (getMobjMeleeState() != 0xff && dist < 6)
     return false;
 
 #if 0
