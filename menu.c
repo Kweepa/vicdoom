@@ -199,7 +199,7 @@ char __fastcall__ runMenu(char canReturn)
     {
 	    char oldItem = item;
 	    --item;
-      if (item == 255) item = menuSize;
+      if (item == 255) item = menuSize-1;
 	    drawMenuItem(oldItem);
 	    drawMenuItem(item);
 	    playSound(SOUND_STNMOV);

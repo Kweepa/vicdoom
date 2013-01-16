@@ -242,7 +242,6 @@ sta curX
 and #$03
 tax
 lda tmasktab,x
-eor #$ff
 sta smask+1
 
 iny
@@ -274,6 +273,7 @@ lda #>buffer
 adc #0 ; plus carry
 sta scrbuf+2
 sta scrbuf2+2
+sta scrbuf3+2
 
 lda #32 ; HALFSCREENHEIGHT
 sec
@@ -282,6 +282,7 @@ clc
 adc scrbuf+1
 sta scrbuf+1
 sta scrbuf2+1
+sta scrbuf3+1
 
 ;     texAddr = textures + 128*textureIndex + TEXHEIGHT*(texI/4);
 
@@ -378,13 +379,13 @@ lsr
 lsr
 lsr
 lsr
-sta tmp
 scrbuf:
-lda buffer,x ; self modified screen addr
+eor buffer,x ; self modified screen addr
 smask:
 and #0
-ora tmp
 scrbuf2:
+eor buffer,x ; self modified screen addr
+scrbuf3:
 sta buffer,x ; self modified screen addr
 dex
 bpl loop
@@ -475,7 +476,6 @@ sta curX
 and #$03
 tax
 lda tmasktab,x
-eor #$ff
 sta smask+1
 
 iny
@@ -506,6 +506,7 @@ lda #>buffer
 adc #0 ; plus carry
 sta scrbuf+2
 sta scrbuf2+2
+sta scrbuf3+2
 
 lda #32 ; HALFSCREENHEIGHT
 sec
@@ -514,6 +515,7 @@ clc
 adc scrbuf+1
 sta scrbuf+1
 sta scrbuf2+1
+sta scrbuf3+1
 
 ;     texAddr = textures + 128*textureIndex + TEXHEIGHT*(texI/4);
 
@@ -636,14 +638,14 @@ lsr
 lsr
 lsr
 lsr
-sta tmp
 scrbuf:
-lda $1800,x
+eor buffer,x ; self modified screen addr
 smask:
 and #0 ; self modified immediate operand
-ora tmp
 scrbuf2:
-sta $1800,x ; self modified screen addr
+eor buffer,x ; self modified screen addr
+scrbuf3:
+sta buffer,x ; self modified screen addr
 dontWrite:
 dex
 bpl loop

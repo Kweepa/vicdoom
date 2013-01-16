@@ -21,6 +21,8 @@ char __fastcall__ mobjInfoType(void);
 void __fastcall__ setMobjInfoType(char);
 char __fastcall__ mobjStateIndex(void);
 void __fastcall__ setMobjStateIndex(char);
+char __fastcall__ mobjTimeout(void);
+void __fastcall__ setMobjTimeout(char);
 
 void __fastcall__ setMobjCurrentType(char);
 char getMobjSpeed(void);

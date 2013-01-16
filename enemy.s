@@ -30,6 +30,8 @@
 .export _setMobjInfoType
 .export _mobjStateIndex
 .export _setMobjStateIndex
+.export _mobjTimeout
+.export _setMobjTimeout
 
 .export _setMobjCurrentType
 .export _getMobjSpeed
@@ -261,6 +263,8 @@ mobjInfoType:
 .res 21,0
 mobjStateIndex:
 .res 21,0
+mobjTimeout:
+.res 21,0
 
 mobjIndex:
 .byte 0
@@ -390,6 +394,17 @@ _mobjStateIndex:
 _setMobjStateIndex:
   ldx mobjIndex
   sta mobjStateIndex,x
+  rts
+
+_mobjTimeout:
+  ldx mobjIndex
+  lda mobjTimeout,x
+  ldx #0
+  rts
+
+_setMobjTimeout:
+  ldx mobjIndex
+  sta mobjTimeout,x
   rts
 
 

@@ -246,6 +246,7 @@ char __fastcall__ allocMobj(char o)
       setMobjInfoType(ot);
       setMobjCurrentType(ot);
       setMobjHealth(getMobjSpawnHealth());
+      setMobjTimeout(100);
       goToChaseState();
       
       return i;
@@ -270,7 +271,7 @@ void __fastcall__ p_enemy_startframe(void)
     // think dying dudes and projectiles
     if (mobjAllocated(i))
     {
-      if (mobjHealth() <= 0 || i == MAX_MOBJ-1)
+      if (mobjTimeout() < 32 || i == MAX_MOBJ-1)
       {
         p_enemy_add_thinker(objForMobj(i));
       }
@@ -304,6 +305,7 @@ void __fastcall__ p_enemy_wasseenthisframe(char o)
     char i = mobjForObj(o);
     setMobjIndex(i);
     addMobjFlags(MF_WASSEENTHISFRAME);
+    setMobjTimeout(0);
   }
 }
 
@@ -341,6 +343,10 @@ void __fastcall__ p_enemy_single_think(char mobjIndex)
   si = mobjStateIndex();
   actionIndex = state_actionIndex[si];
   distanceFromPlayer = P_ApproxDistance(playerx - getObjectX(objIndex), playery - getObjectY(objIndex));
+  if (distanceFromPlayer > 12)
+  {
+    setMobjTimeout(mobjTimeout()+1);
+  }
 #ifdef PRINT_ACTION
   printAction();
 #endif
@@ -420,6 +426,8 @@ boolean P_CheckSight(void)
   // this table will be cleared at the start of render
   // and filled in during render
   if (testMobjFlags(MF_WASSEENTHISFRAME)) return true;
+  if (mobjTimeout() < 10 && distanceFromPlayer < 10) return true;
+  if (distanceFromPlayer < 3) return true;
   return false;
 }
 
@@ -920,26 +928,28 @@ char cacodemonsDead = 0;
 
 void A_Fall(void)
 {
-   if (decMobjMovecount() == 0)
-   {
-     // make the object into a static corpse
-     char o = objForMobj(actorIndex);
-     char ot = mobjInfoType();
-     setObjectType(o, kOT_PossessedCorpseWithAmmo + ot);
-     if (ot == MOBJINFO_CACODEMON)
-     {
-       // count to 2
-       ++cacodemonsDead;
-       // open door when done
-       if (cacodemonsDead == 2)
-       {
-         // edge 3 is the door to the final switch
-         basicOpenDoor(3);
-         playSound(SOUND_DOROPN);
-       }
-     }
-     setMobjAllocated(0);
-   }
+  setMobjTimeout(0);
+
+  if (decMobjMovecount() == 0)
+  {
+    // make the object into a static corpse
+    char o = objForMobj(actorIndex);
+    char ot = mobjInfoType();
+    setObjectType(o, kOT_PossessedCorpseWithAmmo + ot);
+    if (ot == MOBJINFO_CACODEMON)
+    {
+      // count to 2
+      ++cacodemonsDead;
+      // open door when done
+      if (cacodemonsDead == 2)
+      {
+        // edge 3 is the door to the final switch
+        basicOpenDoor(3);
+        playSound(SOUND_DOROPN);
+      }
+    }
+    setMobjAllocated(0);
+  }
 }
 
 void A_Flinch(void)
@@ -955,6 +965,7 @@ void A_Flinch(void)
 void A_Fly(void)
 {
   boolean die = false;
+  setMobjTimeout(0);
   if (distanceFromPlayer < 3)
   {
     die = true;
