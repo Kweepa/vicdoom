@@ -26,6 +26,7 @@
 
 // todo
 // 19. test
+// X 19.1 fix flashing projectile bug - was a bug in division: (long)/(unsigned int) fails for some negative numerators
 // 20. bundle, release, make video
 
 // notes for video
@@ -678,61 +679,76 @@ char sorted[8];
 char numSorted;
 char numTransparent;
 
+#if DEBUG_SECTORLISTS
+int startSectorObjsPos;
+#endif
+
 void __fastcall__ drawObjectsInSector(char sectorIndex, signed char x_L, signed char x_R)
 {
   int vx, vy;
   char o, i, j;
+  char column = 3;
   numSorted = 0;
+
+#if DEBUG_SECTORLISTS
+  startSectorObjsPos += 22;
+  print2DigitNumToScreen(sectorIndex, startSectorObjsPos);
+#endif
   
   // loop through the objects
   for (o = getFirstObjectInSector(sectorIndex); o != 0xff; o = getNextObjectInSector(o))
   {
+#if DEBUG_SECTORLISTS
+    print2DigitNumToScreen(o, startSectorObjsPos + column);
+    column += 3;
+#endif
+
     // inverse transform
     vy = transformxy(getObjectX(o), getObjectY(o));
     
     if (vy > 256)
     {
-       vx = transformx();
-       sorted[numSorted] = numSorted;
+      vx = transformx();
+      sorted[numSorted] = numSorted;
 
-       objO[numSorted] = o;
-       objX[numSorted] = vx;
-       objY[numSorted] = vy;
+      objO[numSorted] = o;
+      objX[numSorted] = vx;
+      objY[numSorted] = vy;
 
-       ++numSorted;
+      ++numSorted;
     }
   }
 
   if (numSorted > 0)
   {
-      // sort
-      for (i = 0; i < numSorted - 1; ++i)
-      {
-         for (j = i + 1; j < numSorted; ++j)
-         {
-            if (objY[sorted[i]] > objY[sorted[j]])
-            {
-               o = sorted[j];
-               sorted[j] = sorted[i];
-               sorted[i] = o;
-            }
-         }
-      }
+    // sort
+    for (i = 0; i < numSorted - 1; ++i)
+    {
+        for (j = i + 1; j < numSorted; ++j)
+        {
+          if (objY[sorted[i]] > objY[sorted[j]])
+          {
+              o = sorted[j];
+              sorted[j] = sorted[i];
+              sorted[i] = o;
+          }
+        }
+    }
 
-      // draw
-      for (i = 0; i < numSorted; ++i)
+    // draw
+    for (i = 0; i < numSorted; ++i)
+    {
+      char type;
+      char index;
+      index = sorted[i];
+      p_enemy_add_thinker(objO[index]);
+      type = getObjectType(objO[index]);
+      if (texFrameSolid(type))
       {
-         char type;
-         char index;
-         index = sorted[i];
-         type = getObjectType(objO[index]);
-         if (texFrameSolid(type))
-         {
-           drawObjectInSector(index, x_L, x_R);
-           p_enemy_add_thinker(objO[index]);
-         }
+        drawObjectInSector(index, x_L, x_R);
       }
     }
+  }
 }
 
 void __fastcall__ queueTransparentObjects(signed char x_L, signed char x_R)
@@ -768,41 +784,41 @@ void __fastcall__ drawTransparentObjects(void)
 // find first edge in sector
 signed char __fastcall__ ffeis(char curSec, signed char x_L, signed char x_R)
 {
-   char i, numVerts;
-   numVerts = getNumVerts(curSec);
-   for (i = 0; i < numVerts; ++i)
-   {
-     signed char sx1, sx2;
-      int ty1, ty2;
-      char ni;
-      ni = (i + 1);
-      if (ni == numVerts) ni = 0;
-      sx1 = getScreenX(i);
-      sx2 = getScreenX(ni);
-      ty1 = getTransformedY(i);
-      ty2 = getTransformedY(ni);
-      // preprocess
-      if (curSec == playerSector)
+  char i, numVerts;
+  numVerts = getNumVerts(curSec);
+  for (i = 0; i < numVerts; ++i)
+  {
+    signed char sx1, sx2;
+    int ty1, ty2;
+    char ni;
+    ni = (i + 1);
+    if (ni == numVerts) ni = 0;
+    sx1 = getScreenX(i);
+    sx2 = getScreenX(ni);
+    ty1 = getTransformedY(i);
+    ty2 = getTransformedY(ni);
+    // preprocess
+    if (curSec == playerSector)
+    {
+      // when inside the sector, adjust the edges clipping the camera plane
+      // so that they are definitely facing the player
+      if (ty1 <= 0 && ty2 > 0) sx1 = x_L;
+      if (ty1 > 0 && ty2 <= 0) sx2 = x_R;
+      if (sx1 <= x_L && sx2 > x_L)
       {
-        // when inside the sector, adjust the edges clipping the camera plane
-        // so that they are definitely facing the player
-        if (ty1 <= 0 && ty2 > 0) sx1 = x_L;
-        if (ty1 > 0 && ty2 <= 0) sx2 = x_R;
-        if (sx1 <= x_L && sx2 > x_L)
-        {
-          return i;
-        }
+        return i;
       }
-      else
+    }
+    else
+    {
+      char firstVertex = getVertexIndex(curSec, i);
+      if (sx1 <= x_L && sx2 > x_L && (ty1 >= 0 || ty2 >= 0))
       {
-        char firstVertex = getVertexIndex(curSec, i);
-        if (sx1 <= x_L && sx2 > x_L && (ty1 >= 0 || ty2 >= 0))
-        {
-          return i;
-        }
+        return i;
       }
-   }
-   return -1;
+    }
+  }
+  return -1;
 }
 
 void __fastcall__ drawSpans(void)
@@ -821,6 +837,13 @@ void __fastcall__ drawSpans(void)
   clearFilled();
   numTransparent = 0;
   typeAtCenterOfView = 0;
+
+#if DEBUG_SECTORLISTS
+  eraseMessage();
+  startSectorObjsPos = 0x1000 + 11*22;
+  print3DigitNumToScreen(getObjectX(47)>>8, 0x100A);
+  print3DigitNumToScreen(getObjectY(47)>>8, 0x100E);
+#endif
 
   stackTop = 0;
   spanStackSec[0] = playerSector;
@@ -1068,14 +1091,7 @@ EPushOutResult __fastcall__ push_out_from_edge(char i)
     }
     dgz = (dist >= 0);
     dle = (dist < edgeLen2);
-#if 0
-    {
-      long len2 = 0;
-      fastMultiplySetup8x8(edgeLen);
-      len2 = ((long)fastMultiply8x8(edgeLen))<<8;
-      dle = dist < len2;
-    }
-#endif
+
     if (dgz & dle)
     {
       thatSector = getOtherSector(edgeGlobalIndex, curSector);
@@ -1875,10 +1891,12 @@ start:
   runMenu(0);
   level = 1;
   godMode = 0;
+  health = 0;
 
 nextLevel:
 
   POKE(0x900F, 8 + 5); // green border, and black screen
+  clearScreen();
 
   {
     char p = '0' + level;

@@ -574,22 +574,22 @@ rts
 ; first->next->prev = o
 ; first = o
 
-tay ; AY = sec, X = o
-lda sectorFirstObj,y ; A = next, Y = sec, X = o
+tay                   ; A = sec, Y = sec, X = o
+lda sectorFirstObj,y  ; A = next, Y = sec, X = o
 
-sta sectorNextObj,x ; o->next = next
-lda #$ff ; A = ff, Y = sec, X = o
-sta sectorPrevObj,x ; o->prev = ff
-stx objectIndex ; A = ff, Y = sec, X = o, tmp = o
-lda sectorFirstObj,y ; A = next, Y = sec, X = tmp = o
-tax ; A = next, Y = sec, X = next, tmp = o
+sta sectorNextObj,x   ; o->next = next
+lda #$ff              ; A = ff, Y = sec, X = o
+sta sectorPrevObj,x   ; o->prev = ff
+stx objectIndex       ; A = ff, Y = sec, X = o, tmp = o
+lda sectorFirstObj,y  ; A = next, Y = sec, X = tmp = o
+tax                   ; A = next, Y = sec, X = next, tmp = o
 bmi @skip
-lda objectIndex ; A = o, Y = sec, X = next, tmp = o
-sta sectorPrevObj,x ; next->prev = o
+lda objectIndex       ; A = o, Y = sec, X = next, tmp = o
+sta sectorPrevObj,x   ; next->prev = o
 @skip:
-lda objectIndex ; A = o, Y = sec, X = next, tmp = o
-sta sectorFirstObj,y ; first = o
-tax ; A = o, X = o
+lda objectIndex       ; A = o, Y = sec, X = next, tmp = o
+sta sectorFirstObj,y  ; first = o
+tax                   ; A = o, X = o
 rts
 
 _addObjectsToSectors:

@@ -4,8 +4,8 @@ ported by ^steve mccrea^
 
 developed using
 
- ^cc65^
-     ullrich bassewitz
+ cc65
+ ^ullrich von bassewitz^
 
  ^vice^     viceteam#.org
 
@@ -16,8 +16,8 @@ thanks to everyone on
 
 the ^denial^ forums,
 
-especially ^TNT^ and
+especially ^tokra^, ^TNT^,
 
-^darkatx^, and to ^]^!
+and ^darkatx^, and to ^]^!
 
 2013 kweepa#.com.@

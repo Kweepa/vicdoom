@@ -178,7 +178,9 @@ char __fastcall__ runMenu(char canReturn)
   waitForEscReleased();
    
   drawLogo();
-   
+//  printCentered("akronyme  analogiker", 0);
+//  printCentered("presents", 1);
+
   enterNumberInMenuItem(caMenus[2][0] + 15, getEffectsVolume());
   enterNumberInMenuItem(caMenus[2][1] + 13, getMusicVolume());
 

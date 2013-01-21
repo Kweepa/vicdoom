@@ -24,7 +24,7 @@
 //
 //-----------------------------------------------------------------------------
 //
-// Ported to the VIC-20 and cc65 in 2010-2012 by Steve McCrea
+// Ported to the VIC-20 and cc65 in 2010-2013 by Steve McCrea
 //
 //-----------------------------------------------------------------------------
 
@@ -192,6 +192,7 @@ char numMobj = 0;
 
 char numEnemies;
 char numKills;
+char cacodemonsDead;
 
 char __fastcall__ p_enemy_getKillPercentage(void)
 {
@@ -208,6 +209,7 @@ void __fastcall__ p_enemy_resetMap(void)
   }
   numEnemies = 0;
   numKills = 0;
+  cacodemonsDead = 0;
 }
 
 //char numAllocated = 0;
@@ -268,10 +270,9 @@ void __fastcall__ p_enemy_startframe(void)
   {
     setMobjIndex(i);
     removeMobjFlags(MF_WASSEENTHISFRAME|MF_THOUGHTTHISFRAME);
-    // think dying dudes and projectiles
     if (mobjAllocated(i))
     {
-      if (mobjTimeout() < 32 || i == MAX_MOBJ-1)
+      if (mobjTimeout() < 32)
       {
         p_enemy_add_thinker(objForMobj(i));
       }
@@ -284,7 +285,7 @@ void __fastcall__ p_enemy_startframe(void)
 void __fastcall__ p_enemy_add_thinker(char o)
 {
   char t = getObjectType(o);
-  if (t < 5)
+  if (t < 5 || t == kOT_ImpShot)
   {
     char i = mobjForObj(o);
     setMobjIndex(i);
@@ -300,7 +301,7 @@ void __fastcall__ p_enemy_add_thinker(char o)
 void __fastcall__ p_enemy_wasseenthisframe(char o)
 {
   char t = getObjectType(o);
-  if (t < 5)
+  if (t < 5 || t == kOT_ImpShot)
   {
     char i = mobjForObj(o);
     setMobjIndex(i);
@@ -369,10 +370,6 @@ void __fastcall__ p_enemy_think(void)
     char mobjIndex = thinkers[i];
     p_enemy_single_think(mobjIndex);
     ++i;
-  }
-  if (mobjAllocated(MAX_MOBJ-1))
-  {
-    p_enemy_single_think(MAX_MOBJ-1);
   }
 }
 
@@ -802,23 +799,14 @@ void A_Chase(void)
   }
     
   // check for missile attack
-  if (getMobjShootState() != 0xff)
+  if (getMobjShootState() != 0xff
+    && !mobjMovecount()
+    && P_CheckMissileRange())
   {
-    if (mobjMovecount())
-    {
-      goto nomissile;
-    }
-
-    if (!P_CheckMissileRange())
-			goto nomissile;
-		
 		P_SetMobjState(getMobjShootState());
     addMobjFlags(MF_JUSTATTACKED);
 		return;
   }
-
-    // ?
-nomissile:
 
   // chase towards player
   if (decMobjMovecount() < 0
@@ -859,44 +847,42 @@ void A_Shoot(void)
 //
 void A_Missile(void)
 {
-	// launch a missile
+  // launch a missile
+  if (mobjAllocated(MAX_MOBJ-1) == 0)
 	{
-    if (mobjAllocated(MAX_MOBJ-1) == false)
-	  {
-      char ot = mobjInfoType();
-      char missileDamage = (ot == MOBJINFO_IMP ? 10 : 30);
-      char enemyIndex;
+    char ot = mobjInfoType();
+    char missileDamage = (ot == MOBJINFO_IMP ? 10 : 30);
+    char enemyIndex;
 
-      // about 256 bytes!
-      long dx = (playerx - getObjectX(objIndex))/16;
-	    long dy = (playery - getObjectY(objIndex))/16;
-	    unsigned int distance = sqrt24(dx*dx + dy*dy)/64;
-      if (distance == 0) distance = 1;
-	    missile_momx = dx/distance;
-	    missile_momy = dy/distance;
-      missile_momx <<= 2;
-      missile_momy <<= 2;
+    // about 256 bytes!
+    long dx = (playerx - getObjectX(objIndex))/16;
+    long dy = (playery - getObjectY(objIndex))/16;
+    int distance = sqrt24(dx*dx + dy*dy)/64;
+    if (distance == 0) distance = 1;
+    missile_momx = dx/distance;
+    missile_momy = dy/distance;
+    missile_momx <<= 2;
+    missile_momy <<= 2;
 
-	    //miss->allocated = true;
-	    setObjectX(MAX_OBJ-1, getObjectX(objIndex));
-	    setObjectY(MAX_OBJ-1, getObjectY(objIndex));
-	    setObjectSector(MAX_OBJ-1, getObjectSector(objIndex));
-      enemyIndex = actorIndex;
-      setMobjIndex(MAX_MOBJ-1);
-        setMobjAllocated(1);
-	      setMobjInfoType(MOBJINFO_IMPSHOT);
-	      setMobjStateIndex(STATE_IMPSHOTFLY);
-        setMobjHealth(missileDamage);
-        setMobjMovecount(32);
-      setMobjIndex(enemyIndex);
+    setObjectX(MAX_OBJ-1, getObjectX(objIndex));
+    setObjectY(MAX_OBJ-1, getObjectY(objIndex));
+    setObjectSector(MAX_OBJ-1, getObjectSector(objIndex));
+    enemyIndex = actorIndex;
+    setMobjIndex(MAX_MOBJ-1);
+      setMobjAllocated(1);
+      setMobjInfoType(MOBJINFO_IMPSHOT);
+      setMobjStateIndex(STATE_IMPSHOTFLY);
+      setMobjHealth(missileDamage);
+      setMobjMovecount(32);
+      setMobjTimeout(0);
+    setMobjIndex(enemyIndex);
 
 #if 0
-	    gotoxy(1,1);
-	    cprintf("%ld %ld %d %d. \n", dx, dy, miss->momx, miss->momy);
+    gotoxy(1,1);
+    cprintf("%ld %ld %d %d. \n", dx, dy, missile_momx, missile_momy);
 #endif
-      setObjForMobj(MAX_OBJ - 1, MAX_MOBJ - 1);
-	    setObjectType(MAX_OBJ - 1, kOT_ImpShot);
-	  }
+    setObjForMobj(MAX_OBJ - 1, MAX_MOBJ - 1);
+    setObjectType(MAX_OBJ - 1, kOT_ImpShot);
 	}
 	setMobjReactiontime(P_Random()&7);
   goToChaseState();
@@ -909,10 +895,8 @@ void A_Melee(void)
 {
   if (mobjMovecount() == 0)
   {
-    {
-      char damage = ((P_Random()&7)+1);
-      damagePlayer(damage + (damage<<1));
-    }
+    char damage = ((P_Random()&7)+1);
+    damagePlayer(damage + (damage<<1));
 		
 	  S_StartSound(SOUND_CLAW);
 		
@@ -924,8 +908,6 @@ void A_Melee(void)
   }
 }
 
-char cacodemonsDead = 0;
-
 void A_Fall(void)
 {
   setMobjTimeout(0);
@@ -933,9 +915,8 @@ void A_Fall(void)
   if (decMobjMovecount() == 0)
   {
     // make the object into a static corpse
-    char o = objForMobj(actorIndex);
     char ot = mobjInfoType();
-    setObjectType(o, kOT_PossessedCorpseWithAmmo + ot);
+    setObjectType(objIndex, kOT_PossessedCorpseWithAmmo + ot);
     if (ot == MOBJINFO_CACODEMON)
     {
       // count to 2
@@ -984,8 +965,7 @@ void A_Fly(void)
   }
   if (die)
   {
-    char o = objForMobj(actorIndex);
-    setObjectSector(o, -1);
+    setObjectSector(objIndex, -1);
     setMobjAllocated(0);
   }
 }
