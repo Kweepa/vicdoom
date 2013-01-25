@@ -34,3 +34,5 @@ void updateFace(void);
 void __fastcall__ setObjForMobj(char obj, char mobj);
 char __fastcall__ objForMobj(char mobj);
 char __fastcall__ mobjForObj(char obj);
+
+void install_nmi_handler(void);

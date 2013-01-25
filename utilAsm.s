@@ -31,6 +31,7 @@
 .export _mobjForObj
 
 .export _sqrt24
+.export _install_nmi_handler
 
 .autoimport on
 
@@ -219,6 +220,20 @@ textcolor:
 
 _setTextColor:
   sta textcolor
+  rts
+
+.segment "CODE"
+
+nmi_handler:
+  rti
+
+_install_nmi_handler:
+  sei
+  lda #<nmi_handler
+  sta $318
+  lda #>nmi_handler
+  sta $319
+  cli
   rts
 
 .segment "LOWCODE"

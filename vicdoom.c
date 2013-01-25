@@ -27,6 +27,7 @@
 // todo
 // 19. test
 // X 19.1 fix flashing projectile bug - was a bug in division: (long)/(unsigned int) fails for some negative numerators
+// 19.2 fix multiple pickup bug - not sure what's happening; perhaps a stack overflow?
 // 20. bundle, release, make video
 
 // notes for video
@@ -1775,6 +1776,14 @@ void __fastcall__ updateWeapons(char keys)
         --shells;
         damage = 1;
       }
+      // no room for this yet
+      /*
+      else if (bullets > 0)
+      {
+        weapon = 2;
+        drawHudAmmo();
+      }
+      */
     }
     else
     {
@@ -1783,6 +1792,14 @@ void __fastcall__ updateWeapons(char keys)
         --bullets;
         damage = 1;
       }
+      // no room for this yet
+      /*
+      else if (weapon == 4 && shells > 0)
+      {
+        weapon = 3;
+        drawHudAmmo();
+      }
+      */
     }
 
     reloadStage = reloadTimes[weapon];
@@ -1858,6 +1875,12 @@ int main()
   char i;
   int ca, sa;
   char numObj;
+
+  // disable Shift-C= (toggle upper/lower case)
+  POKE(657,128);
+
+  // install NMI handler
+  install_nmi_handler();
 
   // needed for clearScreen
   load_data_file("phicode");
