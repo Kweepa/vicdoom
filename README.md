@@ -14,6 +14,7 @@ Features:
   - health, ammo, keys, weapons, security and combat armor
   - corpses
   - exploding barrels
+  - secrets
   - 11 music tracks, converted from the original Doom midi files
   - 20 sound effects, converted from the original Doom PC speaker sounds
   - cheat codes
