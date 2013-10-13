@@ -76,7 +76,7 @@
 
 .include "e1m1.s"
 
-.segment "CODE"
+.segment "MIDCODE"
 
 objXlo:
 .res 48, 0
@@ -440,7 +440,7 @@ jmp incsp1
 .endproc
 
 
-.segment "CODE"
+.segment "MIDCODE"
 
 .proc _getNumObjects : near
 

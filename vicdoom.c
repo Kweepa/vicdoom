@@ -28,6 +28,9 @@
 // 19. test
 // X 19.1 fix flashing projectile bug - was a bug in division: (long)/(unsigned int) fails for some negative numerators
 // 19.2 fix multiple pickup bug - not sure what's happening; perhaps a stack overflow?
+// 19.3 fix horrible flashing sector bug in E1M5 first secret
+// 19.4 don't allow enemies to melee through walls/doors (it's just based on distance! ugh)
+// 19.5 check E1M[3?] (got 107% pickups - could be 19.2 again?)
 // 20. bundle, release, make video
 
 // notes for video
@@ -35,6 +38,7 @@
 // show enemies, weapons
 // key/door/barrel
 // map (scroll and zoom)
+// should probably cut together all music/enemies/pickups/weapons
 
 // memory map:
 // see the .cfg file for how to do this
@@ -1887,12 +1891,13 @@ int main()
 
   // clear screen
   clearScreen();
-  cputsxy(0, 1, "R_Init: Init DOOM");
-  cputsxy(0, 2, "refresh daemon...");
+//  cputsxy(0, 1, "R_Init: Init DOOM");
+//  cputsxy(0, 2, "refresh daemon...");
 
   load_data_file("psounds");
   load_data_file("plowcode");
   load_data_file("pstackcode");
+  load_data_file("pmidcode");
 
   playSoundInitialize();
 
