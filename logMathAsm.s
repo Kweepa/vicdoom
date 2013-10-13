@@ -75,7 +75,7 @@ sintab:
 .byte 0, -12, -24, -36, -48, -59, -70, -80, -89, -98, -105, -112, -117, -121, -124, -126
 .byte -127, -126, -124, -121, -117, -112, -105, -98, -89, -80, -70, -59, -48, -36, -24, -12
 
-.segment "MIDCODE"
+.segment "CODE"
 
 ; unused ZP
 tmple = $40
@@ -530,7 +530,7 @@ multab2hi:
 square2_hi:
 .res $200, 0
 
-.segment "MIDCODE"
+.segment "CODE"
 
 ; misc numeric work area and accum #1 (according to the PRG)
 ; at $57-$66 on the ZP

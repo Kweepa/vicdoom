@@ -1891,13 +1891,12 @@ int main()
 
   // clear screen
   clearScreen();
-//  cputsxy(0, 1, "R_Init: Init DOOM");
-//  cputsxy(0, 2, "refresh daemon...");
+  cputsxy(0, 1, "R_Init: Init DOOM");
+  cputsxy(0, 2, "refresh daemon...");
 
   load_data_file("psounds");
   load_data_file("plowcode");
   load_data_file("pstackcode");
-  load_data_file("pmidcode");
 
   playSoundInitialize();
 
