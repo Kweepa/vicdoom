@@ -7,9 +7,9 @@ developed using
  cc65
  ^ullrich von bassewitz^
 
- ^vice^     viceteam#.org
+ vice     ^viceteam#.org^
 
-loader by  ^tokra^, ^mike^
+loader by ^mike kircher^
 
 
 thanks to everyone on
