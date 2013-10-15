@@ -1,0 +1,53 @@
+REM>boot_src
+:
+DIM code 4095
+:
+Tape=&0340
+:
+FOR pass=4 TO 7 STEP 3
+P%=&2200:O%=code
+[OPT pass
+.Boot
+ LDX #Limit-Load
+.Boot_00
+ LDA Load-1,X
+ STA Tape-1,X
+ DEX
+ BNE Boot_00
+ JMP Tape
+
+.Load
+ LDA &A2:STA &FB
+.Load_00
+ SEC:LDA &A2:SBC &FB:CMP #120:BCC Load_00
+ LDA #1:LDX &BA:LDY #0:JSR &FFBA
+ LDA #8
+ LDX #(Name-Load+Tape) MOD 256
+ LDY #(Name-Load+Tape) DIV 256
+ JSR &FFBD
+ LDX #&01:STX &FB:STX &FD
+ LDY #&12:        STY &FE
+ LDY #&20:        STY &FC
+ LDA #0:JSR &FFD5
+ STX &2D:STY &2E:LDY #0
+.Load_01
+ LDA (&FB),Y:STA (&FD),Y
+ INC &FB:BNE Load_02:INC &FC
+.Load_02
+ INC &FD:BNE Load_03:INC &FE
+.Load_03
+ LDA &FB:CMP &2D:BNE Load_01
+ LDA &FC:CMP &2E:BNE Load_01
+ LDA &FD:STA &2D
+ LDA &FE:STA &2E
+ JSR &E518
+ JSR &C533
+ JSR &C659
+ JMP &C7AE
+
+.Name
+ EQUS "DOOM.PRG"
+
+.Limit
+]
+NEXT
