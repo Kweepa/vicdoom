@@ -9,8 +9,8 @@ developed using
 
  vice     ^viceteam#.org^
 
-loader by ^mike kircher^
-
+loader by
+       ^michael kircher^
 
 thanks to everyone on
 
@@ -20,4 +20,4 @@ especially ^tokra^, ^TNT^,
 
 and ^darkatx^, and to ^]^!
 
-2013 kweepa#.com.@
+   2013 kweepa#.com.@
